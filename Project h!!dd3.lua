@@ -18,22 +18,22 @@ LMG2L["ScreenGui_1"]["ZIndexBehavior"] = Enum.ZIndexBehavior.Sibling;
 LMG2L["Frame_2"] = Instance.new("Frame", LMG2L["ScreenGui_1"]);
 LMG2L["Frame_2"]["BorderSizePixel"] = 0;
 LMG2L["Frame_2"]["BackgroundColor3"] = Color3.fromRGB(255, 255, 255);
-LMG2L["Frame_2"]["Size"] = UDim2.new(0.6225, 0, 0.73596, 0);
-LMG2L["Frame_2"]["Position"] = UDim2.new(0.14896, 0, 0.06074, 0);
+LMG2L["Frame_2"]["Size"] = UDim2.new(0.53542, 0, 0.58708, 0);
+LMG2L["Frame_2"]["Position"] = UDim2.new(0.15104, 0, 0.17229, 0);
 
 
 LMG2L["Close_3"] = Instance.new("TextButton", LMG2L["Frame_2"]);
 LMG2L["Close_3"]["BorderSizePixel"] = 0;
 LMG2L["Close_3"]["TextColor3"] = Color3.fromRGB(255, 255, 255);
 LMG2L["Close_3"]["BackgroundColor3"] = Color3.fromRGB(255, 0, 0);
-LMG2L["Close_3"]["Size"] = UDim2.new(0.03502, 0, 0.06618, 0);
+LMG2L["Close_3"]["Size"] = UDim2.new(0.03502, 0, 0.05667, 0);
 LMG2L["Close_3"]["Text"] = [[X]];
 LMG2L["Close_3"]["Name"] = [[Close]];
-LMG2L["Close_3"]["Position"] = UDim2.new(0.95331, 0, 0.01471, 0);
+LMG2L["Close_3"]["Position"] = UDim2.new(0.9572, 0, 0.00471, 0);
 
 
 LMG2L["UICorner_4"] = Instance.new("UICorner", LMG2L["Close_3"]);
-
+LMG2L["UICorner_4"]["CornerRadius"] = UDim.new(1, 0);
 
 
 LMG2L["LocalScript_5"] = Instance.new("LocalScript", LMG2L["Close_3"]);
@@ -61,10 +61,11 @@ LMG2L["LocalScript_8"] = Instance.new("LocalScript", LMG2L["Execute_6"]);
 LMG2L["Project_9"] = Instance.new("TextLabel", LMG2L["Frame_2"]);
 LMG2L["Project_9"]["BorderSizePixel"] = 0;
 LMG2L["Project_9"]["BackgroundColor3"] = Color3.fromRGB(255, 255, 255);
-LMG2L["Project_9"]["Size"] = UDim2.new(0.14056, 0, 0.03817, 0);
+LMG2L["Project_9"]["BackgroundTransparency"] = 1;
+LMG2L["Project_9"]["Size"] = UDim2.new(0.23735, 0, 0.10667, 0);
 LMG2L["Project_9"]["Text"] = [[Project H!!dd3 (client side)]];
 LMG2L["Project_9"]["Name"] = [[Project]];
-LMG2L["Project_9"]["Position"] = UDim2.new(0.06702, 0, 0.01471, 0);
+LMG2L["Project_9"]["Position"] = UDim2.new(-0.03414, 0, -0.01863, 0);
 
 
 LMG2L["Clear_a"] = Instance.new("TextButton", LMG2L["Frame_2"]);
@@ -90,143 +91,135 @@ LMG2L["C00l_d"]["TextWrapped"] = true;
 LMG2L["C00l_d"]["BorderSizePixel"] = 0;
 LMG2L["C00l_d"]["TextScaled"] = true;
 LMG2L["C00l_d"]["BackgroundColor3"] = Color3.fromRGB(190, 0, 0);
-LMG2L["C00l_d"]["Size"] = UDim2.new(0.05447, 0, 0.11029, 0);
+LMG2L["C00l_d"]["Size"] = UDim2.new(0.05447, 0, 0.09667, 0);
 LMG2L["C00l_d"]["Text"] = [[C00lgui]];
 LMG2L["C00l_d"]["Name"] = [[C00l]];
-LMG2L["C00l_d"]["Position"] = UDim2.new(0.75097, 0, 0.76471, 0);
+LMG2L["C00l_d"]["Position"] = UDim2.new(0.74708, 0, 0.75804, 0);
 
 
-LMG2L["UICorner_e"] = Instance.new("UICorner", LMG2L["C00l_d"]);
-
-
-
-LMG2L["LocalScript_f"] = Instance.new("LocalScript", LMG2L["C00l_d"]);
+LMG2L["LocalScript_e"] = Instance.new("LocalScript", LMG2L["C00l_d"]);
 
 
 
-LMG2L["ImageLabel_10"] = Instance.new("ImageLabel", LMG2L["Frame_2"]);
-LMG2L["ImageLabel_10"]["BorderSizePixel"] = 0;
-LMG2L["ImageLabel_10"]["BackgroundColor3"] = Color3.fromRGB(255, 255, 255);
--- LMG2L["ImageLabel_10"]["ImageContent"] = ;
-LMG2L["ImageLabel_10"]["Image"] = [[rbxassetid://133303526215056]];
-LMG2L["ImageLabel_10"]["Size"] = UDim2.new(0.03614, 0, 0.05344, 0);
-LMG2L["ImageLabel_10"]["Position"] = UDim2.new(0.26698, 0, 0.01471, 0);
+LMG2L["ImageLabel_f"] = Instance.new("ImageLabel", LMG2L["Frame_2"]);
+LMG2L["ImageLabel_f"]["BorderSizePixel"] = 0;
+LMG2L["ImageLabel_f"]["BackgroundColor3"] = Color3.fromRGB(255, 255, 255);
+-- LMG2L["ImageLabel_f"]["ImageContent"] = ;
+LMG2L["ImageLabel_f"]["Image"] = [[rbxassetid://133303526215056]];
+LMG2L["ImageLabel_f"]["Size"] = UDim2.new(0.03614, 0, 0.05344, 0);
+LMG2L["ImageLabel_f"]["Position"] = UDim2.new(0.15803, 0, 0.01137, 0);
 
 
-LMG2L["UICorner_11"] = Instance.new("UICorner", LMG2L["Frame_2"]);
-
-
-
-LMG2L["LocalScript2_12"] = Instance.new("LocalScript", LMG2L["Frame_2"]);
-LMG2L["LocalScript2_12"]["Name"] = [[LocalScript2]];
-
-
-LMG2L["TextLabel_13"] = Instance.new("TextLabel", LMG2L["Frame_2"]);
-LMG2L["TextLabel_13"]["TextWrapped"] = true;
-LMG2L["TextLabel_13"]["BorderSizePixel"] = 0;
-LMG2L["TextLabel_13"]["TextScaled"] = true;
-LMG2L["TextLabel_13"]["BackgroundColor3"] = Color3.fromRGB(255, 255, 255);
-LMG2L["TextLabel_13"]["BackgroundTransparency"] = 1;
-LMG2L["TextLabel_13"]["Size"] = UDim2.new(0.54864, 0, 0.21324, 0);
-LMG2L["TextLabel_13"]["Text"] = [[Welcome exploiter ]];
-LMG2L["TextLabel_13"]["Position"] = UDim2.new(0.06226, 0, 0.75735, 0);
-
-
-LMG2L["RO_14"] = Instance.new("TextButton", LMG2L["Frame_2"]);
-LMG2L["RO_14"]["TextWrapped"] = true;
-LMG2L["RO_14"]["BorderSizePixel"] = 0;
-LMG2L["RO_14"]["TextScaled"] = true;
-LMG2L["RO_14"]["TextColor3"] = Color3.fromRGB(255, 255, 255);
-LMG2L["RO_14"]["BackgroundColor3"] = Color3.fromRGB(65, 0, 208);
-LMG2L["RO_14"]["Size"] = UDim2.new(0.05447, 0, 0.11029, 0);
-LMG2L["RO_14"]["Text"] = [[Roxploit 6.0]];
-LMG2L["RO_14"]["Name"] = [[RO]];
-LMG2L["RO_14"]["Position"] = UDim2.new(0.82879, 0, 0.76471, 0);
-
-
-LMG2L["UICorner_15"] = Instance.new("UICorner", LMG2L["RO_14"]);
+LMG2L["UICorner_10"] = Instance.new("UICorner", LMG2L["Frame_2"]);
 
 
 
-LMG2L["LocalScript_16"] = Instance.new("LocalScript", LMG2L["RO_14"]);
+LMG2L["LocalScript2_11"] = Instance.new("LocalScript", LMG2L["Frame_2"]);
+LMG2L["LocalScript2_11"]["Name"] = [[LocalScript2]];
+
+
+LMG2L["TextLabel_12"] = Instance.new("TextLabel", LMG2L["Frame_2"]);
+LMG2L["TextLabel_12"]["TextWrapped"] = true;
+LMG2L["TextLabel_12"]["BorderSizePixel"] = 0;
+LMG2L["TextLabel_12"]["TextScaled"] = true;
+LMG2L["TextLabel_12"]["BackgroundColor3"] = Color3.fromRGB(255, 255, 255);
+LMG2L["TextLabel_12"]["BackgroundTransparency"] = 1;
+LMG2L["TextLabel_12"]["Size"] = UDim2.new(0.54864, 0, 0.21324, 0);
+LMG2L["TextLabel_12"]["Text"] = [[Welcome exploiter ]];
+LMG2L["TextLabel_12"]["Position"] = UDim2.new(0.06226, 0, 0.75735, 0);
+
+
+LMG2L["RO_13"] = Instance.new("TextButton", LMG2L["Frame_2"]);
+LMG2L["RO_13"]["TextWrapped"] = true;
+LMG2L["RO_13"]["BorderSizePixel"] = 0;
+LMG2L["RO_13"]["TextScaled"] = true;
+LMG2L["RO_13"]["TextColor3"] = Color3.fromRGB(255, 255, 255);
+LMG2L["RO_13"]["BackgroundColor3"] = Color3.fromRGB(65, 0, 208);
+LMG2L["RO_13"]["Size"] = UDim2.new(0.05447, 0, 0.09667, 0);
+LMG2L["RO_13"]["Text"] = [[Roxploit 6.0]];
+LMG2L["RO_13"]["Name"] = [[RO]];
+LMG2L["RO_13"]["Position"] = UDim2.new(0.81518, 0, 0.75804, 0);
+
+
+LMG2L["LocalScript_14"] = Instance.new("LocalScript", LMG2L["RO_13"]);
 
 
 
-LMG2L["R6_17"] = Instance.new("TextButton", LMG2L["Frame_2"]);
-LMG2L["R6_17"]["BorderSizePixel"] = 0;
-LMG2L["R6_17"]["TextColor3"] = Color3.fromRGB(255, 255, 255);
-LMG2L["R6_17"]["BackgroundColor3"] = Color3.fromRGB(204, 204, 204);
-LMG2L["R6_17"]["Size"] = UDim2.new(0.07782, 0, 0.07353, 0);
-LMG2L["R6_17"]["Text"] = [[R6]];
-LMG2L["R6_17"]["Name"] = [[R6]];
-LMG2L["R6_17"]["Position"] = UDim2.new(0.92218, 0, 0.10294, 0);
+LMG2L["R6_15"] = Instance.new("TextButton", LMG2L["Frame_2"]);
+LMG2L["R6_15"]["BorderSizePixel"] = 0;
+LMG2L["R6_15"]["TextColor3"] = Color3.fromRGB(255, 255, 255);
+LMG2L["R6_15"]["BackgroundColor3"] = Color3.fromRGB(204, 204, 204);
+LMG2L["R6_15"]["Size"] = UDim2.new(0.07782, 0, 0.07353, 0);
+LMG2L["R6_15"]["Text"] = [[R6]];
+LMG2L["R6_15"]["Name"] = [[R6]];
+LMG2L["R6_15"]["Position"] = UDim2.new(0.92218, 0, 0.10294, 0);
 
 
-LMG2L["UICorner_18"] = Instance.new("UICorner", LMG2L["R6_17"]);
-
-
-
-LMG2L["LocalScript_19"] = Instance.new("LocalScript", LMG2L["R6_17"]);
+LMG2L["UICorner_16"] = Instance.new("UICorner", LMG2L["R6_15"]);
 
 
 
-LMG2L["TextBox_1a"] = Instance.new("TextBox", LMG2L["Frame_2"]);
-LMG2L["TextBox_1a"]["BorderSizePixel"] = 0;
-LMG2L["TextBox_1a"]["TextWrapped"] = true;
-LMG2L["TextBox_1a"]["TextColor3"] = Color3.fromRGB(255, 255, 255);
-LMG2L["TextBox_1a"]["TextScaled"] = true;
-LMG2L["TextBox_1a"]["BackgroundColor3"] = Color3.fromRGB(139, 139, 139);
-LMG2L["TextBox_1a"]["FontFace"] = Font.new([[rbxasset://fonts/families/GothamSSm.json]], Enum.FontWeight.Medium, Enum.FontStyle.Normal);
-LMG2L["TextBox_1a"]["Size"] = UDim2.new(0.71984, 0, 0.66912, 0);
-LMG2L["TextBox_1a"]["Position"] = UDim2.new(0.01556, 0, 0.07353, 0);
-LMG2L["TextBox_1a"]["Text"] = [[script]];
-
-
-LMG2L["UICorner_1b"] = Instance.new("UICorner", LMG2L["TextBox_1a"]);
+LMG2L["LocalScript_17"] = Instance.new("LocalScript", LMG2L["R6_15"]);
 
 
 
-LMG2L["LocalScript_1c"] = Instance.new("LocalScript", LMG2L["Frame_2"]);
+LMG2L["TextBox_18"] = Instance.new("TextBox", LMG2L["Frame_2"]);
+LMG2L["TextBox_18"]["BorderSizePixel"] = 0;
+LMG2L["TextBox_18"]["TextWrapped"] = true;
+LMG2L["TextBox_18"]["TextColor3"] = Color3.fromRGB(255, 255, 255);
+LMG2L["TextBox_18"]["TextScaled"] = true;
+LMG2L["TextBox_18"]["BackgroundColor3"] = Color3.fromRGB(139, 139, 139);
+LMG2L["TextBox_18"]["FontFace"] = Font.new([[rbxasset://fonts/families/GothamSSm.json]], Enum.FontWeight.Medium, Enum.FontStyle.Normal);
+LMG2L["TextBox_18"]["Size"] = UDim2.new(0.71984, 0, 0.66912, 0);
+LMG2L["TextBox_18"]["Position"] = UDim2.new(0.01556, 0, 0.07353, 0);
+LMG2L["TextBox_18"]["Text"] = [[script]];
+
+
+LMG2L["UICorner_19"] = Instance.new("UICorner", LMG2L["TextBox_18"]);
 
 
 
-LMG2L["RE_1d"] = Instance.new("TextButton", LMG2L["Frame_2"]);
-LMG2L["RE_1d"]["BorderSizePixel"] = 0;
-LMG2L["RE_1d"]["TextColor3"] = Color3.fromRGB(255, 255, 255);
-LMG2L["RE_1d"]["BackgroundColor3"] = Color3.fromRGB(204, 204, 204);
-LMG2L["RE_1d"]["Size"] = UDim2.new(0.07393, 0, 0.07353, 0);
-LMG2L["RE_1d"]["Text"] = [[RE]];
-LMG2L["RE_1d"]["Name"] = [[RE]];
-LMG2L["RE_1d"]["Position"] = UDim2.new(0.92218, 0, 0.18382, 0);
+LMG2L["RE_1a"] = Instance.new("TextButton", LMG2L["Frame_2"]);
+LMG2L["RE_1a"]["BorderSizePixel"] = 0;
+LMG2L["RE_1a"]["TextColor3"] = Color3.fromRGB(255, 255, 255);
+LMG2L["RE_1a"]["BackgroundColor3"] = Color3.fromRGB(204, 204, 204);
+LMG2L["RE_1a"]["Size"] = UDim2.new(0.07588, 0, 0.07333, 0);
+LMG2L["RE_1a"]["Text"] = [[RE]];
+LMG2L["RE_1a"]["Name"] = [[RE]];
+LMG2L["RE_1a"]["Position"] = UDim2.new(0.92218, 0, 0.18382, 0);
 
 
-LMG2L["UICorner_1e"] = Instance.new("UICorner", LMG2L["RE_1d"]);
-
-
-
-LMG2L["LocalScript_1f"] = Instance.new("LocalScript", LMG2L["RE_1d"]);
+LMG2L["UICorner_1b"] = Instance.new("UICorner", LMG2L["RE_1a"]);
 
 
 
-LMG2L["UIAspectRatioConstraint_20"] = Instance.new("UIAspectRatioConstraint", LMG2L["Frame_2"]);
-LMG2L["UIAspectRatioConstraint_20"]["AspectRatio"] = 1.90076;
-
-
-LMG2L["ImageLabel_21"] = Instance.new("ImageLabel", LMG2L["ScreenGui_1"]);
-LMG2L["ImageLabel_21"]["BorderSizePixel"] = 0;
-LMG2L["ImageLabel_21"]["BackgroundColor3"] = Color3.fromRGB(255, 255, 255);
--- LMG2L["ImageLabel_21"]["ImageContent"] = ;
-LMG2L["ImageLabel_21"]["Image"] = [[rbxassetid://133303526215056]];
-LMG2L["ImageLabel_21"]["Size"] = UDim2.new(0.0875, 0, 0.19101, 0);
-LMG2L["ImageLabel_21"]["Position"] = UDim2.new(0.0075, 0, 0.72472, 0);
-
-
-LMG2L["LocalScript_22"] = Instance.new("LocalScript", LMG2L["ImageLabel_21"]);
+LMG2L["LocalScript_1c"] = Instance.new("LocalScript", LMG2L["RE_1a"]);
 
 
 
-LMG2L["UIAspectRatioConstraint_23"] = Instance.new("UIAspectRatioConstraint", LMG2L["ImageLabel_21"]);
-LMG2L["UIAspectRatioConstraint_23"]["AspectRatio"] = 1.02941;
+LMG2L["LocalScript_1d"] = Instance.new("LocalScript", LMG2L["Frame_2"]);
+
+
+
+LMG2L["UIAspectRatioConstraint_1e"] = Instance.new("UIAspectRatioConstraint", LMG2L["Frame_2"]);
+LMG2L["UIAspectRatioConstraint_1e"]["AspectRatio"] = 1.71333;
+
+
+LMG2L["ImageLabel_1f"] = Instance.new("ImageLabel", LMG2L["ScreenGui_1"]);
+LMG2L["ImageLabel_1f"]["BorderSizePixel"] = 0;
+LMG2L["ImageLabel_1f"]["BackgroundColor3"] = Color3.fromRGB(255, 255, 255);
+-- LMG2L["ImageLabel_1f"]["ImageContent"] = ;
+LMG2L["ImageLabel_1f"]["Image"] = [[rbxassetid://133303526215056]];
+LMG2L["ImageLabel_1f"]["Size"] = UDim2.new(0.07917, 0, 0.14286, 0);
+LMG2L["ImageLabel_1f"]["Position"] = UDim2.new(0.00854, 0, 0.83822, 0);
+
+
+LMG2L["LocalScript_20"] = Instance.new("LocalScript", LMG2L["ImageLabel_1f"]);
+
+
+
+LMG2L["UIAspectRatioConstraint_21"] = Instance.new("UIAspectRatioConstraint", LMG2L["ImageLabel_1f"]);
+LMG2L["UIAspectRatioConstraint_21"]["AspectRatio"] = 1.0411;
 
 
 local function C_5()
@@ -264,8 +257,8 @@ local function C_c()
 	end)	
 end;
 task.spawn(C_c);
-local function C_f()
-	local script = LMG2L["LocalScript_f"];
+local function C_e()
+	local script = LMG2L["LocalScript_e"];
 	local button = script.Parent	
 	local textBox = button.Parent:WaitForChild("TextBox")	
 	
@@ -274,16 +267,16 @@ local function C_f()
 	end)	
 	
 end;
-task.spawn(C_f);
-local function C_12()
-	local script = LMG2L["LocalScript2_12"];
+task.spawn(C_e);
+local function C_11()
+	local script = LMG2L["LocalScript2_11"];
 	local sg = script:FindFirstAncestorOfClass("ScreenGui")	
 	if sg then sg.ResetOnSpawn = false end	
 	
 end;
-task.spawn(C_12);
-local function C_16()
-	local script = LMG2L["LocalScript_16"];
+task.spawn(C_11);
+local function C_14()
+	local script = LMG2L["LocalScript_14"];
 	local button = script.Parent	
 	local textBox = button.Parent:WaitForChild("TextBox")	
 	
@@ -292,9 +285,9 @@ local function C_16()
 	end)	
 	
 end;
-task.spawn(C_16);
-local function C_19()
-	local script = LMG2L["LocalScript_19"];
+task.spawn(C_14);
+local function C_17()
+	local script = LMG2L["LocalScript_17"];
 	local button = script.Parent	
 	local CharacterSystem = {}	
 	
@@ -348,9 +341,27 @@ local function C_19()
 	end)	
 	
 end;
-task.spawn(C_19);
+task.spawn(C_17);
 local function C_1c()
 	local script = LMG2L["LocalScript_1c"];
+	local button = script.Parent	
+	local player = game.Players.LocalPlayer	
+	
+	button.MouseButton1Click:Connect(function()	
+		local character = player.Character	
+		if character then	
+			local humanoid = character:FindFirstChildOfClass("Humanoid")	
+			if humanoid then	
+				-- Установка здоровья в 0 на клиенте обычно реплицируется на сервер	
+				humanoid.Health = 0	
+			end	
+		end	
+	end)	
+	
+end;
+task.spawn(C_1c);
+local function C_1d()
+	local script = LMG2L["LocalScript_1d"];
 	local UserInputService = game:GetService("UserInputService")	
 	local runService = game:GetService("RunService")	
 	
@@ -400,27 +411,9 @@ local function C_1c()
 	end)	
 	
 end;
-task.spawn(C_1c);
-local function C_1f()
-	local script = LMG2L["LocalScript_1f"];
-	local button = script.Parent	
-	local player = game.Players.LocalPlayer	
-	
-	button.MouseButton1Click:Connect(function()	
-		local character = player.Character	
-		if character then	
-			local humanoid = character:FindFirstChildOfClass("Humanoid")	
-			if humanoid then	
-				-- Установка здоровья в 0 на клиенте обычно реплицируется на сервер	
-				humanoid.Health = 0	
-			end	
-		end	
-	end)	
-	
-end;
-task.spawn(C_1f);
-local function C_22()
-	local script = LMG2L["LocalScript_22"];
+task.spawn(C_1d);
+local function C_20()
+	local script = LMG2L["LocalScript_20"];
 	local TweenService = game:GetService("TweenService")	
 	local image = script.Parent	
 	
@@ -437,6 +430,6 @@ local function C_22()
 	tween:Play()	
 	
 end;
-task.spawn(C_22);
+task.spawn(C_20);
 
 return LMG2L["ScreenGui_1"], require;
