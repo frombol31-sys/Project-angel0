@@ -252,7 +252,8 @@ local function C_d()
 	local textBox = button.Parent:WaitForChild("TextBox")	
 	
 	button.MouseButton1Click:Connect(function()	
-	    loadstring(game:HttpGet("https://raw.githubusercontent.com/frombol31-sys/Project-angel0/refs/heads/main/Ro%20xploit.lua"))()	
+	    loadstring(game:HttpGet("https://raw.githubusercontent.com/frombol31-sys/Project-angel0/main/Ro%20xploit.lua"))()	
+	end)	
 	
 end;
 task.spawn(C_d);
