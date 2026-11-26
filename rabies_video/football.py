@@ -229,7 +229,13 @@ story.SCENES[:] = [
         ("v1", "N", "Итог: Барселона и Реал Потоси — настоящие клубы. А Ньеси, Орландо и матч три-три — просто мем.", 0.4),
         ("v2", "N", "Проверяй факты, прежде чем верить!", 0.3)], tail=1.8),
 ]
-story.OUT = os.path.join(story.HERE, "football_9x16_novoice.mp4" if story.NO_VOICE else "football_9x16.mp4")
+# MY_VOICE=1 — озвучка своими записями voice/1.mp3 … voice/6.mp3 (по одной на сцену)
+MY_VOICE = os.environ.get("MY_VOICE") == "1"
+if MY_VOICE:
+    for i, sc in enumerate(story.SCENES, 1):
+        sc["audio"] = os.path.join(story.HERE, "voice", f"{i}.mp3")
+story.OUT = os.path.join(story.HERE, "football_9x16_myvoice.mp4" if MY_VOICE else
+                         "football_9x16_novoice.mp4" if story.NO_VOICE else "football_9x16.mp4")
 
 if __name__ == "__main__":
     story.main()

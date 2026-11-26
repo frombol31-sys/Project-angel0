@@ -512,6 +512,14 @@ def tts(voice, txt):
     with wave.open(wav) as wf:
         return np.frombuffer(wf.readframes(wf.getnframes()), np.int16).astype(np.float32) / 32768
 
+def load_audio(path):
+    """mp3/wav -> моно 44.1 кГц, без тишины по краям, громкость выровнена."""
+    out = subprocess.run(["ffmpeg", "-loglevel", "error", "-i", path, "-ac", "1", "-ar", str(SR),
+                          "-af", "silenceremove=start_periods=1:start_threshold=-45dB,areverse,"
+                                 "silenceremove=start_periods=1:start_threshold=-45dB,areverse,loudnorm=I=-16",
+                          "-ar", str(SR), "-f", "s16le", "-"], capture_output=True, check=True).stdout
+    return np.frombuffer(out, np.int16).astype(np.float32) / 32768
+
 def build():
     t, plan = 0.0, []
     for sc in SCENES:
@@ -519,8 +527,16 @@ def build():
         for key, v, txt, pre in sc["lines"]:
             lt += pre; a = tts(v, txt); dur = len(a) / SR
             marks[key] = (lt, lt + dur); clips.append((start + lt, a, v, txt, key)); lt += dur
+        extra = []
+        if sc.get("audio"):  # своя запись на всю сцену: растягиваем метки и субтитры под её длину
+            rec = load_audio(sc["audio"]); first = sc["lines"][0][3]; pad = 0.4
+            r = (len(rec) / SR) / (lt - first)
+            fix = lambda x: pad + (x - first) * r
+            marks = {k: (fix(a), fix(b)) for k, (a, b) in marks.items()}
+            clips = [(start + fix(st - start), np.zeros(int(len(a) * r)), v, txt, key) for st, a, v, txt, key in clips]
+            extra = [(start + pad, rec)]; lt = pad + len(rec) / SR
         dur = lt + sc["tail"]
-        plan.append(dict(sc, start=start, dur=dur, marks=marks, clips=clips)); t += dur
+        plan.append(dict(sc, start=start, dur=dur, marks=marks, clips=clips, extra=extra)); t += dur
     return plan, t
 
 PLAN, TOTAL = None, None
@@ -589,6 +605,8 @@ def soundtrack(path):
     for p in PLAN:
         for st, a, v, txt, key in p["clips"]:
             j0 = int(st*SR); voice[j0:j0 + len(a)] += a[:n - j0] * (0.0 if NO_VOICE else 0.9)
+        for st, a in p.get("extra", []):
+            j0 = int(st*SR); voice[j0:j0 + len(a)] += a[:n - j0] * (0.0 if NO_VOICE else 0.95)
         if p["fn"] is sc_night:  # укус
             ts = p["start"] + p["marks"]["n5"][0] + 0.0
             ts = p["start"] + p["marks"]["n5"][0]
