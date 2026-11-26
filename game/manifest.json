@@ -1,6 +1,6 @@
 {
-  "name": "Кровавая Арена 3D",
-  "short_name": "Кровавая Арена",
+  "name": "GORE ZONE",
+  "short_name": "GORE ZONE",
   "start_url": "./index.html",
   "scope": "./",
   "display": "fullscreen",

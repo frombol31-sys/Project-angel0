@@ -6,81 +6,130 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-<meta name="apple-mobile-web-app-title" content="Кровавая Арена">
+<meta name="apple-mobile-web-app-title" content="GORE ZONE">
 <meta name="theme-color" content="#0b0b0d">
-<title>Кровавая Арена 3D</title>
+<title>GORE ZONE</title>
 <link rel="manifest" href="manifest.json">
 <link rel="apple-touch-icon" href="icon-192.png">
 <link rel="icon" href="icon-192.png">
 <link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=Russo+One&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Rubik+Wet+Paint&family=Russo+One&display=swap" rel="stylesheet">
 <style>
-:root{color-scheme:dark;--bg:#0b0b0d;--panel:rgba(16,13,14,.92);--red:#b3121a;--red2:#ff2d38;--text:#f3ece6;--muted:#a79d97;--line:rgba(255,255,255,.14)}
-@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){--bg:#0b0b0d;--text:#f3ece6}}
-:root[data-theme="dark"]{--bg:#0b0b0d;--text:#f3ece6}
+/* Layout: left-side game menu over the live 3D scene; HUD pinned to screen corners */
+:root{color-scheme:dark;--bg:#0b0a0b;--ink:#f2ece4;--mut:#9e958e;--red:#c8101a;--red2:#ff3340;--panel:rgba(14,11,12,.9);--line:rgba(255,255,255,.12);--glass:rgba(12,10,11,.62);
+  --f-logo:"Rubik Wet Paint","Russo One",Impact,sans-serif;--f-ui:"Russo One",system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;--f-text:system-ui,-apple-system,"Segoe UI",Roboto,sans-serif}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){--bg:#0b0a0b;--ink:#f2ece4}}
+:root[data-theme="dark"]{--bg:#0b0a0b;--ink:#f2ece4}
 *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
-html,body{margin:0;height:100%;overflow:hidden;background:var(--bg);color:var(--text);
-  font-family:"Russo One",system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;
+html,body{margin:0;height:100%;overflow:hidden;background:var(--bg);color:var(--ink);font-family:var(--f-ui);
   touch-action:none;-webkit-user-select:none;user-select:none;-webkit-touch-callout:none;overscroll-behavior:none}
 #root{position:fixed;left:0;top:0;overflow:hidden;transform-origin:0 0;background:var(--bg)}
 #gl,#ov{position:absolute;left:0;top:0;width:100%;height:100%;display:block;touch-action:none}
 #ov{pointer-events:none}
 button{font-family:inherit;color:inherit;touch-action:manipulation;cursor:pointer}
+button:focus-visible{outline:2px solid var(--red2);outline-offset:2px}
 .hidden{display:none!important}
-.screen{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:12px;
-  padding:14px 28px;background:radial-gradient(ellipse at center,rgba(0,0,0,.3),rgba(0,0,0,.82));overflow:hidden}
-.title{font-size:clamp(30px,7.5vmin,72px);line-height:.95;text-align:center;margin:0;letter-spacing:1px;
-  color:#fff;text-shadow:0 0 18px rgba(255,30,40,.55),0 4px 0 var(--red)}
-.title small{display:block;font-size:.3em;color:var(--red2);letter-spacing:6px;margin-top:10px;text-shadow:none}
-.btn{min-width:220px;padding:12px 24px;font-size:19px;border:2px solid var(--red);background:rgba(20,6,8,.85);
-  border-radius:12px;letter-spacing:1px;transition:transform .08s,background .15s}
-.btn:active{transform:scale(.96);background:var(--red)}
-.btn.main{background:var(--red);border-color:var(--red2);font-size:23px}
-.row{display:flex;gap:12px;flex-wrap:wrap;justify-content:center}
-.maps{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px;width:min(820px,100%)}
-.map{border:2px solid var(--line);border-radius:14px;overflow:hidden;background:#141012;text-align:left;padding:0}
-.map:active{border-color:var(--red2)}
-.map .pv{height:72px}
-.map .nm{padding:8px 10px 2px;font-size:16px}
-.map .ds{padding:0 10px 10px;font-size:11px;color:var(--muted);font-family:system-ui,sans-serif}
-.panel{background:var(--panel);border:1px solid var(--line);border-radius:16px;padding:10px 16px;width:min(560px,100%)}
-.opt{display:flex;justify-content:space-between;align-items:center;gap:10px;padding:7px 0;border-bottom:1px solid var(--line);font-size:14px}
+.screen{position:absolute;inset:0;display:flex}
+/* ---- main / pause menu ---- */
+.side{background:linear-gradient(90deg,rgba(8,6,7,.97) 0%,rgba(8,6,7,.88) 32%,rgba(8,6,7,.25) 58%,rgba(8,6,7,0) 75%)}
+.sidepanel{width:min(48%,470px);padding:18px 0 14px 40px;display:flex;flex-direction:column;justify-content:center;gap:10px}
+.logo{font-family:var(--f-logo);font-size:clamp(52px,15vmin,118px);line-height:.82;color:var(--red2);margin:0;font-weight:400;
+  text-shadow:0 4px 0 #4d0005,0 0 34px rgba(255,20,30,.35);letter-spacing:2px}
+.tag{letter-spacing:5px;font-size:11px;color:var(--mut);text-transform:uppercase;margin-bottom:4px}
+.mlist{display:flex;flex-direction:column;gap:2px}
+.mi{display:flex;flex-direction:column;align-items:flex-start;background:none;border:0;border-left:4px solid transparent;
+  padding:7px 14px 7px 16px;text-align:left;transition:padding .15s,background .15s,border-color .15s}
+.mi span{font-size:clamp(19px,4.6vmin,29px);letter-spacing:1px;color:#e9e2da}
+.mi em{font-style:normal;font-size:11px;color:var(--mut);font-family:var(--f-text);margin-top:1px}
+.mi:hover,.mi:active,.mi:focus-visible{border-left-color:var(--red2);background:linear-gradient(90deg,rgba(200,16,26,.38),transparent 85%);padding-left:24px;outline:none}
+.mi.primary{border-left-color:var(--red)} .mi.primary span{color:#fff;font-size:clamp(23px,5.6vmin,36px)}
+.mi.danger span{color:#ff8a8a}
+.foot{display:flex;justify-content:space-between;gap:12px;font-size:11px;color:var(--mut);font-family:var(--f-text);padding-right:18px;margin-top:6px;min-height:14px}
+.stats{font-family:var(--f-text);font-size:13px;color:#cfc6be;display:flex;gap:14px;flex-wrap:wrap}
+.stats b{font-family:var(--f-ui);font-weight:400;color:#fff}
+/* ---- full-screen pages ---- */
+.full{flex-direction:column;background:rgba(9,7,8,.93);padding:12px 24px 16px}
+.bar{display:flex;align-items:center;gap:12px;margin-bottom:12px;flex:0 0 auto}
+.back{width:42px;height:42px;border-radius:12px;border:1px solid var(--line);background:rgba(255,255,255,.05);font-size:22px;line-height:1}
+.back:active{background:var(--red)}
+h2{font-weight:400;font-size:24px;margin:0;letter-spacing:1px}
+.bar small{margin-left:auto;color:var(--mut);font-family:var(--f-text);font-size:12px}
+.maps{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:14px;flex:1;min-height:0}
+.map{position:relative;border-radius:16px;overflow:hidden;border:1px solid var(--line);padding:0;text-align:left;background:#141012;display:flex;flex-direction:column;transition:transform .12s,border-color .12s}
+.map:hover,.map:active{border-color:var(--red2);transform:translateY(-2px)}
+.map .pv{flex:1;min-height:70px;position:relative;display:flex;align-items:flex-end;justify-content:flex-end;padding:8px 12px;font-size:40px}
+.map .info{padding:10px 12px 12px;display:flex;flex-direction:column;gap:5px}
+.map .nm{font-size:19px}
+.map .ds{font-size:12px;color:var(--mut);font-family:var(--f-text);line-height:1.3}
+.chips{display:flex;gap:5px;flex-wrap:wrap}
+.chip{font-size:10px;font-family:var(--f-text);font-weight:700;letter-spacing:.5px;text-transform:uppercase;padding:3px 7px;border-radius:6px;background:rgba(255,255,255,.08);color:#d8d0c8}
+.map .go{position:absolute;left:12px;top:10px;background:var(--red);padding:5px 10px;border-radius:8px;font-size:12px;letter-spacing:1px}
+.panel{background:var(--panel);border:1px solid var(--line);border-radius:16px;padding:6px 18px;width:min(620px,100%);align-self:center}
+.opt{display:flex;justify-content:space-between;align-items:center;gap:12px;padding:8px 0;border-bottom:1px solid var(--line);font-size:14px}
 .opt:last-child{border-bottom:0}
-.seg{display:flex;gap:5px}
-.seg button{padding:6px 10px;border-radius:8px;border:1px solid var(--line);background:#1c1719;font-size:13px}
-.seg button.on{background:var(--red);border-color:var(--red2)}
-.help{font-family:system-ui,sans-serif;font-size:13px;line-height:1.45;color:#ddd;columns:2;column-gap:22px;width:min(820px,100%)}
-.help p{margin:0 0 8px;break-inside:avoid}
-.help b{color:#fff;font-family:"Russo One",sans-serif;font-weight:400}
-h2{margin:0;font-weight:400;font-size:26px}
+.opt small{display:block;font-family:var(--f-text);font-size:11px;color:var(--mut);margin-top:2px}
+.seg{display:flex;gap:4px;background:rgba(0,0,0,.35);padding:3px;border-radius:10px}
+.seg button{padding:6px 11px;border-radius:8px;border:0;background:none;font-size:13px;color:#cfc6be}
+.seg button.on{background:var(--red);color:#fff}
+.help{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px;flex:1;min-height:0;align-content:start}
+.card{background:rgba(255,255,255,.04);border:1px solid var(--line);border-radius:14px;padding:10px 12px}
+.card i{font-style:normal;font-size:22px}
+.card b{display:block;font-weight:400;font-size:14px;margin:4px 0 3px}
+.card p{margin:0;font-family:var(--f-text);font-size:12px;line-height:1.4;color:#cfc6be}
+/* ---- inventory ---- */
+.inv{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:14px;flex:1;min-height:0}
+.invcol h3{font-weight:400;font-size:12px;letter-spacing:2px;text-transform:uppercase;color:var(--mut);margin:0 0 8px;padding-bottom:6px;border-bottom:1px solid var(--line)}
+.invcol{display:flex;flex-direction:column;gap:7px}
+.tile{display:flex;align-items:center;gap:10px;padding:6px 10px;min-height:0;border-radius:12px;border:1px solid var(--line);background:rgba(255,255,255,.04);text-align:left}
+.tile i{font-style:normal;font-size:24px;width:30px;text-align:center}
+.tile span{font-size:14px}
+.tile small{display:block;font-family:var(--f-text);font-size:10.5px;color:var(--mut);margin-top:1px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.tile span{min-width:0}
+.tile.on{border-color:var(--red2);background:rgba(200,16,26,.3)}
+.tile:active{background:rgba(200,16,26,.45)}
+/* ---- HUD ---- */
 #hud{position:absolute;inset:0;pointer-events:none}
-#hud > *{pointer-events:auto}
-.hpwrap{position:absolute;left:14px;top:10px;width:120px;pointer-events:none!important}
-.hp{height:14px;border-radius:7px;background:rgba(0,0,0,.6);border:1px solid var(--line);overflow:hidden}
+#hud button,#hud .rbtn,#palette{pointer-events:auto}
+.hpwrap{position:absolute;left:16px;top:12px}
+.hprow{display:flex;align-items:center;gap:8px}
+.heart{color:var(--red2);font-size:17px}
+.hp{width:128px;height:12px;border-radius:3px;background:rgba(0,0,0,.55);border:1px solid var(--line);overflow:hidden;transform:skewX(-14deg)}
 #hpfill{height:100%;width:100%;background:linear-gradient(90deg,#8a0c12,#ff3440);transition:width .15s}
-#kills{margin-top:6px;font-size:15px;text-shadow:0 2px 3px #000}
-#wbar{position:absolute;top:8px;left:146px;right:64px;display:flex;gap:5px;justify-content:safe center;overflow-x:auto;padding:2px;scrollbar-width:none}
-#wbar::-webkit-scrollbar{display:none}
-.wb{flex:0 0 auto;width:50px;height:50px;border-radius:12px;border:2px solid var(--line);background:rgba(10,8,9,.65);
-  display:flex;flex-direction:column;align-items:center;justify-content:center;font-size:19px;line-height:1;padding:0}
-.wb span{font-size:8.5px;margin-top:4px;color:var(--muted);font-family:system-ui,sans-serif;font-weight:700}
-.wb.on{border-color:var(--red2);background:rgba(140,10,18,.75)}
-.wb.on span{color:#fff}
-.tbtn{position:absolute;right:12px;height:44px;min-width:44px;border-radius:12px;border:2px solid var(--line);background:rgba(10,8,9,.65);font-size:14px;padding:0 10px}
-#pauseBtn{top:10px}
-#npcBtn{top:62px}
-.rbtn{position:absolute;border-radius:50%;border:3px solid rgba(255,255,255,.35);display:flex;align-items:center;justify-content:center;font-size:14px;letter-spacing:1px;touch-action:none}
-#fireBtn{right:34px;bottom:40px;width:96px;height:96px;background:rgba(180,15,25,.45);border-color:rgba(255,80,90,.6)}
-#fireBtn.on{background:rgba(220,20,30,.75)}
-#jumpBtn{right:150px;bottom:26px;width:66px;height:66px;background:rgba(255,255,255,.12);font-size:24px}
-#jumpBtn.on{background:rgba(255,255,255,.35)}
+#hpnum{font-weight:400;font-size:15px;min-width:30px;text-shadow:0 2px 3px #000}
+#kills{margin-top:6px;font-size:14px;color:#e6ded6;text-shadow:0 2px 3px #000}
+#wsel{position:absolute;top:10px;left:50%;transform:translateX(-50%);display:flex;gap:4px}
+#wsel button{background:var(--glass);border:1px solid var(--line);border-radius:12px;height:46px}
+#wsel button:active{background:rgba(200,16,26,.6)}
+#wPrev,#wNext{width:40px;font-size:22px;line-height:1}
+#wCur{display:flex;align-items:center;gap:8px;padding:0 14px;min-width:160px;justify-content:center}
+#wIcon,#fireIcon{font-style:normal}
+#wIcon{font-size:21px}
+#wName{font-size:15px}
+#wCur small{font-size:9px;color:var(--mut)}
+.tr{position:absolute;top:10px;right:14px;display:flex;gap:6px}
+.tbtn{height:46px;min-width:46px;border-radius:12px;border:1px solid var(--line);background:var(--glass);font-size:15px;padding:0 10px}
+.tbtn:active{background:rgba(200,16,26,.6)}
+.rbtn{position:absolute;border-radius:50%;display:flex;flex-direction:column;align-items:center;justify-content:center;touch-action:none}
+#fireBtn{right:30px;bottom:34px;width:100px;height:100px;background:radial-gradient(circle at 50% 40%,rgba(230,30,40,.6),rgba(140,8,16,.55));border:3px solid rgba(255,90,100,.65);box-shadow:0 0 0 6px rgba(200,16,26,.12)}
+#fireBtn.on{background:radial-gradient(circle at 50% 40%,rgba(255,60,70,.85),rgba(190,10,20,.8));transform:scale(.95)}
+#fireIcon{font-size:28px;line-height:1}
+#fireLbl{font-size:11px;letter-spacing:1px;margin-top:3px}
+#jumpBtn{right:148px;bottom:22px;width:64px;height:64px;background:rgba(255,255,255,.1);border:2px solid rgba(255,255,255,.3);font-size:12px;letter-spacing:1px}
+#jumpBtn b{font-size:22px;font-weight:400;line-height:1}
+#jumpBtn.on{background:rgba(255,255,255,.3)}
+#palette{position:absolute;left:50%;transform:translateX(-50%);bottom:14px;display:flex;gap:6px;padding:6px 8px;background:var(--glass);border:1px solid var(--line);border-radius:22px}
+.sw{width:28px;height:28px;border-radius:50%;border:2px solid rgba(255,255,255,.25);padding:0;transition:transform .1s}
+.sw.on{border-color:#fff;transform:scale(1.18);box-shadow:0 0 0 2px rgba(0,0,0,.5)}
 #msg{position:absolute;left:50%;top:38%;transform:translate(-50%,-50%);text-align:center;pointer-events:none;
-  font-size:clamp(26px,6vmin,52px);color:#fff;text-shadow:0 0 16px #f00,0 3px 0 #600;white-space:nowrap}
-#msg small{display:block;font-size:.4em;color:#ddd;margin-top:8px;text-shadow:0 2px 3px #000}
-#toast{position:absolute;left:50%;top:70px;transform:translateX(-50%);background:rgba(0,0,0,.7);
-  padding:8px 14px;border-radius:10px;font-size:13px;font-family:system-ui,sans-serif;pointer-events:none;white-space:nowrap}
-#loading{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-size:20px;background:var(--bg);text-align:center;padding:20px}
-@media (max-height:430px){.btn{padding:9px 20px;font-size:16px;min-width:190px} .btn.main{font-size:19px} .screen{gap:9px} .title{font-size:40px}}
+  font-family:var(--f-logo);font-size:clamp(34px,9vmin,72px);color:var(--red2);text-shadow:0 4px 0 #4d0005;white-space:nowrap}
+#msg small{display:block;font-family:var(--f-ui);font-size:15px;color:#eee;margin-top:6px;text-shadow:0 2px 3px #000}
+#toast{position:absolute;left:50%;top:66px;transform:translateX(-50%);background:rgba(0,0,0,.72);border-left:3px solid var(--red2);
+  padding:8px 14px;border-radius:8px;font-size:13px;font-family:var(--f-text);pointer-events:none;white-space:nowrap}
+#loading{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;flex-direction:column;gap:8px;background:var(--bg);text-align:center;padding:20px}
+#loading b{font-family:var(--f-logo);font-weight:400;font-size:56px;color:var(--red2)}
+@media (max-height:430px){.sidepanel{padding-left:28px;gap:6px} .mi{padding-top:5px;padding-bottom:5px} .full{padding:10px 20px 12px} .bar{margin-bottom:8px}}
+@media (max-width:760px){.maps{gap:10px} .map .ds{display:none} #wCur{min-width:120px} .hp{width:96px}}
+@media (prefers-reduced-motion: reduce){*{transition:none!important}}
 </style>
 </head>
 <body>
@@ -88,64 +137,74 @@ h2{margin:0;font-weight:400;font-size:26px}
 <canvas id="gl"></canvas>
 <canvas id="ov"></canvas>
 
-<div id="menu" class="screen hidden">
-  <h1 class="title">КРОВАВАЯ<br>АРЕНА 3D<small>РЭГДОЛЛ ПЕСОЧНИЦА</small></h1>
-  <button class="btn main" id="bPlay">ИГРАТЬ</button>
-  <div class="row">
-    <button class="btn" id="bSet">НАСТРОЙКИ</button>
-    <button class="btn" id="bHelp">КАК ИГРАТЬ</button>
+<div id="menu" class="screen side hidden">
+  <div class="sidepanel">
+    <h1 class="logo">GORE<br>ZONE</h1>
+    <div class="tag">рэгдолл · кровь · граффити</div>
+    <nav class="mlist">
+      <button class="mi primary" id="bPlay"><span>ИГРАТЬ</span><em>3 карты · песочница</em></button>
+      <button class="mi" id="bSet"><span>НАСТРОЙКИ</span><em>графика, кровь, звук, люди</em></button>
+      <button class="mi" id="bHelp"><span>КАК ИГРАТЬ</span><em>управление и советы</em></button>
+    </nav>
+    <div class="foot"><span id="tip"></span><span>v3.0</span></div>
   </div>
 </div>
 
-<div id="mapsScr" class="screen hidden">
-  <h2>ВЫБЕРИ КАРТУ</h2>
+<div id="mapsScr" class="screen full hidden">
+  <header class="bar"><button class="back" data-back aria-label="Назад">‹</button><h2>Выбери карту</h2><small>нажми на карту, чтобы начать</small></header>
   <div class="maps" id="mapList"></div>
-  <button class="btn" data-back>НАЗАД</button>
 </div>
 
-<div id="setScr" class="screen hidden">
-  <h2>НАСТРОЙКИ</h2>
+<div id="setScr" class="screen full hidden">
+  <header class="bar"><button class="back" data-back aria-label="Назад">‹</button><h2>Настройки</h2><small>сохраняются на этом устройстве</small></header>
   <div class="panel" id="setPanel"></div>
-  <button class="btn" data-back>НАЗАД</button>
 </div>
 
-<div id="helpScr" class="screen hidden">
-  <h2>КАК ИГРАТЬ</h2>
+<div id="helpScr" class="screen full hidden">
+  <header class="bar"><button class="back" data-back aria-label="Назад">‹</button><h2>Как играть</h2></header>
   <div class="help">
-    <p><b>Левый палец</b> — джойстик ходьбы (появляется там, где коснулся).</p>
-    <p><b>Правый палец</b> — свайп по экрану поворачивает камеру.</p>
-    <p><b>Красная кнопка</b> — атака. Держи её и води пальцем, чтобы целиться на ходу. <b>Кнопка ↑</b> — прыжок.</p>
-    <p><b>Оружие</b> — панель сверху: кулаки, нож, бита, катана, пистолет, дробовик, автомат, граната, РПГ.</p>
-    <p><b>Бандиты</b> в масках нападают. <b>Мирные</b> убегают, но иногда дают сдачи. «Хаос» в настройках — все против всех.</p>
-    <p>Убитые остаются лежать, над телом таймер — <b>через 1 минуту человек возрождается</b>.</p>
-    <p>Катана и взрывы отрубают руки, ноги и голову. Кровь остаётся на земле и стенах.</p>
-    <p>Компьютер: WASD, мышь (клик — захват), пробел — прыжок, 1–9 — оружие, Esc — пауза.</p>
+    <div class="card"><i>🕹️</i><b>Ходьба</b><p>Коснись левой половины экрана — появится джойстик. Веди палец, чтобы идти.</p></div>
+    <div class="card"><i>👆</i><b>Обзор</b><p>Свайп по правой половине экрана поворачивает камеру.</p></div>
+    <div class="card"><i>🔴</i><b>Атака</b><p>Держи красную кнопку. Пока держишь — води пальцем, чтобы целиться.</p></div>
+    <div class="card"><i>⤒</i><b>Прыжок</b><p>Кнопка слева от атаки. Запрыгивай на ящики, машины и крыши.</p></div>
+    <div class="card"><i>🗡️</i><b>Арсенал</b><p>Нажми на название оружия сверху или листай стрелками ‹ ›.</p></div>
+    <div class="card"><i>🎨</i><b>Граффити</b><p>Баллончик и маркер рисуют на стенах, асфальте и машинах. Цвет — палитра над кнопкой.</p></div>
+    <div class="card"><i>☠️</i><b>Возрождение</b><p>Убитые лежат минуту, над телом таймер. Потом человек появляется снова.</p></div>
+    <div class="card"><i>⌨️</i><b>Компьютер</b><p>WASD, мышь (клик — захват), пробел — прыжок, 1–0 — оружие, Q/E — листать, Tab — арсенал.</p></div>
   </div>
-  <button class="btn" data-back>НАЗАД</button>
+</div>
+
+<div id="invScr" class="screen full hidden">
+  <header class="bar"><button class="back" id="invClose" aria-label="Закрыть">✕</button><h2>Арсенал</h2><small>игра на паузе</small></header>
+  <div class="inv" id="invGrid"></div>
 </div>
 
 <div id="hud" class="hidden">
-  <div class="hpwrap"><div class="hp"><div id="hpfill"></div></div><div id="kills">☠ 0</div></div>
-  <div id="wbar"></div>
-  <button class="tbtn" id="pauseBtn">❚❚</button>
-  <button class="tbtn" id="npcBtn">+NPC</button>
-  <div class="rbtn" id="jumpBtn">↑</div>
-  <div class="rbtn" id="fireBtn">АТАКА</div>
+  <div class="hpwrap"><div class="hprow"><span class="heart">❤</span><div class="hp"><div id="hpfill"></div></div><b id="hpnum">100</b></div><div id="kills">☠ 0</div></div>
+  <div id="wsel"><button id="wPrev" aria-label="Предыдущее оружие">‹</button><button id="wCur"><i id="wIcon">✊</i><span id="wName">Кулаки</span><small>▼</small></button><button id="wNext" aria-label="Следующее оружие">›</button></div>
+  <div class="tr"><button class="tbtn" id="npcBtn">+ 👤</button><button class="tbtn" id="pauseBtn" aria-label="Пауза">❚❚</button></div>
+  <div id="palette" class="hidden"></div>
+  <div class="rbtn" id="jumpBtn"><b>⤒</b></div>
+  <div class="rbtn" id="fireBtn"><i id="fireIcon">✊</i><span id="fireLbl">УДАР</span></div>
 </div>
 
-<div id="pauseScr" class="screen hidden">
-  <h2>ПАУЗА</h2>
-  <button class="btn main" id="bResume">ПРОДОЛЖИТЬ</button>
-  <div class="row">
-    <button class="btn" id="bMaps2">СМЕНИТЬ КАРТУ</button>
-    <button class="btn" id="bSet2">НАСТРОЙКИ</button>
+<div id="pauseScr" class="screen side hidden">
+  <div class="sidepanel">
+    <h1 class="logo" style="font-size:clamp(40px,11vmin,84px)">ПАУЗА</h1>
+    <div class="stats" id="pStats"></div>
+    <nav class="mlist">
+      <button class="mi primary" id="bResume"><span>ПРОДОЛЖИТЬ</span></button>
+      <button class="mi" id="bMaps2"><span>СМЕНИТЬ КАРТУ</span></button>
+      <button class="mi" id="bSet2"><span>НАСТРОЙКИ</span></button>
+      <button class="mi" id="bClear"><span>ОЧИСТИТЬ КАРТУ</span><em>стереть кровь и граффити</em></button>
+      <button class="mi danger" id="bMenu"><span>ГЛАВНОЕ МЕНЮ</span></button>
+    </nav>
   </div>
-  <button class="btn" id="bMenu">ГЛАВНОЕ МЕНЮ</button>
 </div>
 
 <div id="msg" class="hidden"></div>
 <div id="toast" class="hidden"></div>
-<div id="loading">Загрузка…</div>
+<div id="loading"><b>GORE ZONE</b><span>Загрузка…</span></div>
 </div>
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
@@ -164,9 +223,9 @@ const ease = t => 1 - (1 - t) * (1 - t);
 function angDiff(a, b) { let d = b - a; while (d > Math.PI) d -= 2 * Math.PI; while (d < -Math.PI) d += 2 * Math.PI; return d; }
 
 // ---------------- settings ----------------
-const settings = { blood: 1, npc: 8, chaos: false, sound: true, gfx: 1, sens: 1 };
-try { Object.assign(settings, JSON.parse(localStorage.getItem('ba3_settings') || '{}')); } catch (e) {}
-function saveSettings() { try { localStorage.setItem('ba3_settings', JSON.stringify(settings)); } catch (e) {} }
+const settings = { blood: 1, npc: 8, chaos: false, sound: true, gfx: 1, sens: 1, paint: 0 };
+try { Object.assign(settings, JSON.parse(localStorage.getItem('gz_settings') || '{}')); } catch (e) {}
+function saveSettings() { try { localStorage.setItem('gz_settings', JSON.stringify(settings)); } catch (e) {} }
 const bloodMul = () => [0.4, 1, 2][settings.blood];
 
 // ---------------- landscape layout ----------------
@@ -191,7 +250,7 @@ function initAudio() {
 const SFX = {
   pistol: [.14, 1900, .55], shotgun: [.3, 1100, .8], rifle: [.09, 2300, .4], hit: [.1, 500, .6, 'lowpass', 150],
   swish: [.12, 2600, .18, 'bandpass'], boom: [1.1, 420, 1, 'lowpass', 90], splat: [.2, 650, .45], slash: [.16, 3200, .3, 'highpass'],
-  throw: [.1, 1500, .15, 'bandpass'], rocket: [.4, 900, .5, 'bandpass'], hurt: [.15, 300, .5, 'lowpass', 110]
+  throw: [.1, 1500, .15, 'bandpass'], spray: [.13, 6000, .1, 'highpass'], marker: [.05, 2500, .035, 'bandpass'], rocket: [.4, 900, .5, 'bandpass'], hurt: [.15, 300, .5, 'lowpass', 110]
 };
 function sfx(n, pos) {
   if (!AC || !settings.sound) return;
@@ -219,19 +278,22 @@ function sfx(n, pos) {
 
 // ---------------- weapons ----------------
 const WEAPONS = [
-  { id: 'fists', name: 'Кулаки', icon: '✊', type: 'melee', dmg: 15, range: 1.25, cd: .32, dur: .25, knock: 4 },
-  { id: 'knife', name: 'Нож', icon: '🔪', type: 'melee', dmg: 35, range: 1.35, cd: .3, dur: .22, knock: 3, bleed: 3, slice: .2 },
-  { id: 'bat', name: 'Бита', icon: '🏏', type: 'melee', dmg: 32, range: 1.7, cd: .55, dur: .34, knock: 11 },
-  { id: 'katana', name: 'Катана', icon: '🗡️', type: 'melee', dmg: 62, range: 1.9, cd: .42, dur: .3, knock: 5, bleed: 4, slice: .85 },
-  { id: 'pistol', name: 'Пистолет', icon: '🔫', type: 'gun', dmg: 34, cd: .26, spread: .012, pellets: 1, knock: 6, snd: 'pistol' },
-  { id: 'shotgun', name: 'Дробовик', icon: '💥', type: 'gun', dmg: 16, cd: .85, spread: .07, pellets: 9, knock: 5, snd: 'shotgun', two: 1 },
-  { id: 'rifle', name: 'Автомат', icon: '⚡', type: 'gun', dmg: 22, cd: .095, spread: .025, pellets: 1, knock: 4, snd: 'rifle', two: 1 },
-  { id: 'grenade', name: 'Граната', icon: '💣', type: 'throw', cd: .9, dur: .35 },
-  { id: 'rpg', name: 'РПГ', icon: '🚀', type: 'rocket', cd: 1.3, two: 1 }
+  { id: 'fists', name: 'Кулаки', icon: '✊', cat: 'melee', desc: 'быстрые удары', type: 'melee', dmg: 15, range: 1.25, cd: .32, dur: .25, knock: 4 },
+  { id: 'knife', name: 'Нож', icon: '🔪', cat: 'melee', desc: 'кровотечение', type: 'melee', dmg: 35, range: 1.35, cd: .3, dur: .22, knock: 3, bleed: 3, slice: .2 },
+  { id: 'bat', name: 'Бита', icon: '🏏', cat: 'melee', desc: 'сильно отбрасывает', type: 'melee', dmg: 32, range: 1.7, cd: .55, dur: .34, knock: 11 },
+  { id: 'katana', name: 'Катана', icon: '🗡️', cat: 'melee', desc: 'отрубает конечности', type: 'melee', dmg: 62, range: 1.9, cd: .42, dur: .3, knock: 5, bleed: 4, slice: .85 },
+  { id: 'pistol', name: 'Пистолет', icon: '🔫', cat: 'gun', desc: 'точный', type: 'gun', dmg: 34, cd: .26, spread: .012, pellets: 1, knock: 6, snd: 'pistol' },
+  { id: 'shotgun', name: 'Дробовик', icon: '💥', cat: 'gun', desc: '9 дробин, в упор', type: 'gun', dmg: 16, cd: .85, spread: .07, pellets: 9, knock: 5, snd: 'shotgun', two: 1 },
+  { id: 'rifle', name: 'Автомат', icon: '⚡', cat: 'gun', desc: 'очередь', type: 'gun', dmg: 22, cd: .095, spread: .025, pellets: 1, knock: 4, snd: 'rifle', two: 1 },
+  { id: 'grenade', name: 'Граната', icon: '💣', cat: 'boom', desc: 'взрыв через 2 с', type: 'throw', cd: .9, dur: .35 },
+  { id: 'rpg', name: 'РПГ', icon: '🚀', cat: 'boom', desc: 'ракета', type: 'rocket', cd: 1.3, two: 1 },
+  { id: 'spray', name: 'Баллончик', icon: '🎨', cat: 'paint', desc: 'широкое граффити', type: 'paint', cd: 0, range: 7 },
+  { id: 'marker', name: 'Маркер', icon: '🖊️', cat: 'paint', desc: 'тонкие линии вблизи', type: 'paint', cd: 0, range: 2.6 }
 ];
+const PAINT_COLORS = ['#ff2a2a', '#ff8c1a', '#ffe01a', '#36e05a', '#1ad6ff', '#3a6bff', '#c43aff', '#ff4fb8', '#ffffff', '#111111'];
 
 // ---------------- three setup ----------------
-if (!window.THREE) { $('loading').textContent = 'Не удалось загрузить 3D-движок. Проверь интернет и обнови страницу.'; throw new Error('no three'); }
+if (!window.THREE) { $('loading').lastChild.textContent = 'Не удалось загрузить 3D-движок. Проверь интернет и обнови страницу.'; throw new Error('no three'); }
 const renderer = new THREE.WebGLRenderer({ canvas: glc, antialias: true, powerPreference: 'high-performance' });
 renderer.autoClear = false;
 const scene = new THREE.Scene();
@@ -342,7 +404,7 @@ function mulberry(a) { return () => { a |= 0; a = a + 0x6D2B79F5 | 0; let t = Ma
 function B(cx, cz, w, d, h, look, y0 = 0, o = {}) { return Object.assign({ cx, cz, w, d, h, look, y0 }, o); }
 const MAPS = [
   {
-    id: 'city', name: 'Ночной город', desc: 'Улица, машины, автобус, крыша с лестницей', bx: 48, bz: 14,
+    id: 'city', emoji: '🌃', tags: ['Ночь', 'Улица', 'Крыша'], name: 'Ночной город', desc: 'Улица, машины, автобус, крыша с лестницей', bx: 48, bz: 14,
     sky: ['#05071a', '#1f1736', '#4b2235'], fog: [0x1a1530, 25, 95], hemi: [0x8a8ac8, 0x302830, .75], sun: [0xb0b8ff, .55, [-20, 40, 15]],
     ground: ['road', 100, 44], pv: 'linear-gradient(#0a0d22,#3a1d33 60%,#2b2b30 60%)',
     build() {
@@ -367,7 +429,7 @@ const MAPS = [
     }
   },
   {
-    id: 'ware', name: 'Склад', desc: 'Ящики, стеллажи, контейнер. Тесные драки', bx: 24, bz: 14,
+    id: 'ware', emoji: '🏭', tags: ['В помещении', 'Тесно'], name: 'Склад', desc: 'Ящики, стеллажи, контейнер. Тесные драки', bx: 24, bz: 14,
     sky: ['#120e0b', '#1d1712', '#241c15'], fog: [0x1d1712, 18, 70], hemi: [0xffe2b0, 0x3a3028, .85], sun: [0xffe6c0, .5, [5, 30, 8]],
     ground: ['concrete', 50, 30], pv: 'linear-gradient(#1c1612,#2d241b 60%,#5a5550 60%)',
     build() {
@@ -387,7 +449,7 @@ const MAPS = [
     }
   },
   {
-    id: 'canyon', name: 'Каньон', desc: 'Пустыня, скалы, руины и столовая гора', bx: 58, bz: 58,
+    id: 'canyon', emoji: '🏜️', tags: ['Закат', 'Открыто', 'Большая'], name: 'Каньон', desc: 'Пустыня, скалы, руины и столовая гора', bx: 58, bz: 58,
     sky: ['#3b1d3f', '#c2543a', '#f0a55a'], fog: [0xe0905a, 35, 150], hemi: [0xffd0a0, 0x8a5030, .8], sun: [0xffc080, .9, [-40, 30, -20]],
     ground: ['sand', 140, 140], pv: 'linear-gradient(#5a2448,#e07a45 55%,#c99556 55%)',
     build() {
@@ -415,19 +477,21 @@ const game = {
 // ---------------- particles & decals ----------------
 const MAXP = 2500;
 class PSys {
-  constructor(color, size, add, opacity, tex) {
+  constructor(color, size, add, opacity, tex, vc) {
     this.pos = new Float32Array(MAXP * 3);
     this.geo = new THREE.BufferGeometry();
     this.geo.setAttribute('position', new THREE.BufferAttribute(this.pos, 3));
-    this.mat = new THREE.PointsMaterial({ color, size, sizeAttenuation: true, transparent: true, opacity, depthWrite: false, map: tex, blending: add ? THREE.AdditiveBlending : THREE.NormalBlending });
+    this.vc = !!vc;
+    if (vc) { this.col = new Float32Array(MAXP * 3); this.geo.setAttribute('color', new THREE.BufferAttribute(this.col, 3)); }
+    this.mat = new THREE.PointsMaterial({ color, size, sizeAttenuation: true, transparent: true, opacity, depthWrite: false, map: tex, vertexColors: !!vc, blending: add ? THREE.AdditiveBlending : THREE.NormalBlending });
     this.pts = new THREE.Points(this.geo, this.mat); this.pts.frustumCulled = false; this.pts.renderOrder = 2;
     scene.add(this.pts); this.list = [];
   }
   add(p) { if (this.list.length < MAXP) this.list.push(p); }
   sync() {
     const n = this.list.length;
-    for (let i = 0; i < n; i++) { const p = this.list[i]; this.pos[i * 3] = p.x; this.pos[i * 3 + 1] = p.y; this.pos[i * 3 + 2] = p.z; }
-    this.geo.setDrawRange(0, n); this.geo.attributes.position.needsUpdate = true;
+    for (let i = 0; i < n; i++) { const p = this.list[i]; this.pos[i * 3] = p.x; this.pos[i * 3 + 1] = p.y; this.pos[i * 3 + 2] = p.z; if (this.vc) { this.col[i * 3] = p.cr; this.col[i * 3 + 1] = p.cg; this.col[i * 3 + 2] = p.cb; } }
+    this.geo.setDrawRange(0, n); this.geo.attributes.position.needsUpdate = true; if (this.vc) this.geo.attributes.color.needsUpdate = true;
   }
 }
 const PS = {
@@ -435,27 +499,86 @@ const PS = {
   mist: new PSys(0xa00010, .45, false, .45, TEX.soft),
   spark: new PSys(0xffd36a, .06, true, 1, TEX.dot),
   fire: new PSys(0xff8a30, 1.1, true, .85, TEX.soft),
-  smoke: new PSys(0x8a8a8a, 1.2, false, .32, TEX.soft)
+  smoke: new PSys(0x8a8a8a, 1.2, false, .32, TEX.soft),
+  paint: new PSys(0xffffff, .18, false, .5, TEX.soft, true)
 };
-const MAXD = 2200;
-const decals = new THREE.InstancedMesh(new THREE.PlaneGeometry(1, 1),
-  new THREE.MeshBasicMaterial({ color: 0xffffff, map: TEX.splat, transparent: true, depthWrite: false, polygonOffset: true, polygonOffsetFactor: -2, polygonOffsetUnits: -2 }), MAXD);
-decals.count = 0; decals.frustumCulled = false; decals.renderOrder = 1; scene.add(decals);
-decals.setColorAt(0, new THREE.Color(1, 1, 1));
-let decalIdx = 0, decalN = 0;
+class DecalPool {
+  constructor(max, tex, opacity, layer) {
+    this.max = max; this.layer = layer;
+    this.mesh = new THREE.InstancedMesh(new THREE.PlaneGeometry(1, 1),
+      new THREE.MeshBasicMaterial({ color: 0xffffff, map: tex, transparent: true, opacity, depthWrite: false, polygonOffset: true, polygonOffsetFactor: -2 - layer, polygonOffsetUnits: -2 - layer }), max);
+    this.mesh.setColorAt(0, new THREE.Color(1, 1, 1));
+    this.mesh.count = 0; this.mesh.frustumCulled = false; this.mesh.renderOrder = 1 + layer;
+    scene.add(this.mesh);
+    this.idx = 0; this.n = 0; this.lo = 1e9; this.hi = -1;
+  }
+  add(x, y, z, nx, ny, nz, sx, sy, r, g, b) {
+    const off = .008 + this.layer * .004 + Math.random() * .003;
+    _o.position.set(x + nx * off, y + ny * off, z + nz * off);
+    _o.lookAt(_o.position.x + nx, _o.position.y + ny, _o.position.z + nz);
+    _o.rotateZ(Math.random() * 6.28);
+    _o.scale.set(sx, sy, 1); _o.updateMatrix();
+    const i = this.idx;
+    this.mesh.setMatrixAt(i, _o.matrix); _c.setRGB(r, g, b); this.mesh.setColorAt(i, _c);
+    if (i < this.lo) this.lo = i; if (i > this.hi) this.hi = i;
+    this.idx = (i + 1) % this.max; this.n = Math.min(this.n + 1, this.max); this.mesh.count = this.n;
+  }
+  flush() {
+    if (this.hi < 0) return;
+    const im = this.mesh.instanceMatrix, ic = this.mesh.instanceColor;
+    im.updateRange.offset = this.lo * 16; im.updateRange.count = (this.hi - this.lo + 1) * 16; im.needsUpdate = true;
+    if (ic) { ic.updateRange.offset = this.lo * 3; ic.updateRange.count = (this.hi - this.lo + 1) * 3; ic.needsUpdate = true; }
+    this.lo = 1e9; this.hi = -1;
+  }
+  clear() { this.idx = 0; this.n = 0; this.mesh.count = 0; this.lo = 1e9; this.hi = -1; }
+}
 const _o = new THREE.Object3D(), _c = new THREE.Color();
+const bloodPool = new DecalPool(2200, TEX.splat, 1, 0);
+const sprayPool = new DecalPool(9000, TEX.soft, .6, 1);
+const markerPool = new DecalPool(7000, TEX.dot, 1, 2);
 function addDecal(x, y, z, nx, ny, nz, size, dark) {
-  const off = .01 + Math.random() * .008;
-  _o.position.set(x + nx * off, y + ny * off, z + nz * off);
-  _o.lookAt(_o.position.x + nx, _o.position.y + ny, _o.position.z + nz);
-  _o.rotateZ(Math.random() * 6.28);
-  _o.scale.set(size * rnd(.7, 1.3), size * rnd(.7, 1.3), 1);
-  _o.updateMatrix();
-  decals.setMatrixAt(decalIdx, _o.matrix);
-  if (dark) _c.setRGB(.06, .05, .05); else _c.setRGB(rnd(.55, .75), rnd(0, .03), rnd(.02, .05));
-  decals.setColorAt(decalIdx, _c);
-  decalIdx = (decalIdx + 1) % MAXD; decalN = Math.min(decalN + 1, MAXD);
-  decals.count = decalN; decals.instanceMatrix.needsUpdate = true; if (decals.instanceColor) decals.instanceColor.needsUpdate = true;
+  const s1 = size * rnd(.7, 1.3), s2 = size * rnd(.7, 1.3);
+  if (dark) bloodPool.add(x, y, z, nx, ny, nz, s1, s2, .06, .05, .05);
+  else bloodPool.add(x, y, z, nx, ny, nz, s1, s2, rnd(.55, .75), rnd(0, .03), rnd(.02, .05));
+}
+// ---------------- graffiti ----------------
+let lastMark = null, lastPaintSnd = 0;
+function castWorld(o, d, maxT) {
+  let best = maxT, n = null;
+  if (d.y < -1e-6) { const t = -o.y / d.y; if (t < best) { best = t; n = [0, 1, 0]; } }
+  for (const b of game.boxes) { const r = rayBox(o, d, b); if (r && r.t < best) { best = r.t; n = r.n; } }
+  return n ? { t: best, n, at: { x: o.x + d.x * best, y: o.y + d.y * best, z: o.z + d.z * best } } : null;
+}
+function hexRGB(h) { const n = parseInt(h.slice(1), 16); return [((n >> 16) & 255) / 255, ((n >> 8) & 255) / 255, (n & 255) / 255]; }
+function doPaint(h, w) {
+  const { o, d } = aimOf(h);
+  const [r, g, b] = hexRGB(PAINT_COLORS[settings.paint]);
+  if (w.id === 'spray') {
+    for (let k = 0; k < 3; k++) {
+      const sp = .03, dd = { x: d.x + rnd(-sp, sp), y: d.y + rnd(-sp, sp), z: d.z + rnd(-sp, sp) };
+      const l = Math.hypot(dd.x, dd.y, dd.z); dd.x /= l; dd.y /= l; dd.z /= l;
+      const hit = castWorld(o, dd, w.range); if (!hit) continue;
+      const s1 = (.09 + hit.t * .02) * rnd(.8, 1.4);
+      sprayPool.add(hit.at.x, hit.at.y, hit.at.z, hit.n[0], hit.n[1], hit.n[2], s1, s1, r, g, b);
+    }
+    const rx = Math.cos(game.yaw), rz = -Math.sin(game.yaw);
+    const nz = { x: o.x + d.x * .5 + rx * .14, y: o.y + d.y * .5 - .08, z: o.z + d.z * .5 + rz * .14 };
+    for (let k = 0; k < 2; k++) PS.paint.add({ x: nz.x, y: nz.y, z: nz.z, vx: d.x * rnd(3, 6) + rnd(-.5, .5), vy: d.y * rnd(3, 6) + rnd(-.5, .5), vz: d.z * rnd(3, 6) + rnd(-.5, .5), life: .35, cr: r, cg: g, cb: b });
+    if (game.time - lastPaintSnd > .1) { lastPaintSnd = game.time; sfx('spray'); }
+  } else {
+    const hit = castWorld(o, d, w.range);
+    if (!hit) { lastMark = null; return; }
+    const lm = lastMark;
+    if (lm && lm.n[0] === hit.n[0] && lm.n[1] === hit.n[1] && lm.n[2] === hit.n[2]) {
+      const dist = Math.hypot(hit.at.x - lm.at.x, hit.at.y - lm.at.y, hit.at.z - lm.at.z);
+      if (dist < .5) {
+        const steps = Math.max(1, Math.ceil(dist / .012));
+        for (let i = 1; i <= steps; i++) { const t = i / steps; markerPool.add(lerp(lm.at.x, hit.at.x, t), lerp(lm.at.y, hit.at.y, t), lerp(lm.at.z, hit.at.z, t), hit.n[0], hit.n[1], hit.n[2], .026, .026, r, g, b); }
+      } else markerPool.add(hit.at.x, hit.at.y, hit.at.z, hit.n[0], hit.n[1], hit.n[2], .026, .026, r, g, b);
+    } else markerPool.add(hit.at.x, hit.at.y, hit.at.z, hit.n[0], hit.n[1], hit.n[2], .026, .026, r, g, b);
+    lastMark = hit;
+    if (game.time - lastPaintSnd > .12) { lastPaintSnd = game.time; sfx('marker'); }
+  }
 }
 const chunkGeo = new THREE.BoxGeometry(.09, .07, .08), chunkMat = new THREE.MeshLambertMaterial({ color: '#6e070c' });
 const chunks = [];
@@ -498,7 +621,7 @@ function updateParticles(dt) {
     }
     if (p.life <= 0) bl.splice(i, 1);
   }
-  for (const k of ['mist', 'spark', 'fire', 'smoke']) {
+  for (const k of ['mist', 'spark', 'fire', 'smoke', 'paint']) {
     const L = PS[k].list;
     for (let i = L.length - 1; i >= 0; i--) {
       const p = L[i]; p.life -= dt;
@@ -665,6 +788,18 @@ function makeWeaponModel(id) {
     case 'bat': { const m = add(0, 0, 0, '#9a6a3a', 0, 0, .35, new THREE.CylinderGeometry(.05, .025, .85, 8)); m.rotation.x = Math.PI / 2; } break;
     case 'katana': add(.035, .035, .22, '#111', 0, 0, 0); add(.08, .01, .02, '#c9a227', 0, 0, .12); add(.012, .035, .85, '#e4e8ee', 0, 0, .55); break;
     case 'grenade': add(0, 0, 0, '#3d5a2a', 0, 0, 0, new THREE.SphereGeometry(.06, 10, 8)); add(.03, .03, .03, '#999', 0, .06, 0); break;
+    case 'spray': {
+      add(0, 0, 0, '#cfd0d6', 0, 0, 0, new THREE.CylinderGeometry(.038, .038, .18, 14));
+      add(0, 0, 0, '#ffffff', 0, -.01, 0, new THREE.CylinderGeometry(.0395, .0395, .08, 14)).userData.paint = 1;
+      add(0, 0, 0, '#ffffff', 0, .105, 0, new THREE.CylinderGeometry(.026, .034, .035, 14)).userData.paint = 1;
+      add(.014, .016, .02, '#1a1a1a', 0, .13, .016);
+    } break;
+    case 'marker': {
+      const body = add(0, 0, 0, '#f2f2f2', 0, 0, 0, new THREE.CylinderGeometry(.017, .017, .17, 10)); body.rotation.x = Math.PI / 2;
+      const band = add(0, 0, 0, '#ffffff', 0, 0, -.04, new THREE.CylinderGeometry(.0175, .0175, .05, 10)); band.rotation.x = Math.PI / 2; band.userData.paint = 1;
+      const tip = add(0, 0, 0, '#ffffff', 0, 0, .1, new THREE.ConeGeometry(.013, .035, 10)); tip.rotation.x = Math.PI / 2; tip.userData.paint = 1;
+      const cap = add(0, 0, 0, '#ffffff', 0, 0, -.095, new THREE.CylinderGeometry(.019, .019, .03, 10)); cap.rotation.x = Math.PI / 2; cap.userData.paint = 1;
+    } break;
   }
   return g;
 }
@@ -995,6 +1130,7 @@ function aimOf(h) {
 }
 function doAttack(h) {
   const w = WEAPONS[h.weapon];
+  if (w.type === 'paint') { doPaint(h, w); return; }
   if (h.cd > 0) return;
   const isP = h === game.player;
   h.cd = w.cd * (isP ? 1 : 1.8);
@@ -1238,12 +1374,17 @@ for (const [id, k] of [['fireBtn', 'fire'], ['jumpBtn', 'jump']]) {
 }
 addEventListener('keydown', e => {
   keys[e.code] = true; initAudio();
-  if (game.state === 'play' && game.player) { const n = parseInt(e.key, 10); if (n >= 1 && n <= WEAPONS.length) selectWeapon(n - 1); }
+  if (game.state === 'play' && game.player) {
+    const n = parseInt(e.key, 10); if (!isNaN(n)) { const i = n === 0 ? 9 : n - 1; if (i < WEAPONS.length) selectWeapon(i); }
+    if (e.code === 'KeyQ') cycleWeapon(-1); if (e.code === 'KeyE') cycleWeapon(1);
+    if (e.code === 'Tab') { e.preventDefault(); openInv(); return; }
+  }
+  if (game.state === 'inv' && (e.code === 'Tab' || e.code === 'Escape')) { e.preventDefault(); closeInv(); return; }
   if (e.code === 'Escape' || e.code === 'KeyP') { if (game.state === 'play') pauseGame(); }
 });
 addEventListener('keyup', e => { keys[e.code] = false; });
 document.addEventListener('gesturestart', e => e.preventDefault());
-document.addEventListener('touchmove', e => { if (!e.target.closest('#wbar')) e.preventDefault(); }, { passive: false });
+document.addEventListener('touchmove', e => e.preventDefault(), { passive: false });
 addEventListener('contextmenu', e => e.preventDefault());
 function readInput() {
   let fx = 0, sx = 0;
@@ -1280,8 +1421,16 @@ function buildVM(id) {
     holder.position.set(.2, -.2, -.38);
     if (W.type === 'melee') holder.position.set(.22, -.24, -.4);
     if (W.type === 'throw') holder.position.set(.26, -.26, -.55);
+    if (id === 'spray') { holder.position.set(.24, -.25, -.5); m.rotation.set(-.15, Math.PI, 0); r.position.set(.01, -.1, .03); }
+    if (id === 'marker') { holder.position.set(.2, -.2, -.42); holder.rotation.set(.1, .15, 0); r.position.set(.0, -.03, .1); }
   }
   vmId = id;
+  recolorVM();
+}
+function recolorVM() {
+  if (!vmWeapon) return;
+  const m = colMat(PAINT_COLORS[settings.paint]);
+  vmWeapon.traverse(o => { if (o.userData && o.userData.paint) o.material = m; });
 }
 let bobT = 0;
 function updateVM(dt) {
@@ -1307,6 +1456,10 @@ function updateVM(dt) {
     } else if (w.type === 'throw') {
       u.holder.rotation.set(attacking ? lerp(-1.2, .8, ease(t)) : 0, 0, 0);
       u.holder.visible = !(attacking && t > .45) && p.cd < .5;
+    } else if (w.type === 'paint') {
+      const f = p.fire ? 1 : 0;
+      u.holder.position.x = (w.id === 'spray' ? .24 : .2) + (f ? rnd(-.003, .003) : 0);
+      u.holder.position.z = (w.id === 'spray' ? -.5 : -.42) - f * .04;
     } else u.holder.rotation.set(0, 0, 0);
   }
 }
@@ -1324,7 +1477,7 @@ function updateHuman(h, dt) {
     return;
   }
   const isP = h === game.player;
-  if (isP) { h.mvx = input.mx; h.mvz = input.mz; h.jump = input.jump; h.fire = input.fire; h.yaw = game.yaw; h.pitch = game.pitch; }
+  if (isP) { h.mvx = input.mx; h.mvz = input.mz; h.jump = input.jump; h.fire = input.fire; h.yaw = game.yaw; h.pitch = game.pitch; if (!h.fire) lastMark = null; }
   else ai(h, dt);
   h.cd -= dt; h.attackT = Math.max(0, h.attackT - dt); h.hurt -= dt; h.inv -= dt;
   if (h.fire) doAttack(h);
@@ -1417,7 +1570,8 @@ function drawOverlay() {
       c.strokeStyle = 'rgba(255,255,255,.85)'; c.lineWidth = 2;
       const gap = w.id === 'shotgun' ? 14 : w.type === 'melee' ? 4 : 6, len = 7;
       c.beginPath();
-      if (w.type === 'melee') c.arc(cx, cy, 3, 0, 6.3);
+      if (w.type === 'paint') { c.stroke(); c.beginPath(); c.fillStyle = PAINT_COLORS[settings.paint]; c.arc(cx, cy, w.id === 'spray' ? 9 : 4, 0, 6.3); c.globalAlpha = .55; c.fill(); c.globalAlpha = 1; c.arc(cx, cy, w.id === 'spray' ? 9 : 4, 0, 6.3); }
+      else if (w.type === 'melee') c.arc(cx, cy, 3, 0, 6.3);
       else { c.moveTo(cx - gap - len, cy); c.lineTo(cx - gap, cy); c.moveTo(cx + gap, cy); c.lineTo(cx + gap + len, cy); c.moveTo(cx, cy - gap - len); c.lineTo(cx, cy - gap); c.moveTo(cx, cy + gap); c.lineTo(cx, cy + gap + len); }
       c.stroke();
       if (game.hitMarker > 0) { c.strokeStyle = '#ff3a3a'; c.lineWidth = 2.5; c.beginPath(); for (const [sx, sy] of [[-1, -1], [1, -1], [-1, 1], [1, 1]]) { c.moveTo(cx + sx * 6, cy + sy * 6); c.lineTo(cx + sx * 13, cy + sy * 13); } c.stroke(); }
@@ -1441,7 +1595,7 @@ function drawOverlay() {
 }
 
 // ---------------- UI ----------------
-const screens = ['menu', 'mapsScr', 'setScr', 'helpScr', 'pauseScr'];
+const screens = ['menu', 'mapsScr', 'setScr', 'helpScr', 'pauseScr', 'invScr'];
 let backTo = 'menu';
 function show(id) { for (const s of screens) $(s).classList.toggle('hidden', s !== id); }
 function hideAll() { for (const s of screens) $(s).classList.add('hidden'); }
@@ -1452,35 +1606,65 @@ function toast(t, ms = 2500) { const e = $('toast'); e.textContent = t; e.classL
 function updateHud() {
   const p = game.player; if (!p) return;
   $('hpfill').style.width = clamp(p.hp / p.maxHp * 100, 0, 100) + '%';
+  $('hpnum').textContent = Math.max(0, Math.ceil(p.hp));
   $('kills').textContent = '☠ ' + game.kills;
 }
-function buildWeaponBar() {
-  const bar = $('wbar'); bar.innerHTML = '';
-  WEAPONS.forEach((w, i) => {
-    const b = document.createElement('button');
-    b.className = 'wb'; b.innerHTML = `${w.icon}<span>${w.name}</span>`;
-    b.addEventListener('pointerdown', e => { e.preventDefault(); e.stopPropagation(); initAudio(); selectWeapon(i); });
-    bar.appendChild(b);
-  });
+const CATS = [['melee', 'Ближний бой'], ['gun', 'Огнестрел'], ['boom', 'Взрывчатка'], ['paint', 'Граффити']];
+const FIRE_LBL = { melee: 'УДАР', gun: 'ОГОНЬ', throw: 'БРОСОК', rocket: 'ПУСК', paint: 'РИСОВАТЬ' };
+function buildInventory() {
+  const g = $('invGrid'); g.innerHTML = '';
+  for (const [c, t] of CATS) {
+    const col = document.createElement('div'); col.className = 'invcol'; col.innerHTML = `<h3>${t}</h3>`;
+    WEAPONS.forEach((w, i) => {
+      if (w.cat !== c) return;
+      const b = document.createElement('button');
+      b.className = 'tile' + (game.player && game.player.weapon === i ? ' on' : '');
+      b.innerHTML = `<i>${w.icon}</i><span>${w.name}<small>${w.desc}</small></span>`;
+      b.addEventListener('click', () => { selectWeapon(i); closeInv(); });
+      col.appendChild(b);
+    });
+    g.appendChild(col);
+  }
 }
+function openInv() {
+  if (game.state !== 'play') return;
+  game.state = 'inv'; buildInventory(); show('invScr'); $('hud').classList.add('hidden');
+  touch.move = touch.look = touch.fire = touch.jump = null; mouseDown = false;
+  $('fireBtn').classList.remove('on'); $('jumpBtn').classList.remove('on');
+  if (document.exitPointerLock && locked) document.exitPointerLock();
+}
+function closeInv() { if (game.state !== 'inv') return; hideAll(); game.state = 'play'; $('hud').classList.remove('hidden'); }
 function selectWeapon(i) {
-  if (!game.player) return;
-  game.player.weapon = i; game.player.cd = Math.max(game.player.cd, .15);
-  [...$('wbar').children].forEach((b, j) => b.classList.toggle('on', j === i));
+  const p = game.player; if (!p) return;
+  p.weapon = i; p.cd = Math.max(p.cd, .15); lastMark = null;
+  const w = WEAPONS[i];
+  $('wIcon').textContent = w.icon; $('wName').textContent = w.name;
+  $('fireIcon').textContent = w.icon; $('fireLbl').textContent = FIRE_LBL[w.type];
+  $('palette').classList.toggle('hidden', w.type !== 'paint');
+}
+function cycleWeapon(d) { const p = game.player; if (!p) return; selectWeapon((p.weapon + d + WEAPONS.length) % WEAPONS.length); }
+function buildPalette() {
+  const P = $('palette'); P.innerHTML = '';
+  PAINT_COLORS.forEach((c, i) => {
+    const b = document.createElement('button'); b.className = 'sw' + (settings.paint === i ? ' on' : ''); b.style.background = c;
+    b.setAttribute('aria-label', 'Цвет ' + (i + 1));
+    b.addEventListener('pointerdown', e => { e.preventDefault(); e.stopPropagation(); settings.paint = i; saveSettings(); recolorVM(); [...P.children].forEach((x, j) => x.classList.toggle('on', j === i)); });
+    P.appendChild(b);
+  });
 }
 function buildMaps() {
   const list = $('mapList'); list.innerHTML = '';
   MAPS.forEach((m, i) => {
     const b = document.createElement('button'); b.className = 'map';
-    b.innerHTML = `<div class="pv" style="background:${m.pv}"></div><div class="nm">${m.name}</div><div class="ds">${m.desc}</div>`;
+    b.innerHTML = `<div class="pv" style="background:${m.pv}"><span class="go">ИГРАТЬ ▶</span>${m.emoji}</div><div class="info"><div class="nm">${m.name}</div><div class="ds">${m.desc}</div><div class="chips">${m.tags.map(t => `<span class="chip">${t}</span>`).join('')}</div></div>`;
     b.addEventListener('click', () => { initAudio(); goLandscape(); startGame(i, false); });
     list.appendChild(b);
   });
 }
 function buildSettings() {
   const P = $('setPanel'); P.innerHTML = '';
-  const row = (label, opts, key) => {
-    const r = document.createElement('div'); r.className = 'opt'; r.innerHTML = `<span>${label}</span>`;
+  const row = (label, hint, opts, key) => {
+    const r = document.createElement('div'); r.className = 'opt'; r.innerHTML = `<span>${label}<small>${hint}</small></span>`;
     const sg = document.createElement('div'); sg.className = 'seg';
     opts.forEach(([v, t]) => {
       const b = document.createElement('button'); b.textContent = t; b.classList.toggle('on', settings[key] === v);
@@ -1489,12 +1673,12 @@ function buildSettings() {
     });
     r.appendChild(sg); P.appendChild(r);
   };
-  row('Кровь', [[0, 'Мало'], [1, 'Норм'], [2, 'Много']], 'blood');
-  row('Людей на карте', [[4, '4'], [8, '8'], [12, '12'], [16, '16']], 'npc');
-  row('Хаос (все против всех)', [[false, 'Выкл'], [true, 'Вкл']], 'chaos');
-  row('Графика', [[0, 'Быстро'], [1, 'Красиво']], 'gfx');
-  row('Чувствительность', [[.6, 'Низк'], [1, 'Сред'], [1.6, 'Высок']], 'sens');
-  row('Звук', [[true, 'Вкл'], [false, 'Выкл']], 'sound');
+  row('Кровь', 'сколько брызг и пятен', [[0, 'Мало'], [1, 'Норм'], [2, 'Много']], 'blood');
+  row('Людей на карте', 'при старте карты', [[4, '4'], [8, '8'], [12, '12'], [16, '16']], 'npc');
+  row('Хаос', 'все дерутся со всеми', [[false, 'Выкл'], [true, 'Вкл']], 'chaos');
+  row('Графика', '«Быстро» — для слабых телефонов', [[0, 'Быстро'], [1, 'Красиво']], 'gfx');
+  row('Чувствительность', 'скорость поворота камеры', [[.6, 'Низк'], [1, 'Сред'], [1.6, 'Высок']], 'sens');
+  row('Звук', '', [[true, 'Вкл'], [false, 'Выкл']], 'sound');
 }
 function goLandscape() {
   try {
@@ -1504,19 +1688,19 @@ function goLandscape() {
     }
   } catch (e) {}
 }
+function clearMarks() { bloodPool.clear(); sprayPool.clear(); markerPool.clear(); for (const c of chunks) c.m.visible = false; }
 function clearActors() {
   while (actors.children.length) actors.remove(actors.children[0]);
   for (const p of game.projectiles) if (p.mesh) scene.remove(p.mesh);
-  for (const c of chunks) c.m.visible = false;
   for (const k in PS) PS[k].list.length = 0;
-  decalIdx = 0; decalN = 0; decals.count = 0;
+  clearMarks();
   tracers.length = 0;
 }
 const PSTART = { city: [-38, 0, -Math.PI / 2], ware: [-20, -12, Math.PI], canyon: [0, -8, Math.PI] };
 function startGame(mi, demo) {
   const m = MAPS[mi];
   clearActors();
-  game.map = m; m.pstart = PSTART[m.id]; buildWorld(m);
+  game.map = m; game.mapIndex = mi; m.pstart = PSTART[m.id]; buildWorld(m);
   game.humans = []; game.projectiles = []; game.time = 0; game.kills = 0; game.demo = demo; game.shake = 0; game.recoil = 0; game.flash = 0;
   game.player = null;
   if (!demo) {
@@ -1529,32 +1713,44 @@ function startGame(mi, demo) {
   touch.move = touch.look = touch.fire = touch.jump = null;
   if (!demo) {
     game.state = 'play'; hideAll(); $('hud').classList.remove('hidden');
-    buildWeaponBar(); selectWeapon(0); updateHud(); buildVM('fists');
+    buildPalette(); selectWeapon(0); updateHud(); buildVM('fists');
     toast(settings.chaos ? 'Режим ХАОС: все против всех!' : 'Бандиты в масках охотятся за тобой');
   } else { game.state = 'menu'; $('hud').classList.add('hidden'); }
 }
 function pauseGame() {
-  if (game.state !== 'play') return;
+  if (game.state !== 'play' && game.state !== 'inv') return;
   game.state = 'pause'; backTo = 'pauseScr'; show('pauseScr'); $('hud').classList.add('hidden');
+  const t = Math.floor(game.time), mm = Math.floor(t / 60), ss = String(t % 60).padStart(2, '0');
+  $('pStats').innerHTML = `<span>Карта: <b>${game.map.name}</b></span><span>Убито: <b>${game.kills}</b></span><span>Время: <b>${mm}:${ss}</b></span>`;
   touch.move = touch.look = touch.fire = touch.jump = null; mouseDown = false;
   $('fireBtn').classList.remove('on'); $('jumpBtn').classList.remove('on');
   if (document.exitPointerLock && locked) document.exitPointerLock();
 }
+function resume() { game.state = 'play'; hideAll(); $('hud').classList.remove('hidden'); }
 function goMenu() { backTo = 'menu'; startGame(0, true); show('menu'); }
+const TIPS = ['Катана отрубает руки, ноги и голову', 'Баллончиком можно рисовать на машинах', 'В режиме «Хаос» люди дерутся между собой', 'Граната отскакивает от стен', 'Дробовик в упор сносит голову', 'Убитые возрождаются через минуту', 'Маркер рисует тонкие линии — подойди ближе к стене'];
+let tipI = 0;
+function nextTip() { $('tip').textContent = '💡 ' + TIPS[tipI++ % TIPS.length]; }
+nextTip(); setInterval(nextTip, 4500);
 $('bPlay').onclick = () => { initAudio(); backTo = 'menu'; buildMaps(); show('mapsScr'); };
 $('bSet').onclick = () => { backTo = 'menu'; buildSettings(); show('setScr'); };
 $('bHelp').onclick = () => { backTo = 'menu'; show('helpScr'); };
 document.querySelectorAll('[data-back]').forEach(b => b.onclick = () => show(backTo));
 $('pauseBtn').addEventListener('pointerdown', e => { e.preventDefault(); e.stopPropagation(); pauseGame(); });
+$('wCur').addEventListener('pointerdown', e => { e.preventDefault(); e.stopPropagation(); openInv(); });
+$('wPrev').addEventListener('pointerdown', e => { e.preventDefault(); e.stopPropagation(); cycleWeapon(-1); });
+$('wNext').addEventListener('pointerdown', e => { e.preventDefault(); e.stopPropagation(); cycleWeapon(1); });
+$('invClose').onclick = closeInv;
 $('npcBtn').addEventListener('pointerdown', e => {
   e.preventDefault(); e.stopPropagation();
   if (game.humans.length >= 28) { toast('Максимум людей на карте'); return; }
   const h = makeHuman(Math.random() < .5 ? 'civil' : 'hostile'); game.humans.push(h); respawn(h);
   toast(h.team === 'hostile' ? 'Появился бандит' : 'Появился мирный житель', 1200);
 });
-$('bResume').onclick = () => { game.state = 'play'; hideAll(); $('hud').classList.remove('hidden'); };
+$('bResume').onclick = resume;
 $('bMaps2').onclick = () => { buildMaps(); show('mapsScr'); };
 $('bSet2').onclick = () => { buildSettings(); show('setScr'); };
+$('bClear').onclick = () => { clearMarks(); resume(); toast('Карта очищена', 1500); };
 $('bMenu').onclick = goMenu;
 document.addEventListener('visibilitychange', () => { if (document.hidden) pauseGame(); });
 
@@ -1570,6 +1766,7 @@ function frame(now) {
   updateCamera(dt);
   updateVM(dt);
   syncMeshes();
+  bloodPool.flush(); sprayPool.flush(); markerPool.flush();
   renderer.clear();
   renderer.render(scene, camera);
   if (game.player && game.state !== 'menu') { renderer.clearDepth(); renderer.render(vmScene, vmCam); }
