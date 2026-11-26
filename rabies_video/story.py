@@ -13,6 +13,7 @@ HERE = os.path.dirname(os.path.abspath(__file__))
 OUT = os.path.join(HERE, "rabies_story_9x16.mp4")
 CACHE = os.path.join(HERE, ".tts_cache")
 SR = 44100
+NO_VOICE = os.environ.get("NO_VOICE") == "1"  # 1 = без озвучки (музыка + субтитры)
 
 VOICES = {  # ключ: (голос RHVoice, высота %, темп % (100 = норма), подпись, цвет подписи)
     "N": ("aleksandr-hq", 100, 112, None, NAVY),
@@ -587,7 +588,7 @@ def soundtrack(path):
     rng = np.random.default_rng(1)
     for p in PLAN:
         for st, a, v, txt, key in p["clips"]:
-            j0 = int(st*SR); voice[j0:j0 + len(a)] += a[:n - j0] * 0.9
+            j0 = int(st*SR); voice[j0:j0 + len(a)] += a[:n - j0] * (0.0 if NO_VOICE else 0.9)
         if p["fn"] is sc_night:  # укус
             ts = p["start"] + p["marks"]["n5"][0] + 0.0
             ts = p["start"] + p["marks"]["n5"][0]
