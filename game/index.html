@@ -321,7 +321,7 @@ h2{font-weight:600;letter-spacing:2px;text-transform:uppercase}
     <div class="card"><i data-icon="rifle"></i><b>Арсенал</b><p>Круглая кнопка с оружием открывает колесо.</p></div>
     <div class="card"><i data-icon="axe"></i><b>Расчленёнка</b><p>Топор, катана, пила и снайперка отрубают руки, ноги и голову.</p></div>
     <div class="card"><i data-icon="crusher"></i><b>Реалити-крашер</b><p>Создавай, хватай, кидай, толкай, оживляй и удаляй.</p></div>
-    <div class="card"><i data-icon="s_h_rifle"></i><b>Режимы</b><p>Песочница: возрождение через минуту. Выживание: волны врагов.</p></div>
+    <div class="card"><i data-icon="s_h_rifle"></i><b>Режимы</b><p>Песочница: полная свобода, тела остаются. Выживание: волны врагов.</p></div>
     <div class="card"><i data-icon="m_push"></i><b>Полёт и бессмертие</b><p>В настройках, только в песочнице. ⤒ вверх, ⤓ вниз.</p></div>
     <div class="card pc"><i data-icon="pistol"></i><b>Компьютер</b><p>WASD, мышь, ПКМ — прицел, R — перезарядка, пробел — прыжок, колёсико, Q/E и Tab — оружие. Крашер: V или ПКМ — режим, Z — назад, B — каталог. Баллончик и маркер: V или ПКМ — цвет, Z — назад. F11 — полный экран.</p></div>
   </div>
@@ -1310,34 +1310,6 @@ function sliceNear(h, x, y, z) {
   if (limb) dismember(h, limb);
   return limb;
 }
-function updateRagdoll(rd) {
-  const g = G * DT * DT, c = rd.p[rd.center === undefined ? 8 : rd.center];
-  const boxes = nearBoxes(c.x, c.z, 3);
-  for (const p of rd.p) {
-    const vx = clamp((p.x - p.px) * .992, -.8, .8), vy = clamp((p.y - p.py) * .992, -.8, .8), vz = clamp((p.z - p.pz) * .992, -.8, .8);
-    p.px = p.x; p.py = p.y; p.pz = p.z;
-    p.x += vx; p.y += vy - g; p.z += vz;
-  }
-  for (let it = 0; it < 7; it++) {
-    for (const s of rd.sticks) {
-      if (s[3]) continue;
-      const a = rd.p[s[0]], b = rd.p[s[1]];
-      const dx = b.x - a.x, dy = b.y - a.y, dz = b.z - a.z, d = Math.hypot(dx, dy, dz) || .0001;
-      const k = (d - s[2]) / d * .5;
-      a.x += dx * k; a.y += dy * k; a.z += dz * k; b.x -= dx * k; b.y -= dy * k; b.z -= dz * k;
-    }
-    for (const p of rd.p) collideP(p, boxes);
-  }
-  const pulse = .55 + .45 * Math.sin(game.time * 11);
-  for (let i = rd.emit.length - 1; i >= 0; i--) {
-    const e = rd.emit[i]; e.t -= DT;
-    if (e.t <= 0) { rd.emit.splice(i, 1); continue; }
-    if (Math.random() < .8 * bloodMul()) {
-      const p = rd.p[e.pt], s = Math.min(1, e.t) * rnd(1.5, 3.5) * pulse;
-      PS.blood.add({ x: p.x, y: p.y, z: p.z, vx: rnd(-.6, .6) * s, vy: rnd(.3, 1) * s, vz: rnd(-.6, .6) * s, life: 3 });
-    }
-  }
-}
 function hitCorpse(h, i, dir, at, w, power) {
   if (ptGone(h, i)) return;
   pushCorpse(h, i, dir.x * power, dir.y * power + 1.5, dir.z * power);
@@ -1512,28 +1484,140 @@ function makeWeaponModel(id) {
   return g;
 }
 function nearBoxes(x, z, r) { return game.boxes.filter(b => x > b.x0 - r && x < b.x1 + r && z > b.z0 - r && z < b.z1 + r); }
-function collideP(p, boxes) {
-  const r = p.r;
-  if (p.y < r) { const vx = p.x - p.px, vy = p.y - p.py, vz = p.z - p.pz; p.y = r; p.py = p.y + vy * .25; p.px = p.x - vx * .55; p.pz = p.z - vz * .55; }
-  for (const b of boxes) {
-    if (p.x < b.x0 - r || p.x > b.x1 + r || p.y < b.y0 - r || p.y > b.y1 + r || p.z < b.z0 - r || p.z > b.z1 + r) continue;
-    const d = [p.x - (b.x0 - r), b.x1 + r - p.x, p.y - (b.y0 - r), b.y1 + r - p.y, p.z - (b.z0 - r), b.z1 + r - p.z];
-    let m = 0; for (let i = 1; i < 6; i++) if (d[i] < d[m]) m = i;
-    const vx = p.x - p.px, vy = p.y - p.py, vz = p.z - p.pz;
-    if (m === 3) { p.y = b.y1 + r; p.py = p.y + vy * .25; p.px = p.x - vx * .55; p.pz = p.z - vz * .55; }
-    else if (m === 2) { p.y = b.y0 - r; p.py = p.y + vy * .2; }
-    else if (m === 0) { p.x = b.x0 - r; p.px = p.x + vx * .3; }
-    else if (m === 1) { p.x = b.x1 + r; p.px = p.x + vx * .3; }
-    else if (m === 4) { p.z = b.z0 - r; p.pz = p.z + vz * .3; }
-    else { p.z = b.z1 + r; p.pz = p.z + vz * .3; }
-  }
-}
 function pushCorpse(h, i, ix, iy, iz) {
   const rd = h.ragdoll, p = rd.p[i];
   p.px -= ix * DT; p.py -= iy * DT; p.pz -= iz * DT;
   for (const q of rd.p) if (q !== p) { q.px -= ix * DT * .25; q.py -= iy * DT * .25; q.pz -= iz * DT * .25; }
 }
 
+// ---------------- ragdoll physics: weighted Verlet, joint limits, friction, sleeping ----------------
+// heavier torso, lighter hands and feet: inverse masses used when solving constraints
+const PMASS = [1.5, 2.2, 1.7, 1.7, 1, 1, .7, .7, 2.6, 1.5, 1.5, 1.2, 1.2, .9, .9];
+const PINV = PMASS.map(m => 1 / m);
+// minimum distances that stop limbs from folding through themselves (knees, elbows, legs crossing)
+const MINC = [[9, 13, .58, 'lLeg'], [10, 14, .58, 'rLeg'], [2, 6, .24, 'lArm'], [3, 7, .24, 'rArm'], [13, 14, .16, 'lLeg', 'rLeg'], [11, 12, .15, 'lLeg', 'rLeg'],
+  [6, 8, .16, 'lArm'], [7, 8, .16, 'rArm'], [4, 8, .14, 'lArm'], [5, 8, .14, 'rArm'], [11, 2, .5, 'lLeg'], [12, 3, .5, 'rLeg'], [6, 0, .14, 'lArm'], [7, 0, .14, 'rArm']];
+function collideP(p, boxes) {
+  // position-only: push the point out; velocity is fixed once per step in contactPass
+  const r = p.r;
+  p.cn = 0;
+  if (p.y < r + .003) { if (p.y < r) p.y = r; p.cn = 4; }
+  for (const b of boxes) {
+    if (p.cn !== 4 && Math.abs(p.y - r - b.y1) < .003 && p.x > b.x0 && p.x < b.x1 && p.z > b.z0 && p.z < b.z1) { p.cn = 4; continue; }
+    if (p.x < b.x0 - r || p.x > b.x1 + r || p.y < b.y0 - r || p.y > b.y1 + r || p.z < b.z0 - r || p.z > b.z1 + r) continue;
+    const d0 = p.x - (b.x0 - r), d1 = b.x1 + r - p.x, d2 = p.y - (b.y0 - r), d3 = b.y1 + r - p.y, d4 = p.z - (b.z0 - r), d5 = b.z1 + r - p.z;
+    const m = Math.min(d0, d1, d2, d3, d4, d5);
+    if (m === d3) { p.y = b.y1 + r; p.cn = 4; }
+    else if (m === d2) { p.y = b.y0 - r; p.cn = 5; }
+    else if (m === d0) { p.x = b.x0 - r; p.cn = 1; }
+    else if (m === d1) { p.x = b.x1 + r; p.cn = 1; }
+    else if (m === d4) { p.z = b.z0 - r; p.cn = 3; }
+    else { p.z = b.z1 + r; p.cn = 3; }
+  }
+}
+function contactPass(pts) {
+  for (const p of pts) {
+    if (!p.cn) continue;
+    let vx = p.x - p.px, vy = p.y - p.py, vz = p.z - p.pz;
+    if (p.cn === 4 || p.cn === 5) {
+      // floor/ceiling: small bounce, strong friction, static friction when nearly still
+      if ((p.cn === 4 && vy < 0) || (p.cn === 5 && vy > 0)) vy = -vy * .18;
+      const t = Math.hypot(vx, vz);
+      if (t < .0035) { vx = 0; vz = 0; } else { vx *= .8; vz *= .8; }
+    } else if (p.cn === 1) { vx = -vx * .2; vy *= .85; vz *= .85; }
+    else { vz = -vz * .2; vx *= .85; vy *= .85; }
+    p.px = p.x - vx; p.py = p.y - vy; p.pz = p.z - vz;
+  }
+}
+function emitRagdoll(rd) {
+  const pulse = .55 + .45 * Math.sin(game.time * 11);
+  for (let i = rd.emit.length - 1; i >= 0; i--) {
+    const e = rd.emit[i]; e.t -= DT;
+    if (e.t <= 0) { rd.emit.splice(i, 1); continue; }
+    if (Math.random() < .8 * bloodMul()) {
+      const p = rd.p[e.pt], s = Math.min(1, e.t) * rnd(1.5, 3.5) * pulse;
+      PS.blood.add({ x: p.x, y: p.y, z: p.z, vx: rnd(-.6, .6) * s, vy: rnd(.3, 1) * s, vz: rnd(-.6, .6) * s, life: 3 });
+    }
+  }
+}
+function updateRagdoll(rd) {
+  const pts = rd.p;
+  emitRagdoll(rd);
+  if (rd.sleep) {
+    // asleep: wake as soon as anything moved a point (a hit, a push, a grab), and re-check support now and then
+    let moved = false;
+    for (const p of pts) if (Math.abs(p.x - p.px) + Math.abs(p.y - p.py) + Math.abs(p.z - p.pz) > 1e-5) { moved = true; break; }
+    rd.sleepTick = (rd.sleepTick || 0) + 1;
+    if (!moved && rd.sleepTick % 30) return;
+    rd.sleep = false; rd.calm = moved ? 0 : 40;
+  }
+  const g = G * DT * DT, c = pts[rd.center === undefined ? 8 : rd.center];
+  const boxes = nearBoxes(c.x, c.z, 3);
+  let maxV = 0;
+  for (const p of pts) {
+    const vx = clamp((p.x - p.px) * .996, -.9, .9), vy = clamp((p.y - p.py) * .996, -.9, .9), vz = clamp((p.z - p.pz) * .996, -.9, .9);
+    p.px = p.x; p.py = p.y; p.pz = p.z;
+    p.x += vx; p.y += vy - g; p.z += vz;
+  }
+  const lost = rd.lost || {}, full = rd.sticks.length === STICKS.length && !rd.center;
+  for (let it = 0; it < 8; it++) {
+    for (const s of rd.sticks) {
+      if (s[3]) continue;
+      const ia = s[0], ib = s[1], a = pts[ia], b = pts[ib];
+      const wa = ia < 15 ? PINV[ia] : 1.1, wb = ib < 15 ? PINV[ib] : 1.1;
+      const dx = b.x - a.x, dy = b.y - a.y, dz = b.z - a.z, d = Math.hypot(dx, dy, dz) || .0001;
+      const k = (d - s[2]) / (d * (wa + wb));
+      a.x += dx * k * wa; a.y += dy * k * wa; a.z += dz * k * wa; b.x -= dx * k * wb; b.y -= dy * k * wb; b.z -= dz * k * wb;
+    }
+    if (full || rd.p.length >= 15) for (const m of MINC) {
+      if (lost[m[3]] || (m[4] && lost[m[4]]) || (rd.gone && (rd.gone[m[3]] || (m[4] && rd.gone[m[4]])))) continue;
+      const a = pts[m[0]], b = pts[m[1]];
+      const dx = b.x - a.x, dy = b.y - a.y, dz = b.z - a.z, d = Math.hypot(dx, dy, dz) || .0001;
+      if (d >= m[2]) continue;
+      const wa = PINV[m[0]], wb = PINV[m[1]], k = (d - m[2]) / (d * (wa + wb));
+      a.x += dx * k * wa; a.y += dy * k * wa; a.z += dz * k * wa; b.x -= dx * k * wb; b.y -= dy * k * wb; b.z -= dz * k * wb;
+    }
+    for (const p of pts) collideP(p, boxes);
+  }
+  contactPass(pts);
+  for (const p of pts) { const v = Math.abs(p.x - p.px) + Math.abs(p.z - p.pz) + Math.max(0, Math.abs(p.y - p.py) - g * 1.5); if (v > maxV) maxV = v; }
+  // fall asleep once it has settled
+  if (maxV < .004) { rd.calm = (rd.calm || 0) + 1; if (rd.calm > 40) { rd.sleep = true; rd.sleepTick = 0; for (const p of pts) { p.px = p.x; p.py = p.y; p.pz = p.z; } } }
+  else rd.calm = 0;
+}
+// bodies push each other; living people shove and kick corpses when they walk into them
+function bodyContacts() {
+  const corpses = [];
+  for (const h of game.humans) if (!h.alive && h.ragdoll) corpses.push(h.ragdoll);
+  for (const g of game.gibs) corpses.push(g);
+  const ctr = rd => rd.p[rd.center === undefined ? 8 : rd.center];
+  for (const h of game.humans) {
+    if (!h.alive || h.held) continue;
+    for (const rd of corpses) {
+      const c = ctr(rd); if (Math.abs(c.x - h.x) > 1.6 || Math.abs(c.z - h.z) > 1.6 || c.y > h.y + 2) continue;
+      for (const p of rd.p) {
+        if (p.y > h.y + 1.8 || p.y < h.y - .2) continue;
+        const dx = p.x - h.x, dz = p.z - h.z, d = Math.hypot(dx, dz), R2 = PR + p.r * .6;
+        if (d >= R2 || d < 1e-5) continue;
+        const push = (R2 - d) / d;
+        p.x += dx * push * .7; p.z += dz * push * .7;
+        p.px -= h.vx * DT * .35; p.pz -= h.vz * DT * .35; p.py -= Math.min(1.5, h.speed * .25) * DT;
+      }
+    }
+  }
+  for (let i = 0; i < corpses.length; i++) for (let j = i + 1; j < corpses.length; j++) {
+    const A = corpses[i], Bd = corpses[j], ca = ctr(A), cb = ctr(Bd);
+    if (Math.abs(ca.x - cb.x) > 1.9 || Math.abs(ca.z - cb.z) > 1.9 || Math.abs(ca.y - cb.y) > 1.9) continue;
+    if (A.sleep && Bd.sleep) continue;
+    for (const a of A.p) for (const b of Bd.p) {
+      const dx = b.x - a.x, dy = b.y - a.y, dz = b.z - a.z, rr = a.r + b.r;
+      if (Math.abs(dx) > rr || Math.abs(dy) > rr || Math.abs(dz) > rr) continue;
+      const d = Math.hypot(dx, dy, dz) || .0001; if (d >= rr) continue;
+      const k = (rr - d) / d * .5;
+      a.x -= dx * k; a.y -= dy * k; a.z -= dz * k; b.x += dx * k; b.y += dy * k; b.z += dz * k;
+    }
+  }
+}
 // ---------------- combat ----------------
 function rayBox(o, d, b) {
   let t0 = 0, t1 = 1e9, ax = -1;
@@ -1684,6 +1768,10 @@ function kill(h, ix, iy, iz, at, o, dmg) {
   if (h === game.player) { h.deathRoll = rnd(-.9, .9); feed('Ты погиб' + (killer ? ' · ' + killer.name : '')); onPlayerDeath(); return; }
   h.ragdoll = makeRagdoll(h, ix, iy, iz, at);
   sfx('bodyfall', at);
+  if (game.mode !== 'survival') {
+    const corpses = game.humans.filter(x => !x.alive && x.ragdoll && x !== game.player);
+    if (corpses.length > 30) { const old = corpses.sort((a, b) => a.deadAt - b.deadAt)[0]; const q = old.ragdoll.p[8]; for (let i = 0; i < 10; i++) PS.smoke.add({ x: q.x + rnd(-.4, .4), y: q.y + rnd(0, .5), z: q.z + rnd(-.4, .4), vx: rnd(-.3, .3), vy: rnd(.2, .8), vz: rnd(-.3, .3), life: .8 }); removeHuman(old); }
+  }
   if (Math.random() < .35) scream(at);
   const w = o.w;
   let tag = '';
@@ -2166,6 +2254,7 @@ function resolveXZ(h) {
     const cx = clamp(h.x, b.x0, b.x1), cz = clamp(h.z, b.z0, b.z1);
     const dx = h.x - cx, dz = h.z - cz, d2 = dx * dx + dz * dz;
     if (d2 >= PR * PR) continue;
+    if (b.prop && !b.prop.held) { const pr = b.prop, m = pr.type === 'crate' ? .55 : .75; pr.vx += (h.vx * m - pr.vx) * .25; pr.vz += (h.vz * m - pr.vz) * .25; }
     if (d2 > 1e-8) { const d = Math.sqrt(d2), k = (PR - d) / d; h.x += dx * k; h.z += dz * k; }
     else {
       const pen = [h.x - b.x0, b.x1 - h.x, h.z - b.z0, b.z1 - h.z]; let m = 0; for (let i = 1; i < 4; i++) if (pen[i] < pen[m]) m = i;
@@ -2387,7 +2476,6 @@ function updateHuman(h, dt) {
       return;
     }
     if (game.mode === 'survival') return;
-    if (NPC_RESPAWN - (game.time - h.deadAt) <= 0) respawn(h);
     return;
   }
   if (isP) { h.mvx = input.mx; h.mvz = input.mz; h.jump = input.jump; h.fire = input.fire; h.yaw = game.yaw; h.pitch = game.pitch; if (!h.fire) lastMark = null; }
@@ -2418,6 +2506,7 @@ function step(dt) {
   game.time += dt;
   for (const h of game.humans) updateHuman(h, dt);
   for (const g of game.gibs) updateGib(g);
+  bodyContacts();
   separate();
   updateProjectiles(dt);
   updateProps(dt);
@@ -2520,8 +2609,7 @@ function syncMeshes() {
     if (h.alive) { updateBodyMesh(h, h.P || pose(h), STICKS, null); h.mesh.visible = true; }
     else if (h.ragdoll) {
       updateBodyMesh(h, h.ragdoll.p, h.ragdoll.sticks, h.ragdoll);
-      const left = NPC_RESPAWN - (game.time - h.deadAt);
-      h.mesh.visible = game.mode === 'survival' || left > 1.5 || Math.floor(game.time * 10) % 2 === 0;
+      h.mesh.visible = true;
     }
   }
   let n = 0;
@@ -2542,14 +2630,8 @@ function drawOverlay() {
   c.textAlign = 'center'; c.font = '12px "Russo One",sans-serif';
   for (const h of game.humans) {
     if (h === game.player) continue;
-    if (!h.alive && h.ragdoll) {
-      if (game.mode === 'survival') continue;
-      const left = NPC_RESPAWN - (game.time - h.deadAt), q = h.ragdoll.p[8];
-      if (Math.hypot(q.x - camera.position.x, q.z - camera.position.z) > 25) continue;
-      const s = project(q.x, q.y + .7, q.z); if (!s) continue;
-      c.fillStyle = 'rgba(0,0,0,.6)'; c.fillText('↻ ' + Math.ceil(left) + 'с', s.x + 1, s.y + 1);
-      c.fillStyle = 'rgba(255,255,255,.85)'; c.fillText('↻ ' + Math.ceil(left) + 'с', s.x, s.y);
-    } else if (h.alive && (h.hp < h.maxHp || (h.team === 'hostile' && !game.demo))) {
+    if (!h.alive) continue;
+    if (h.alive && (h.hp < h.maxHp || (h.team === 'hostile' && !game.demo))) {
       if (Math.hypot(h.x - camera.position.x, h.z - camera.position.z) > 30) continue;
       const s = project(h.x, h.y + 2.05, h.z); if (!s) continue;
       if (h.hp < h.maxHp) { c.fillStyle = 'rgba(0,0,0,.6)'; c.fillRect(s.x - 18, s.y, 36, 5); c.fillStyle = h.team === 'hostile' ? '#ff3b3b' : '#e0d070'; c.fillRect(s.x - 18, s.y, 36 * Math.max(0, h.hp) / h.maxHp, 5); }
@@ -2784,7 +2866,7 @@ function buildPalette() {
 // ---- play screen: modes + maps ----
 let selMode = 'sandbox';
 const MODES = [
-  { id: 'sandbox', icon: '🧪', name: 'Песочница', desc: 'Мирные и бандиты. Убитые возрождаются через минуту. Делай что хочешь.' },
+  { id: 'sandbox', icon: '🧪', name: 'Песочница', desc: 'Мирные, бандиты и реалити-крашер. Тела остаются на карте — оживить можно крашером.' },
   { id: 'survival', icon: '🩸', name: 'Выживание', desc: 'Волны бандитов, с каждой сильнее. Одна жизнь.' }
 ];
 function buildMaps() {
@@ -2934,7 +3016,7 @@ function gameOver(record) {
 }
 function resume() { game.state = 'play'; hideAll(); $('hud').classList.remove('hidden'); }
 function goMenu() { backTo = 'menu'; startGame(0, true); show('menu'); }
-const TIPS = ['Реалити-крашер создаёт людей, ящики и взрывные бочки', 'В режиме «Захват» людей можно поднять и швырнуть', 'Полёт и бессмертие — в настройках', 'Катана и топор отрубают руки прямо у живых', 'Снайперка пробивает двоих насквозь', 'Бензопилу надо держать — она режет без остановки', 'Без руки человек паникует и истекает кровью', 'РПГ вблизи разрывает тело в клочья', 'В «Выживании» каждая волна сильнее', 'Баллончиком можно рисовать на машинах', 'Кнопка ◎ — прицеливание, ⟳ — перезарядка'];
+const TIPS = ['Мёртвых можно оживить крашером в режиме «Оживить»', 'Трупы можно пинать — просто пройди сквозь них', 'Реалити-крашер создаёт людей, ящики и взрывные бочки', 'В режиме «Захват» людей можно поднять и швырнуть', 'Полёт и бессмертие — в настройках', 'Катана и топор отрубают руки прямо у живых', 'Снайперка пробивает двоих насквозь', 'Бензопилу надо держать — она режет без остановки', 'Без руки человек паникует и истекает кровью', 'РПГ вблизи разрывает тело в клочья', 'В «Выживании» каждая волна сильнее', 'Баллончиком можно рисовать на машинах', 'Кнопка ◎ — прицеливание, ⟳ — перезарядка'];
 let tipI = 0;
 function nextTip() { $('tip').textContent = 'Совет: ' + TIPS[tipI++ % TIPS.length]; }
 nextTip(); setInterval(nextTip, 4500);
