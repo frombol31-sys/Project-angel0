@@ -3010,7 +3010,9 @@ function npcNear(src, r, filter, fn, max = 2) {
 const npcLabel = h => (h.team === 'hostile' ? L('бандит ') : '') + h.name;
 const FEM = { [L('обезглавлен')]: L('обезглавлена'), [L('расчленён')]: L('расчленена'), [L('разорван в клочья')]: L('разорвана в клочья'), [L('разорван')]: L('разорвана'), [L('разрублен пополам')]: L('разрублена пополам'), [L('истёк кровью')]: L('истекла кровью'), [L('Понял.')]: L('Поняла.') };
 function npcSay(h, text) {
-  if (h.female && FEM[text]) text = FEM[text]; h.say = text; h.sayT = game.time + 3.2; chatMsg(npcLabel(h), text, h.team === 'hostile' ? 'bad' : 'civ'); }
+  if (h.female && FEM[text]) text = FEM[text];
+  if (game.demo || !game.humans.includes(h)) { h.say = text; h.sayT = game.time + 3.2; return; } /* the fight behind the menu doesn't write to the chat */
+  h.say = text; h.sayT = game.time + 3.2; chatMsg(npcLabel(h), text, h.team === 'hostile' ? 'bad' : 'civ'); }
 function inFront(h) { const p = game.player, dx = h.x - p.x, dz = h.z - p.z, d = Math.hypot(dx, dz) || 1; return (-Math.sin(game.yaw) * dx - Math.cos(game.yaw) * dz) / d > .55; }
 const EMOTE_REPLY = {
   fak: { civil: [L('Ах ты!'), L('Сам такой!'), L('Это что за жест?!'), L('Ну ты и наглый...'), L('Мама, он мне фак показал!')], hostile: [L('Ну всё, ты труп!'), L('Ах так?!'), L('Я тебя запомнил!'), L('Сейчас пальцы отрежу!')] },
@@ -3550,7 +3552,7 @@ function startGame(mi, demo, mode = 'sandbox') {
   const m = MAPS[mi];
   clearActors();
   game.map = m; game.mapIndex = mi; m.pstart = PSTART[m.id]; buildWorld(m);
-  saveBest(); game.runId = (game.runId || 0) + 1; $('toast').classList.add('hidden');
+  saveBest(); game.runId = (game.runId || 0) + 1; $('toast').classList.add('hidden'); $('chatLog').innerHTML = '';
   Object.assign(game, { clickT: 0, humans: [], projectiles: [], time: 0, kills: 0, demo, shake: 0, recoil: 0, flash: 0, mode: demo ? 'sandbox' : mode, wave: 0, waveT: 3, toSpawn: 0, spawnT: 0,
     reloadT: 0, autoReload: 0, ads: false, adsK: 0, vmFlash: 0, dmgInd: [], splats: [], props: [], grab: null, crushLabel: '', ammo: WEAPONS.map(w => w.mag || 0) });
   game.player = null;
