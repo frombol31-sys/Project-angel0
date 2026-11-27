@@ -247,7 +247,7 @@ h2{font-weight:600;letter-spacing:2px;text-transform:uppercase}
 .scard .ic{width:78px;height:78px;margin:-6px 0 -4px -8px}
 .mode .ic{width:54px;height:54px}
 .card .ic{width:42px;height:42px}
-.fi .ic.fic{display:inline-block;width:24px;height:24px;vertical-align:middle;margin:-4px 6px -4px 0}
+.fi .fn{font-weight:700;color:#7fd4ff;margin-right:2px} .fi .ic.fic{display:inline-block;width:24px;height:24px;vertical-align:middle;margin:-4px 6px -4px 0}
 .map .pv{background-size:cover!important}
 .card{padding:8px 11px} .card p{font-size:11.5px;line-height:1.35} .card b{margin:2px 0}
 /* ---- final pass: everything fits on small landscape phones without scrolling ---- */
@@ -279,6 +279,27 @@ h2{font-weight:600;letter-spacing:2px;text-transform:uppercase}
 .card.pc{display:none}
 @media (pointer:fine){ .kb{display:inline} .khint{display:block} .card.pc{display:grid} }
 .khint.pal{align-self:center;padding:0 4px} @media (pointer:fine){ .khint.pal{display:block} }
+/* player name, emotes, chat */
+.hpbox .pn{font:600 12px var(--f-ui);letter-spacing:1.5px;color:#fff;opacity:.8;margin-bottom:1px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+#emoteBtn{left:266px;top:12px} #chatBtn{left:320px;top:12px}
+#emoteBtn .ic,#chatBtn .ic{width:30px;height:30px}
+#emoteMenu{position:absolute;left:256px;top:64px;display:flex;gap:6px;padding:6px;border-radius:14px;background:var(--hudbg);border:1px solid var(--hudline);pointer-events:auto}
+#emoteMenu button{display:flex;flex-direction:column;align-items:center;gap:2px;width:78px;padding:6px 4px;border-radius:10px;border:1px solid transparent;background:rgba(255,255,255,.06);color:#fff;font:600 12px var(--f-ui);letter-spacing:1px;text-transform:uppercase}
+#emoteMenu button:active{background:rgba(255,255,255,.3)}
+#emoteMenu .ic{width:44px;height:44px}
+#chatLog{position:absolute;left:150px;bottom:170px;width:min(330px,42%);display:flex;flex-direction:column;gap:3px;pointer-events:none}
+#chatLog div{font:500 13px var(--f-text);color:#fff;background:rgba(0,0,0,.45);padding:3px 8px;border-radius:6px;text-shadow:0 1px 2px #000;overflow-wrap:anywhere;transition:opacity .5s}
+#chatLog b{font-weight:700;color:#e8e2d8} #chatLog .me b{color:#7fd4ff} #chatLog .bad b{color:#ff6b6b} #chatLog .civ b{color:#ffe08a} #chatLog .sys{color:#bbb;font-style:italic}
+#chatLog .old{opacity:0} #hud.chatting #chatLog .old{opacity:1}
+#hud.chatting #chatLog{top:116px;bottom:auto;left:50%;transform:translateX(-50%);width:min(560px,72%)}
+#chatBar{position:absolute;left:50%;top:12px;transform:translateX(-50%);width:min(560px,72%);display:flex;flex-direction:column;gap:6px;padding:8px;border-radius:14px;background:rgba(10,10,12,.82);border:1px solid var(--hudline);pointer-events:auto;z-index:5}
+#chatBar .row{display:flex;gap:6px}
+#chatIn{flex:1;min-width:0;font:500 15px var(--f-text);color:#fff;background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.25);border-radius:8px;padding:8px 10px;outline:none;user-select:text;-webkit-user-select:text}
+#chatBar button{font:600 13px var(--f-ui);color:#fff;background:rgba(255,255,255,.12);border:1px solid rgba(255,255,255,.25);border-radius:8px;padding:6px 12px;letter-spacing:1px}
+#chatBar #chatSend{background:var(--red2);border-color:var(--red2)}
+#chatBar .qp{display:flex;gap:5px;flex-wrap:wrap} #chatBar .qp button{padding:4px 9px;font-size:12px}
+.opt input.nameIn{width:170px;font:600 15px var(--f-ui);letter-spacing:1px;color:#fff;background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.3);border-radius:8px;padding:7px 10px;outline:none;user-select:text;-webkit-user-select:text}
+@media (max-width:760px){ #chatLog{left:130px;width:40%} .opt input.nameIn{width:130px} }
 </style>
 </head>
 <body>
@@ -321,9 +342,9 @@ h2{font-weight:600;letter-spacing:2px;text-transform:uppercase}
     <div class="card"><i data-icon="rifle"></i><b>Арсенал</b><p>Круглая кнопка с оружием открывает колесо.</p></div>
     <div class="card"><i data-icon="axe"></i><b>Расчленёнка</b><p>Топор, катана, пила и снайперка отрубают руки, ноги и голову.</p></div>
     <div class="card"><i data-icon="crusher"></i><b>Реалити-крашер</b><p>Создавай, хватай, кидай, толкай, оживляй и удаляй.</p></div>
-    <div class="card"><i data-icon="s_h_rifle"></i><b>Режимы</b><p>Песочница: полная свобода, возрождение в настройках. Выживание: волны врагов.</p></div>
-    <div class="card"><i data-icon="m_push"></i><b>Полёт и бессмертие</b><p>В настройках, только в песочнице. ⤒ вверх, ⤓ вниз.</p></div>
-    <div class="card pc"><i data-icon="pistol"></i><b>Компьютер</b><p>WASD, мышь, ПКМ — прицел, R — перезарядка, пробел — прыжок, колёсико, Q/E и Tab — оружие. Крашер: V или ПКМ — режим, Z — назад, B — каталог. Баллончик и маркер: V или ПКМ — цвет, Z — назад. F11 — полный экран.</p></div>
+    <div class="card"><i data-icon="s_h_rifle"></i><b>Режимы</b><p>Песочница: свобода, полёт и бессмертие в настройках. Выживание: волны врагов.</p></div>
+    <div class="card"><i data-icon="e_chat"></i><b>Чат и эмоции</b><p>Кнопки вверху: жесты и чат — люди отвечают. Имя — в настройках.</p></div>
+    <div class="card pc"><i data-icon="pistol"></i><b>Компьютер</b><p>WASD, мышь, ПКМ — прицел, R — перезарядка, пробел — прыжок, колёсико, Q/E и Tab — оружие. Крашер: V или ПКМ — режим, Z — назад, B — каталог. Баллончик и маркер: V или ПКМ — цвет, Z — назад. T или Enter — чат, G — фак, H — помахать. F11 — полный экран.</p></div>
   </div>
 </div>
 
@@ -359,8 +380,14 @@ h2{font-weight:600;letter-spacing:2px;text-transform:uppercase}
 
 <div id="hud" class="hidden">
   <button class="hb" id="pauseBtn" aria-label="Пауза">☰</button>
-  <div class="hpbox" id="hpbox"><div class="hpl"><span>✚</span><b id="hpnum">100</b><em id="kills">0 убито</em></div><div class="hp"><div id="hpfill"></div></div></div>
+  <div class="hpbox" id="hpbox"><div class="pn" id="pName">ИГРОК</div><div class="hpl"><span>✚</span><b id="hpnum">100</b><em id="kills">0 убито</em></div><div class="hp"><div id="hpfill"></div></div></div>
   <div id="wave" class="hidden"></div>
+  <button class="hb" id="emoteBtn" aria-label="Эмоции"><i data-icon="e_wave"></i></button>
+  <button class="hb" id="chatBtn" aria-label="Чат"><i data-icon="e_chat"></i></button>
+  <div id="emoteMenu" class="hidden"><button data-e="fak"><i data-icon="e_fak"></i>Фак<span class="kb"> · G</span></button><button data-e="wave"><i data-icon="e_wave"></i>Помахать<span class="kb"> · H</span></button></div>
+  <div id="chatLog"></div>
+  <div id="chatBar" class="hidden"><div class="row"><input id="chatIn" maxlength="80" autocomplete="off" enterkeyhint="send" placeholder="Сообщение… (/help — команды)"><button id="chatSend">ОТПР.</button><button id="chatX">✕</button></div>
+    <div class="qp" id="chatQuick"></div></div>
   <div id="feed"></div>
   <div id="palette" class="hidden"></div>
   <div id="crushCol" class="hidden"><button class="cm cat" id="crushCat"><i id="crushCatIcon"></i>каталог<span class="kb"> · B</span></button><div id="crushModes"></div><div class="kb khint">V / ПКМ<br>режим</div></div>
@@ -409,8 +436,10 @@ const ease = t => 1 - (1 - t) * (1 - t);
 function angDiff(a, b) { let d = b - a; while (d > Math.PI) d -= 2 * Math.PI; while (d < -Math.PI) d += 2 * Math.PI; return d; }
 
 // ---------------- settings ----------------
-const settings = { blood: 1, npcStart: 0, chaos: false, vol: .7, music: true, gfx: 1, sens: 1, paint: 0, fov: 75, best: 0, fly: false, god: false, respawn: 0 };
+const settings = { blood: 1, npcStart: 0, chaos: false, vol: .7, music: true, gfx: 1, sens: 1, paint: 0, fov: 75, best: 0, fly: false, god: false, respawn: 0, name: '' };
 try { Object.assign(settings, JSON.parse(localStorage.getItem('gz_settings') || '{}')); } catch (e) {}
+const pname = () => (settings.name || '').trim() || 'Игрок';
+const esc = t => String(t).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c]);
 function saveSettings() { try { localStorage.setItem('gz_settings', JSON.stringify(settings)); } catch (e) {} }
 const bloodMul = () => [0.4, 1, 2][settings.blood];
 
@@ -1852,7 +1881,8 @@ function kill(h, ix, iy, iz, at, o, dmg) {
   if (o.bleedOut) tag = 'истёк кровью';
   if (killer === game.player) {
     game.kills++; updateHud();
-    feed(`${icon(w ? w.id : o.explosive ? 'grenade' : 'knife', 'fic')}${h.team === 'hostile' ? 'бандит ' : ''}${h.name}${tag ? ' · ' + tag : ''}`);
+    feed(`<b class="fn">${esc(pname())}</b> ${icon(w ? w.id : o.explosive ? 'grenade' : 'knife', 'fic')}${h.team === 'hostile' ? 'бандит ' : ''}${h.name}${tag ? ' · ' + tag : ''}`);
+    if (Math.random() < .25) npcNear(h, 16, n => n.team === 'civil' && n !== h, n => npcSay(n, pick(['Он убил ' + h.name + '!!', 'Помогите!', 'Маньяк!', 'Бежим!'])), 1);
   }
 }
 function melee(h, o, d, w) {
@@ -2377,7 +2407,7 @@ function endPointer(e) {
   for (const k of ['move', 'look', 'fire', 'jump', 'down']) if (touch[k] && touch[k].id === e.pointerId) { touch[k] = null; if (k === 'down') $('downBtn').classList.remove('on'); if (k === 'fire') $('fireBtn').classList.remove('on'); if (k === 'jump') $('jumpBtn').classList.remove('on'); }
 }
 addEventListener('pointerup', endPointer); addEventListener('pointercancel', endPointer);
-document.addEventListener('pointerlockchange', () => { const was = locked; locked = document.pointerLockElement === glc; if (was && !locked && game.state === 'play') pauseGame(); });
+document.addEventListener('pointerlockchange', () => { const was = locked; locked = document.pointerLockElement === glc; if (was && !locked && game.state === 'play' && !chatOpen) pauseGame(); });
 glc.addEventListener('wheel', e => { if (game.state === 'play' && game.player) { e.preventDefault(); cycleWeapon(e.deltaY > 0 ? 1 : -1); } }, { passive: false });
 for (const [id, k] of [['fireBtn', 'fire'], ['jumpBtn', 'jump'], ['downBtn', 'down']]) {
   $(id).addEventListener('pointerdown', e => {
@@ -2405,6 +2435,8 @@ addEventListener('keydown', e => {
       if (e.code === 'KeyB') { openSpawn(); return; }
     }
     if (e.code === 'KeyQ') cycleWeapon(-1); if (e.code === 'KeyE') cycleWeapon(1);
+    if (e.code === 'KeyG') doEmote('fak'); if (e.code === 'KeyH') doEmote('wave');
+    if (e.code === 'KeyT' || e.code === 'Enter' || e.code === 'NumpadEnter' || e.code === 'Slash') { e.preventDefault(); openChat(e.code === 'Slash' ? '/' : ''); return; }
     if (e.code === 'Tab') { e.preventDefault(); openInv(); return; }
   }
   if (game.state === 'inv' && (e.code === 'Tab' || e.code === 'Escape')) { e.preventDefault(); closeInv(); closeSpawn(); return; }
@@ -2482,6 +2514,7 @@ function updateVM(dt) {
   game.adsK = lerp(game.adsK || 0, game.ads ? 1 : 0, Math.min(1, dt * 12));
   const scoped = w.id === 'sniper' && game.adsK > .85;
   vm.visible = p.alive && !scoped;
+  if (updateEmoteVM(dt)) vm.visible = false;
   vm.position.set(Math.sin(bobT) * .012 * bob, -Math.abs(Math.cos(bobT)) * .014 * bob, game.recoil);
   vm.rotation.x = game.recoil * 2;
   const attacking = p.attackT > 0, t = attacking ? 1 - p.attackT / p.attackDur : 1;
@@ -2633,6 +2666,138 @@ function feed(text) {
   f.prepend(d); while (f.children.length > 4) f.lastChild.remove();
   setTimeout(() => { d.classList.add('out'); setTimeout(() => d.remove(), 400); }, 4000);
 }
+// ---------------- player name, emotes, chat ----------------
+function updateName() { const n = pname(); if ($('pName')) $('pName').textContent = n; if (game.player) game.player.name = n; }
+// a first-person hand: 'fak' (middle finger) or 'wave' (open palm); forearm points down
+function makeHandModel(kind, forIcon) {
+  const g = new THREE.Group(), sk = colMat(forIcon ? '#b97a50' : '#e0ac80');
+  const box = (w, h, d, x, y, z, m = sk) => { const b = new THREE.Mesh(new THREE.BoxGeometry(w, h, d), m); b.position.set(x, y, z); g.add(b); return b; };
+  box(.17, .17, .07, 0, 0, 0);                       // palm
+  if (!forIcon) { box(.15, .26, .13, 0, -.21, 0, colMat('#d8d2c4')); box(.12, .05, .1, 0, -.1, 0); } // sleeve, wrist
+  if (kind === 'fak') {
+    box(.042, .17, .05, 0, .17, 0);                    // the middle finger
+    for (const x of [-.056, .052]) box(.04, .055, .07, x, .1, .03);   // folded index + ring
+    box(.036, .05, .065, .095, .09, .03);              // folded pinky
+    box(.05, .045, .06, -.075, .02, .045).rotation.z = .4; // thumb across
+  } else {
+    [-.06, -.02, .02, .06].forEach((x, i) => box(.036, i === 0 || i === 3 ? .12 : .14, .045, x, .14 + (i === 0 || i === 3 ? -.01 : 0), 0));
+    const th = box(.042, .1, .045, -.11, .03, 0); th.rotation.z = .55;
+  }
+  return g;
+}
+const emoteVM = new THREE.Group(); vmScene.add(emoteVM); emoteVM.visible = false; emoteVM.scale.setScalar(.72);
+const EMOTE_MODELS = {};
+function updateEmoteVM(dt) {
+  const e = game.emote, p = game.player;
+  if (!e || !p || !p.alive) { emoteVM.visible = false; if (e && (!p || !p.alive)) game.emote = null; return false; }
+  e.t += dt;
+  if (e.t >= e.dur) { game.emote = null; emoteVM.visible = false; return false; }
+  if (!EMOTE_MODELS[e.kind]) EMOTE_MODELS[e.kind] = makeHandModel(e.kind);
+  const m = EMOTE_MODELS[e.kind];
+  if (m.parent !== emoteVM) { emoteVM.clear(); emoteVM.add(m); }
+  emoteVM.visible = true;
+  const up = Math.min(1, e.t / .18), down = Math.min(1, (e.dur - e.t) / .2), k = ease(Math.min(up, down));
+  emoteVM.position.set(.08, -.44 + .34 * k, -.42);
+  if (e.kind === 'fak') { const jab = Math.max(0, Math.sin((e.t - .15) * 9)) * .03; emoteVM.position.z -= jab; emoteVM.rotation.set(-.15, -.25, .08 + Math.sin(e.t * 25) * .02 * (e.t > .3 ? 1 : 0)); }
+  else emoteVM.rotation.set(-.1, -.3, .1 + Math.sin(e.t * 13) * .45);
+  return true;
+}
+// call fn for nearby living NPCs that pass the filter, nearest first, at most max
+function npcNear(src, r, filter, fn, max = 2) {
+  const list = game.humans.filter(h => h.alive && h !== game.player && h.team !== 'dummy' && filter(h) && Math.hypot(h.x - src.x, h.z - src.z) < r)
+    .sort((a, b) => Math.hypot(a.x - src.x, a.z - src.z) - Math.hypot(b.x - src.x, b.z - src.z)).slice(0, max);
+  list.forEach((h, i) => setTimeout(() => { if (h.alive && game.state !== 'menu') fn(h); }, 500 + i * 700 + Math.random() * 600));
+  return list.length;
+}
+const npcLabel = h => (h.team === 'hostile' ? 'бандит ' : '') + h.name;
+function npcSay(h, text) { h.say = text; h.sayT = game.time + 3.2; chatMsg(npcLabel(h), text, h.team === 'hostile' ? 'bad' : 'civ'); }
+function inFront(h) { const p = game.player, dx = h.x - p.x, dz = h.z - p.z, d = Math.hypot(dx, dz) || 1; return (-Math.sin(game.yaw) * dx - Math.cos(game.yaw) * dz) / d > .55; }
+const EMOTE_REPLY = {
+  fak: { civil: ['Ах ты!', 'Сам такой!', 'Это что за жест?!', 'Ну ты и наглый...', 'Мама, он мне фак показал!'], hostile: ['Ну всё, ты труп!', 'Ах так?!', 'Я тебя запомнил!', 'Сейчас пальцы отрежу!'] },
+  wave: { civil: ['Привет!', 'Хай!', 'И тебе привет!', () => 'О, привет, ' + pname() + '!', '*машет в ответ*'], hostile: ['Машешь? Скоро помашешь на прощание!', 'Привет... и пока!', 'Не подлизывайся!'] }
+};
+const say = (arr) => { const v = pick(arr); return typeof v === 'function' ? v() : v; };
+function doEmote(kind) {
+  const p = game.player; if (!p || !p.alive || game.state !== 'play' || (game.emote && game.emote.t < game.emote.dur - .3)) return;
+  closeEmotes();
+  game.emote = { kind, t: 0, dur: kind === 'fak' ? 1.5 : 1.7 };
+  sfx('swish');
+  chatMsg(null, pname() + (kind === 'fak' ? ' показывает фак' : ' машет рукой'), 'sys');
+  npcNear(p, 14, h => inFront(h) && h.team !== 'dummy', h => npcSay(h, say((h.panic ? { civil: ['Не до тебя!!', 'Помогите!'] } : EMOTE_REPLY[kind])[h.team] || EMOTE_REPLY[kind].civil)), 2);
+}
+let emotesOpen = false;
+function openEmotes() { if (game.state !== 'play') return; emotesOpen = !emotesOpen; $('emoteMenu').classList.toggle('hidden', !emotesOpen); if (emotesOpen) { closeChat(); $('toast').classList.add('hidden'); } }
+function closeEmotes() { emotesOpen = false; $('emoteMenu').classList.add('hidden'); }
+// --- chat ---
+let chatOpen = false;
+function chatMsg(who, text, cls = '') {
+  const L = $('chatLog'), d = document.createElement('div'); d.className = cls;
+  d.innerHTML = who ? `<b>${esc(who)}:</b> ${esc(text)}` : esc(text);
+  L.append(d); while (L.children.length > 8) L.firstChild.remove();
+  setTimeout(() => d.classList.add('old'), 9000);
+}
+const QUICK = ['Привет!', 'Ха-ха', 'Беги!', 'Ты кто?', 'GG', 'Пока!'];
+function openChat(prefill = '') {
+  if (game.state !== 'play' || !game.player) return;
+  closeEmotes(); chatOpen = true; $('toast').classList.add('hidden'); for (const k in keys) keys[k] = false; releaseTouches();
+  $('hud').classList.add('chatting'); $('chatBar').classList.remove('hidden');
+  const Q = $('chatQuick'); if (!Q.children.length) QUICK.forEach(t => { const b = document.createElement('button'); b.textContent = t; b.addEventListener('click', () => { sendChat(t); closeChat(); }); Q.appendChild(b); });
+  if (document.pointerLockElement) try { document.exitPointerLock(); } catch (e) {}
+  const i = $('chatIn'); i.value = prefill; try { i.focus(); } catch (e) {} setTimeout(() => { i.focus(); i.setSelectionRange(i.value.length, i.value.length); }, 30);
+}
+function closeChat() {
+  if (!chatOpen) return; chatOpen = false;
+  $('hud').classList.remove('chatting'); $('chatBar').classList.add('hidden'); $('chatIn').blur();
+}
+const CHAT_KIND = [
+  ['greet', /(^|\s)(прив|здаров|здравств|хай|hi|hello|ку\b|салам|добр)/i], ['insult', /(лох|дурак|идиот|урод|тупой|сдохни|fuck|фак|пошёл|пошел|чмо|нуб)/i],
+  ['bye', /(пока|бб|bye|до свид)/i], ['laugh', /(ха|лол|lol|ахах|хех|ору)/i], ['question', /\?/], ['run', /(беги|бегите|спасайся)/i], ['gg', /(^|\s)(gg|гг)(\s|$)/i]
+];
+const CHAT_REPLY = {
+  civil: { greet: ['Привет!', 'Здорово!', () => 'О, привет, ' + pname() + '!', 'Хай!'], insult: ['Сам такой!', 'Эй, полегче!', 'Ну и грубиян...', 'Я маме расскажу!'],
+    bye: ['Пока!', 'Давай, удачи!', 'Не возвращайся...'], laugh: ['Ха-ха!', 'Смешно тебе...', 'Лол'], question: ['Не знаю...', 'Может быть.', 'Спроси у бандитов.', 'Без понятия, я тут просто гуляю.'],
+    run: ['Куда бежать?!', 'А-а-а!', 'Уже бегу!'], gg: ['GG!', 'Хорошая игра!'], other: ['Ага.', 'Чего?', 'Понял.', 'Интересно...', 'Ты кто такой вообще?', 'Только не стреляй!', 'Ну да, ну да...'] },
+  hostile: { greet: ['Привет? Сейчас попрощаешься!', 'Ну здравствуй...'], insult: ['Ты труп!', 'Повтори, если смелый!', 'Ну всё, держись!'], bye: ['Никуда ты не уйдёшь!'],
+    laugh: ['Посмеёшься, когда догоню!'], question: ['Вопросы здесь задаём мы!', 'Сейчас узнаешь!'], run: ['Сам беги!'], gg: ['Рано радуешься!'],
+    other: ['Заткнись!', () => 'Тебе конец, ' + pname() + '!', 'Хватай его!', 'Чего болтаешь?', 'Мы тебя найдём!'] }
+};
+function sendChat(t) {
+  t = String(t || '').trim().slice(0, 80); if (!t) return;
+  if (t[0] === '/') { chatCommand(t); return; }
+  sfx('ui'); chatMsg(pname(), t, 'me');
+  const p = game.player; if (!p) return;
+  const kind = (CHAT_KIND.find(([, re]) => re.test(t)) || ['other'])[0];
+  npcNear(p, 20, () => true, h => {
+    if (h.panic && h.team === 'civil') { npcSay(h, pick(['Помогите!!', 'Не убивай!', 'А-а-а!'])); return; }
+    const tab = CHAT_REPLY[h.team] || CHAT_REPLY.civil; npcSay(h, say(tab[kind] || tab.other));
+  }, Math.random() < .4 ? 2 : 1);
+}
+function chatCommand(t) {
+  const [cmd, ...rest] = t.slice(1).split(/\s+/), arg = rest.join(' '), sand = game.mode === 'sandbox';
+  const sys = m => chatMsg(null, m, 'sys');
+  switch ((cmd || '').toLowerCase()) {
+    case 'help': case 'помощь': sys('Команды: /name ИМЯ · /god · /fly · /spawn N · /kill · /clear · G — фак · H — помахать'); break;
+    case 'name': case 'имя': if (!arg) { sys('Напиши: /name ТвоёИмя'); break; } settings.name = arg.slice(0, 16); saveSettings(); updateName(); sys('Теперь тебя зовут ' + pname()); break;
+    case 'god': if (!sand) { sys('Только в песочнице'); break; } settings.god = !settings.god; saveSettings(); sys('Бессмертие: ' + (settings.god ? 'вкл' : 'выкл')); break;
+    case 'fly': if (!sand) { sys('Только в песочнице'); break; } settings.fly = !settings.fly; saveSettings(); sys('Полёт: ' + (settings.fly ? 'вкл' : 'выкл')); break;
+    case 'clear': $('chatLog').innerHTML = ''; break;
+    case 'spawn': { if (!sand) { sys('Только в песочнице'); break; } const n = clamp(parseInt(arg, 10) || 4, 1, 16);
+      for (let i = 0; i < n; i++) { const h = makeHuman(i % 2 ? 'hostile' : 'civil'); placeHuman(h); h.P = pose(h); game.humans.push(h); } sys('Создано людей: ' + n); break; }
+    case 'kill': { let n = 0; for (const h of game.humans) if (h.alive && h !== game.player) { damage(h, 999, { x: 0, y: 1, z: 0 }, { x: h.x, y: h.y + 1.2, z: h.z }, { owner: game.player, knock: 3, pt: 1 }); n++; } sys('Убито: ' + n); break; }
+    default: sys('Нет такой команды. /help — список');
+  }
+}
+$('chatIn').addEventListener('keydown', e => {
+  e.stopPropagation();
+  if (e.key === 'Enter') { e.preventDefault(); sendChat($('chatIn').value); closeChat(); }
+  else if (e.key === 'Escape') { e.preventDefault(); closeChat(); }
+});
+$('chatIn').addEventListener('keyup', e => e.stopPropagation());
+$('chatSend').addEventListener('click', () => { sendChat($('chatIn').value); closeChat(); });
+$('chatX').addEventListener('click', closeChat);
+for (const id of ['chatBtn', 'emoteBtn']) $(id).addEventListener('pointerdown', e => { e.preventDefault(); e.stopPropagation(); initAudio(); if (id === 'chatBtn') (chatOpen ? closeChat() : openChat()); else openEmotes(); });
+document.querySelectorAll('#emoteMenu button').forEach(b => b.addEventListener('pointerdown', e => { e.preventDefault(); e.stopPropagation(); doEmote(b.dataset.e); }));
+['pointerdown', 'pointerup', 'pointermove'].forEach(ev => { $('chatBar').addEventListener(ev, e => e.stopPropagation()); $('emoteMenu').addEventListener(ev, e => e.stopPropagation()); });
 function screenSplat(n) { for (let i = 0; i < n; i++) game.splats.push({ x: rnd(.05, .95), y: rnd(.05, .9), r: rnd(18, 55), a: rnd(.5, .85), v: rnd(.005, .02), seed: Math.random() * 1000 }); if (game.splats.length > 25) game.splats.splice(0, game.splats.length - 25); }
 function updateAmmo() {
   const p = game.player; if (!p) return;
@@ -2704,10 +2869,17 @@ function drawOverlay() {
       c.fillStyle = 'rgba(0,0,0,.6)'; c.fillText(txt, s.x + 1, s.y + 1); c.fillStyle = 'rgba(255,255,255,.85)'; c.fillText(txt, s.x, s.y);
       continue;
     }
-    if (h.alive && (h.hp < h.maxHp || (h.team === 'hostile' && !game.demo))) {
+    const talking = h.say && h.sayT > game.time && h !== game.player;
+    if (h.alive && (talking || h.panic || (h.team === 'hostile' && !game.demo))) {
       if (Math.hypot(h.x - camera.position.x, h.z - camera.position.z) > 30) continue;
       const s = project(h.x, h.y + 2.05, h.z); if (!s) continue;
-      if (h.hp < h.maxHp) { c.fillStyle = 'rgba(0,0,0,.6)'; c.fillRect(s.x - 18, s.y, 36, 5); c.fillStyle = h.team === 'hostile' ? '#ff3b3b' : '#e0d070'; c.fillRect(s.x - 18, s.y, 36 * Math.max(0, h.hp) / h.maxHp, 5); }
+      if (talking) {
+        c.save(); c.font = '600 13px Oswald,sans-serif'; const tw = Math.min(220, c.measureText(h.say).width) + 16, bx = s.x - tw / 2, by = s.y - 44;
+        c.globalAlpha = Math.min(1, (h.sayT - game.time) * 2); c.fillStyle = 'rgba(255,255,255,.92)';
+        c.beginPath(); if (c.roundRect) c.roundRect(bx, by, tw, 22, 8); else c.rect(bx, by, tw, 22); c.fill();
+        c.beginPath(); c.moveTo(s.x - 5, by + 22); c.lineTo(s.x + 5, by + 22); c.lineTo(s.x, by + 28); c.fill();
+        c.fillStyle = h.team === 'hostile' ? '#b0101a' : '#111'; c.textAlign = 'center'; c.textBaseline = 'middle'; c.fillText(h.say, s.x, by + 11.5, 220); c.restore();
+      }
       if (h.team === 'hostile' && !game.demo) { c.fillStyle = '#ff2d38'; c.beginPath(); c.moveTo(s.x - 5, s.y - 10); c.lineTo(s.x + 5, s.y - 10); c.lineTo(s.x, s.y - 3); c.fill(); }
       if (h.panic) { c.fillStyle = '#fff'; c.font = '14px "Russo One",sans-serif'; c.fillText('!!', s.x, s.y - 14); c.font = '12px "Russo One",sans-serif'; }
     }
@@ -2843,6 +3015,9 @@ function makeIcons() {
   { const g = new THREE.Group(); g.add(mesh(new THREE.SphereGeometry(.13, 16, 12), '#dfe9ff')); for (const [r, t] of [[.3, .03], [.48, .022]]) { const m = mesh(new THREE.TorusGeometry(r, t, 8, 40), glowMat); m.rotation.x = Math.PI / 2 - .5; g.add(m); } ICONS.m_push = snap(g, 0, 0, .2); }
   { const g = new THREE.Group(); g.add(mesh(new THREE.BoxGeometry(.5, .16, .16), glowG)); g.add(mesh(new THREE.BoxGeometry(.16, .5, .16), glowG)); ICONS.m_revive = snap(g, .5, 0, .3); }
   { const g = new THREE.Group(); const a = mesh(new THREE.BoxGeometry(.6, .14, .14), red), b = mesh(new THREE.BoxGeometry(.6, .14, .14), red); a.rotation.z = .785; b.rotation.z = -.785; g.add(a, b); ICONS.m_delete = snap(g, .5, 0, .3); }
+  ICONS.e_fak = snap(makeHandModel('fak', true), .3, 0, .15); ICONS.e_wave = snap(makeHandModel('wave', true), .3, -.2, .15);
+  { const g = new THREE.Group(), wht = colMat('#f2f2f2'); g.add(mesh(new THREE.BoxGeometry(.6, .38, .1), wht)); const tl = mesh(new THREE.BoxGeometry(.14, .14, .1), wht, -.16, -.2, 0); tl.rotation.z = .785; g.add(tl);
+    for (let i = 0; i < 3; i++) g.add(mesh(new THREE.BoxGeometry(.08, .08, .12), '#2a2830', -.15 + i * .15, 0, 0)); ICONS.e_chat = snap(g, .35, 0, .15); }
   ICONS.mode_sandbox = ICONS.crusher; ICONS.mode_survival = ICONS.s_h_rifle;
   // map thumbnails: the real maps, rendered from a fixed camera
   const VIEWS = { city: [[-30, 6, -9], [2, 1.5, 6]], ware: [[-20, 5.5, -11], [6, 1, 6]], canyon: [[-12, 9, -28], [16, 2, 16]], test: [[-8, 6, 26], [6, 1, -8]] };
@@ -3015,6 +3190,11 @@ function buildSettings() {
     });
     r.appendChild(sg); P.appendChild(r);
   };
+  { const r = document.createElement('div'); r.className = 'opt'; r.innerHTML = '<span>Имя игрока<small>в чате и ленте убийств</small></span>';
+    const inp = document.createElement('input'); inp.className = 'nameIn'; inp.maxLength = 16; inp.value = settings.name || ''; inp.placeholder = 'Игрок'; inp.autocomplete = 'off';
+    inp.addEventListener('input', () => { settings.name = inp.value.slice(0, 16); saveSettings(); updateName(); });
+    inp.addEventListener('keydown', e => { e.stopPropagation(); if (e.key === 'Enter') inp.blur(); });
+    r.appendChild(inp); P.appendChild(r); }
   row('Кровь', 'брызги, лужи и пятна', [[0, 'Мало'], [1, 'Норм'], [2, 'Много']], 'blood');
   row('Людей при старте', 'в песочнице; 0 — пустая карта', [[0, '0'], [4, '4'], [8, '8'], [16, '16']], 'npcStart');
   row('Полёт', 'только в песочнице', [[false, 'Выкл'], [true, 'Вкл']], 'fly');
@@ -3053,7 +3233,7 @@ function startGame(mi, demo, mode = 'sandbox') {
   game.player = null;
   $('feed').innerHTML = '';
   if (!demo) {
-    const p = makeHuman('player'); game.player = p; game.humans.push(p);
+    const p = makeHuman('player'); game.player = p; game.humans.push(p); p.name = pname(); closeChat(); closeEmotes(); game.emote = null; updateName();
     p.x = m.pstart[0]; p.z = m.pstart[1]; game.yaw = m.pstart[2]; game.pitch = 0; p.inv = 2;
   }
   const n = demo ? 10 : game.mode === 'survival' ? 0 : settings.npcStart;
@@ -3071,6 +3251,7 @@ function startGame(mi, demo, mode = 'sandbox') {
   } else { game.state = 'menu'; $('hud').classList.add('hidden'); }
 }
 function pauseGame() {
+  closeChat(); closeEmotes();
   if (game.state !== 'play' && game.state !== 'inv') return;
   if (game.player && !game.player.alive && game.mode === 'survival') return;
   game.state = 'pause'; backTo = 'pauseScr'; show('pauseScr'); $('hud').classList.add('hidden');
@@ -3140,6 +3321,7 @@ function frame(now) {
 }
 applyGfx();
 makeIcons();
+updateName();
 startGame(0, true);
 show('menu');
 $('loading').classList.add('hidden');
