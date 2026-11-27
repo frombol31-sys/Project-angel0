@@ -1697,6 +1697,23 @@ function chunk(x, y, z, vx, vy, vz, bone) {
   c.m.visible = true;
   chunks.push(c);
 }
+const crushScreenCv = document.createElement('canvas'); crushScreenCv.width = crushScreenCv.height = 128;
+const crushScreenTex = new THREE.CanvasTexture(crushScreenCv), crushScreenMat = new THREE.MeshBasicMaterial({ map: crushScreenTex });
+function drawCrushScreen(mode) {
+  const c = crushScreenCv.getContext('2d'), W = 128;
+  c.fillStyle = '#050506'; c.fillRect(0, 0, W, W);
+  c.strokeStyle = 'rgba(255,255,255,.12)'; c.lineWidth = 1; for (let y = 8; y < W; y += 10) { c.beginPath(); c.moveTo(6, y); c.lineTo(W - 6, y); c.stroke(); }
+  c.strokeStyle = 'rgba(255,255,255,.35)'; c.lineWidth = 3; c.strokeRect(5, 5, W - 10, W - 10);
+  c.save(); c.translate(W / 2, W / 2); c.strokeStyle = c.fillStyle = '#fff'; c.lineCap = c.lineJoin = 'round'; c.shadowColor = '#fff'; c.shadowBlur = 10; c.lineWidth = 9;
+  const rr = (x, y, w, h, r) => { c.beginPath(); c.moveTo(x + r, y); c.arcTo(x + w, y, x + w, y + h, r); c.arcTo(x + w, y + h, x, y + h, r); c.arcTo(x, y + h, x, y, r); c.arcTo(x, y, x + w, y, r); c.closePath(); };
+  if (mode === 'grab') { c.rotate(-Math.PI / 4); rr(-38, -13, 44, 26, 13); c.stroke(); rr(-6, -13, 44, 26, 13); c.stroke(); }
+  else if (mode === 'spawn') { c.beginPath(); c.arc(-10, -22, 11, 0, 7); c.fill(); rr(-26, -6, 32, 40, 10); c.fill(); c.lineWidth = 8; c.beginPath(); c.moveTo(24, -12); c.lineTo(24, 16); c.moveTo(10, 2); c.lineTo(38, 2); c.stroke(); }
+  else if (mode === 'push') { for (let k = 0; k < 3; k++) { c.beginPath(); c.arc(-30, 0, 18 + k * 17, -.9, .9); c.stroke(); } }
+  else if (mode === 'revive') { c.lineWidth = 16; c.beginPath(); c.moveTo(0, -32); c.lineTo(0, 32); c.moveTo(-32, 0); c.lineTo(32, 0); c.stroke(); }
+  else { c.lineWidth = 12; c.beginPath(); c.moveTo(-28, -28); c.lineTo(28, 28); c.moveTo(28, -28); c.lineTo(-28, 28); c.stroke(); }
+  c.restore(); crushScreenTex.needsUpdate = true;
+}
+drawCrushScreen('spawn');
 const WM_CACHE = {};
 function weaponModel(id) { return (WM_CACHE[id] || (WM_CACHE[id] = makeWeaponModel(id))).clone(); }
 function makeWeaponModel(id) {
@@ -1744,17 +1761,34 @@ function makeWeaponModel(id) {
       for (let i = 0; i < 4; i++) add(.045, .05, .1, '#e0ac80', -.075 + i * .05, .06, .1);
       add(.06, .05, .12, '#e0ac80', -.11, -.01, .05); add(.22, .2, .12, '#d8d2c4', 0, 0, -.13);
       break;
-    case 'crusher':
-      add(.085, .095, .34, '#121214', 0, 0, .02);                                  // black body
-      add(.05, .12, .06, '#0b0b0c', 0, -.085, -.07).rotation.x = -.2;              // grip
-      add(.095, .022, .24, '#6e7176', 0, .058, 0); add(.02, .03, .06, '#a7aaae', 0, .08, -.06); // grey top rail + sight
-      for (const sx of [-1, 1]) add(.006, .07, .2, '#f4f6f8', sx * .044, 0, .03);  // white side stripes
-      { const core = add(0, 0, 0, glowMat, 0, 0, .13, new THREE.CylinderGeometry(.03, .03, .18, 12)); core.rotation.x = Math.PI / 2;
-        const ring = add(0, 0, 0, '#2a2b2e', 0, 0, .225, new THREE.CylinderGeometry(.05, .05, .03, 14)); ring.rotation.x = Math.PI / 2; }
-      for (let k = 0; k < 3; k++) { const a = k / 3 * Math.PI * 2 + Math.PI / 2; add(.014, .014, .2, '#8d9095', Math.cos(a) * .04, Math.sin(a) * .04, .29); }
-      add(0, 0, 0, glowMat, 0, 0, .39, new THREE.SphereGeometry(.034, 12, 10));
-      add(0, 0, 0, '#d0d3d7', 0, 0, .39, new THREE.TorusGeometry(.05, .006, 6, 18));
+    case 'crusher': {
+      // chunky black device: barrel/grip toward the player, a wide head with vented side pods,
+      // a finned dome on top and a small screen that shows the current crusher mode
+      add(.1, .11, .3, '#2b2d31', 0, -.01, .0);                                    // barrel / body
+      add(.07, .03, .26, '#3a3d42', 0, .055, -.01);                                // top plate
+      add(.06, .13, .07, '#141518', 0, -.1, -.09).rotation.x = -.25;              // grip
+      add(.34, .12, .15, '#0f1012', 0, .03, .23);                                 // wide head
+      for (const sx of [-1, 1]) {
+        add(.1, .15, .17, '#17181b', sx * .16, .03, .23);                          // side pod
+        for (let k = 0; k < 4; k++) add(.08, .008, .004, '#3f4248', sx * .16, -.02 + k * .032, .143); // vent slats (facing the player)
+        add(.004, .11, .13, '#2a2c30', sx * .211, .03, .23);                       // side panel line
+      }
+      { // finned dome
+        add(0, 0, 0, '#1a1b1e', 0, .11, .23, new THREE.CylinderGeometry(.075, .085, .05, 16));
+        add(0, 0, 0, '#0b0b0c', 0, .14, .23, new THREE.SphereGeometry(.055, 14, 8, 0, Math.PI * 2, 0, Math.PI / 2));
+        for (let k = 0; k < 12; k++) {
+          const a = k / 12 * Math.PI * 2, c = k === 2 || k === 3 ? '#3a4cc8' : k === 8 ? '#b8262f' : '#2e3035';
+          const f = add(.01, .045, .05, c, Math.sin(a) * .07, .14, .23 + Math.cos(a) * .07); f.rotation.y = a;
+        }
+      }
+      { // mode screen, top right
+        const fr = add(.11, .11, .025, '#08080a', -.14, .17, .18); fr.rotation.x = -.25;   // -x: shows on the right in the player's hands
+        const scr = new THREE.Mesh(new THREE.PlaneGeometry(.094, .094), crushScreenMat); scr.position.set(0, 0, -.0135); scr.rotation.y = Math.PI; fr.add(scr);
+      }
+      for (let k = 0; k < 3; k++) { const a = k / 3 * Math.PI * 2 + Math.PI / 2; add(.012, .012, .12, '#5c5f66', Math.cos(a) * .035, .03 + Math.sin(a) * .035, .34); } // emitter prongs
+      add(0, 0, 0, glowMat, 0, .03, .38, new THREE.SphereGeometry(.026, 12, 10));
       break;
+    }
     case 'grenade': add(0, 0, 0, '#3d5a2a', 0, 0, 0, new THREE.SphereGeometry(.06, 10, 8)); add(.03, .03, .03, '#999', 0, .06, 0); add(.006, .05, .02, '#888', .03, .05, 0); break;
     case 'spray': {
       add(0, 0, 0, '#cfd0d6', 0, 0, 0, new THREE.CylinderGeometry(.038, .038, .18, 14));
@@ -2495,6 +2529,7 @@ function releaseGrab() {
   if (g.kind === 'prop') g.ref.held = false;
 }
 function buildCrushPanel() {
+  drawCrushScreen(crushMode);
   const M = $('crushModes'); M.innerHTML = '';
   CRUSH_MODES.forEach(([id, ic, nm]) => {
     const b = document.createElement('button'); b.className = 'cm' + (crushMode === id ? ' on' : ''); b.innerHTML = `<i>${icon('m_' + id)}</i>${nm}`;
@@ -2748,7 +2783,7 @@ function readInput() {
 const vm = new THREE.Group(); vmScene.add(vm);
 const flashMat = new THREE.MeshBasicMaterial({ color: 0xffb050, map: TEX.soft, transparent: true, blending: THREE.AdditiveBlending, depthWrite: false });
 let vmWeapon = null, vmId = null;
-const VM_POS = { crusher: [.2, -.2, -.38], melee: [.22, -.24, -.4], saw: [.2, -.26, -.45], throw: [.26, -.26, -.55], gun: [.2, -.2, -.38], rocket: [.22, -.2, -.4], spray: [.24, -.25, -.5], marker: [.2, -.2, -.42] };
+const VM_POS = { crusher: [.14, -.27, -.44], melee: [.22, -.24, -.4], saw: [.2, -.26, -.45], throw: [.26, -.26, -.55], gun: [.2, -.2, -.38], rocket: [.22, -.2, -.4], spray: [.24, -.25, -.5], marker: [.2, -.2, -.42] };
 const VM_CACHE = {};
 function buildVM(id) {
   if (vmWeapon) vm.remove(vmWeapon);
