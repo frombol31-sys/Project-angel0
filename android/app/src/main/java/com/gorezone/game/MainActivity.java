@@ -7,10 +7,12 @@ import android.view.View;
 import android.view.WindowInsets;
 import android.view.WindowInsetsController;
 import android.view.WindowManager;
+import android.webkit.ValueCallback;
 import android.webkit.WebChromeClient;
 import android.webkit.WebSettings;
 import android.webkit.WebView;
 import android.webkit.WebViewClient;
+import android.window.OnBackInvokedCallback;
 import android.window.OnBackInvokedDispatcher;
 
 public class MainActivity extends Activity {
@@ -32,15 +34,19 @@ public class MainActivity extends Activity {
         hideSystemUi();
         if (Build.VERSION.SDK_INT >= 33) {
             // Android 13+ (and required on Android 16): predictive back instead of onBackPressed
-            getOnBackInvokedDispatcher().registerOnBackInvokedCallback(OnBackInvokedDispatcher.PRIORITY_DEFAULT, this::handleBack);
+            getOnBackInvokedDispatcher().registerOnBackInvokedCallback(OnBackInvokedDispatcher.PRIORITY_DEFAULT,
+                new OnBackInvokedCallback() { @Override public void onBackInvoked() { handleBack(); } });
         }
         web.loadUrl("file:///android_asset/index.html");
     }
 
+    // no lambdas: the class also builds with the plain dx toolchain (build/build-apk36.sh)
     // Back pauses the game; in the menus it closes the app
     private void handleBack() {
         web.evaluateJavascript("(game.state==='menu'||game.state==='pause')?'exit':(pauseGame(),'ok')",
-            v -> { if ("\"exit\"".equals(v)) finish(); });
+            new ValueCallback<String>() {
+                @Override public void onReceiveValue(String v) { if ("\"exit\"".equals(v)) finish(); }
+            });
     }
 
     @SuppressWarnings("deprecation")
