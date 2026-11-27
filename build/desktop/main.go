@@ -1,12 +1,11 @@
 // GORE ZONE desktop launcher.
-// Serves the embedded game files on 127.0.0.1 and opens them in an app window
-// (Microsoft Edge or Google Chrome in --app mode); falls back to the default browser.
-// Closing the game window stops the launcher.
+// Serves the embedded game on 127.0.0.1 and shows it in a native game window
+// (Windows: WebView2, see native_windows.go). If the native window cannot be
+// created, the game opens in Edge/Chrome app mode or the default browser instead.
 package main
 
 import (
 	"embed"
-	"fmt"
 	"io/fs"
 	"net"
 	"net/http"
@@ -18,6 +17,19 @@ import (
 
 //go:embed web
 var webFS embed.FS
+
+func startServer() string {
+	sub, _ := fs.Sub(webFS, "web")
+	// a fixed port keeps the same origin, so settings and records survive between launches
+	ln, err := net.Listen("tcp", "127.0.0.1:47613")
+	if err != nil {
+		if ln, err = net.Listen("tcp", "127.0.0.1:0"); err != nil {
+			return ""
+		}
+	}
+	go http.Serve(ln, http.FileServer(http.FS(sub)))
+	return "http://" + ln.Addr().String() + "/"
+}
 
 func findBrowser() string {
 	var cands []string
@@ -42,44 +54,37 @@ func findBrowser() string {
 	return ""
 }
 
-func openDefault(url string) error {
-	if runtime.GOOS == "windows" {
-		return exec.Command("rundll32", "url.dll,FileProtocolHandler", url).Start()
-	}
-	return exec.Command("xdg-open", url).Start()
-}
-
-func main() {
-	sub, _ := fs.Sub(webFS, "web")
-	// a fixed port keeps the same origin, so settings and records survive between launches
-	ln, err := net.Listen("tcp", "127.0.0.1:47613")
-	if err != nil {
-		if ln, err = net.Listen("tcp", "127.0.0.1:0"); err != nil {
-			fmt.Println("Не удалось запустить игру:", err)
-			return
-		}
-	}
-	go http.Serve(ln, http.FileServer(http.FS(sub)))
-	url := "http://" + ln.Addr().String() + "/"
-	fmt.Println("GORE ZONE запущена:", url)
-	fmt.Println("Закрой окно игры, чтобы выйти.")
-
-	if os.Getenv("GOREZONE_SERVE_ONLY") != "" {
-		select {}
-	}
+func browserFallback(url string) {
 	if b := findBrowser(); b != "" {
 		profile := filepath.Join(os.TempDir(), "GoreZoneProfile")
 		if d, err := os.UserConfigDir(); err == nil {
 			profile = filepath.Join(d, "GoreZone")
 		}
-		cmd := exec.Command(b, "--app="+url, "--user-data-dir="+profile, "--window-size=1280,720",
+		cmd := exec.Command(b, "--app="+url, "--user-data-dir="+profile, "--start-fullscreen",
 			"--no-first-run", "--no-default-browser-check")
 		if err := cmd.Start(); err == nil {
 			cmd.Wait()
 			return
 		}
 	}
-	openDefault(url)
-	fmt.Println("Игра открыта в браузере. Не закрывай это окно, пока играешь.")
+	if runtime.GOOS == "windows" {
+		exec.Command("rundll32", "url.dll,FileProtocolHandler", url).Start()
+	} else {
+		exec.Command("xdg-open", url).Start()
+	}
 	select {}
+}
+
+func main() {
+	url := startServer()
+	if url == "" {
+		return
+	}
+	if os.Getenv("GOREZONE_SERVE_ONLY") != "" {
+		select {}
+	}
+	if runNative(url) {
+		return
+	}
+	browserFallback(url)
 }

@@ -295,6 +295,7 @@ h2{font-weight:600;letter-spacing:2px;text-transform:uppercase}
       <button class="mi" id="bArm"><span>АРСЕНАЛ</span><em>15 видов оружия и инструментов</em></button>
       <button class="mi" id="bSet"><span>НАСТРОЙКИ</span><em>графика, кровь, звук, люди</em></button>
       <button class="mi" id="bHelp"><span>КАК ИГРАТЬ</span><em>управление и советы</em></button>
+      <button class="mi danger hidden" id="bQuit"><span>ВЫЙТИ</span><em>закрыть игру</em></button>
     </nav>
     <div class="foot"><span id="tip"></span><span>v1.0</span></div>
   </div>
@@ -322,7 +323,7 @@ h2{font-weight:600;letter-spacing:2px;text-transform:uppercase}
     <div class="card"><i data-icon="crusher"></i><b>Реалити-крашер</b><p>Создавай, хватай, кидай, толкай, оживляй и удаляй.</p></div>
     <div class="card"><i data-icon="s_h_rifle"></i><b>Режимы</b><p>Песочница: возрождение через минуту. Выживание: волны врагов.</p></div>
     <div class="card"><i data-icon="m_push"></i><b>Полёт и бессмертие</b><p>В настройках, только в песочнице. ⤒ вверх, ⤓ вниз.</p></div>
-    <div class="card pc"><i data-icon="pistol"></i><b>Компьютер</b><p>WASD, мышь, ПКМ — прицел, R — перезарядка, пробел — прыжок, колёсико, Q/E и Tab — оружие. Крашер: V или ПКМ — режим, Z — назад, B — каталог. Баллончик и маркер: V или ПКМ — цвет, Z — назад.</p></div>
+    <div class="card pc"><i data-icon="pistol"></i><b>Компьютер</b><p>WASD, мышь, ПКМ — прицел, R — перезарядка, пробел — прыжок, колёсико, Q/E и Tab — оружие. Крашер: V или ПКМ — режим, Z — назад, B — каталог. Баллончик и маркер: V или ПКМ — цвет, Z — назад. F11 — полный экран.</p></div>
   </div>
 </div>
 
@@ -2092,6 +2093,13 @@ for (const [id, k] of [['fireBtn', 'fire'], ['jumpBtn', 'jump'], ['downBtn', 'do
   });
 }
 addEventListener('keydown', e => {
+  if (e.code === 'F11') {
+    e.preventDefault();
+    if (window.gzToggleFullscreen) window.gzToggleFullscreen();
+    else if (!document.fullscreenElement && document.documentElement.requestFullscreen) document.documentElement.requestFullscreen().catch(() => {});
+    else if (document.exitFullscreen) document.exitFullscreen().catch(() => {});
+    return;
+  }
   keys[e.code] = true; initAudio();
   if (game.state === 'play' && game.player) {
     const n = parseInt(e.key, 10); if (!isNaN(n)) { const i = n === 0 ? 9 : n - 1; if (i < WEAPONS.length) selectWeapon(i); }
@@ -2803,6 +2811,7 @@ $('bMaps2').onclick = () => { buildMaps(); show('mapsScr'); };
 $('bSet2').onclick = () => { buildSettings(); show('setScr'); };
 $('bClear').onclick = () => { clearMarks(); resume(); toast('Карта очищена', 1500); };
 $('bMenu').onclick = goMenu;
+if (window.gzQuit) { $('bQuit').classList.remove('hidden'); $('bQuit').onclick = () => window.gzQuit(); }
 $('bAgain').onclick = () => { goLandscape(); startGame(game.mapIndex, false, 'survival'); };
 $('bMenu2').onclick = goMenu;
 document.addEventListener('visibilitychange', () => { if (document.hidden) pauseGame(); });

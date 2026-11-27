@@ -7,3 +7,5 @@ desktop/web/
 out/
 *.jks
 *.idsig
+desktop/icon.ico
+desktop/rsrc_windows_amd64.syso
