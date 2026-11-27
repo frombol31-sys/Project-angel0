@@ -1166,10 +1166,13 @@ function pose(h) {
   const L = new Array(15);
   const mv = h.onGround ? clamp(h.speed / 4.5, 0, 1) : 0, ph = h.anim;
   const bob = h.onGround ? Math.abs(Math.sin(ph)) * .03 * mv : 0;
-  const lean = .07 * mv;
-  L[8] = [0, .95 + bob, 0]; L[9] = [-.1, .92 + bob, 0]; L[10] = [.1, .92 + bob, 0];
+  const run = h.onGround ? clamp((h.speed - 3) / 1.8, 0, 1) : 0, lean = .07 * mv + .1 * run;
+  const t = (typeof game !== 'undefined' && game.time) || 0, idle = 1 - mv, sph = Math.sin(ph);
+  const hx = sph * .022 * mv * (h.female ? 1.8 : 1) + Math.sin(t * .5 + (h.id || 0)) * .012 * idle;   // hip sway / idle weight shift
+  const tilt = sph * .018 * mv, tw = sph * .06 * mv * (1 - run * .3), br = Math.sin(t * 2.1 + (h.id || 0)) * .006 * idle; // hip tilt, shoulder twist, breathing
+  L[8] = [hx, .95 + bob, 0]; L[9] = [-.1 + hx, .92 + bob + tilt, 0]; L[10] = [.1 + hx, .92 + bob - tilt, 0];
   const sw = h.female ? .17 : .2;
-  L[1] = [0, 1.48 + bob, lean]; L[0] = [0, 1.66 + bob, lean + .02]; L[2] = [-sw, 1.44 + bob, lean]; L[3] = [sw, 1.44 + bob, lean];
+  L[1] = [hx * .3, 1.48 + bob + br, lean]; L[0] = [hx * .2, 1.66 + bob + br, lean + .02]; L[2] = [-sw + hx * .4, 1.44 + bob + br, lean + tw]; L[3] = [sw + hx * .4, 1.44 + bob + br, lean - tw];
   for (const [hi, ki, fi, p, right] of [[9, 11, 13, ph + Math.PI, 0], [10, 12, 14, ph, 1]]) {
     let a, b;
     if (h.onGround) { a = Math.sin(p) * .6 * mv; b = Math.max(0, -Math.cos(p)) * .9 * mv + .05; }
@@ -1180,10 +1183,11 @@ function pose(h) {
   }
   const w = WEAPONS[h.weapon], pt = h.pitch, ad = [0, Math.sin(pt), Math.cos(pt)];
   const attacking = h.attackT > 0, atk = attacking ? 1 - h.attackT / h.attackDur : 1;
-  const arm = (si, ei, hi, phi, ox = 0) => {
+  const bend = .3 + .15 * mv + 1.05 * run; // elbows bend more the faster you go
+  const arm = (si, ei, hi, phi, ox = 0, bd = .3) => {
     const s = L[si];
     L[ei] = [s[0] + ox * .5, s[1] - .3 * Math.cos(phi), s[2] + .3 * Math.sin(phi)];
-    L[hi] = [L[ei][0] + ox * .5, L[ei][1] - .28 * Math.cos(phi + .3), L[ei][2] + .28 * Math.sin(phi + .3)];
+    L[hi] = [L[ei][0] + ox * .5, L[ei][1] - .28 * Math.cos(phi + bd), L[ei][2] + .28 * Math.sin(phi + bd)];
   };
   const add = (a, b, k) => [a[0] + b[0] * k, a[1] + b[1] * k, a[2] + b[2] * k];
   h._wdir = null;
@@ -1199,16 +1203,22 @@ function pose(h) {
     const rh = add([.08, 1.42 + bob, lean + .18], ad, .35 * ext); L[7] = rh;
     L[5] = [.2, rh[1] - .14 + .1 * ext, (L[3][2] + rh[2]) / 2 - .05 * (1 - ext)];
     L[6] = [-.08, 1.46 + bob, lean + .2]; L[4] = [-.22, 1.3 + bob, lean + .1];
-  } else if (w.type === 'melee' || w.type === 'throw') {
+  } else if ((w.type === 'melee' && w.id !== 'fists') || w.type === 'throw') {
     const phi = w.type === 'throw' ? (attacking ? lerp(2.9, 1.2, ease(atk)) : .7) : (attacking ? lerp(2.8, .45, ease(atk)) : .85);
     arm(3, 5, 7, phi, -.08);
     arm(2, 4, 6, Math.sin(ph) * .5 * mv + .05, -.04);
     const wp = phi + (attacking ? 1.0 : 1.5);
     h._wdir = [0, -Math.cos(wp), Math.sin(wp)];
+  } else if ((h.panic || (h.fear > 0 && h.team === 'civil')) && mv > .3) { // running scared: hands up by the head
+    const f = Math.sin(ph * 1.3) * .04;
+    L[4] = [-.3, 1.52 + bob, lean + .06]; L[6] = [-.16 + f, 1.76 + bob, lean + .14];
+    L[5] = [.3, 1.52 + bob, lean + .06]; L[7] = [.16 - f, 1.76 + bob, lean + .14];
   } else {
-    arm(2, 4, 6, Math.sin(ph) * .5 * mv + .05, -.05);
-    arm(3, 5, 7, Math.sin(ph + Math.PI) * .5 * mv + .05, .05);
+    arm(2, 4, 6, Math.sin(ph) * (.5 + .25 * run) * mv + .05 + Math.sin(t * 1.3 + (h.id || 0)) * .02 * idle, -.05, bend);
+    arm(3, 5, 7, Math.sin(ph + Math.PI) * (.5 + .25 * run) * mv + .05 + Math.sin(t * 1.3 + (h.id || 0) + 1) * .02 * idle, .05, bend);
   }
+  if (h.alive !== false && h.hurt > 0) { const k = clamp(h.hurt / .25, 0, 1) * .07; for (const i of [0, 1, 2, 3]) { L[i][2] -= k; L[i][1] -= k * .3; } for (const i of [4, 5, 6, 7]) L[i][2] -= k * .7; } // flinch
+  { const lt = t - (h.landT || -9); if (lt >= 0 && lt < .28) { const c = (1 - lt / .28) * .09; for (let i = 0; i <= 10; i++) L[i][1] -= c; for (let i = 4; i <= 7; i++) L[i][1] -= c * .2; L[11][2] += c; L[12][2] += c; L[11][1] -= c * .5; L[12][1] -= c * .5; } } // landing crouch
   if (h.gest && h.alive && h.gestT > game.time) { // NPC gestures: wave back, shake a fist, thumbs up, hands to the face
     const t = game.time, g = h.gest;
     if (g === 'wave') { L[5] = [.32, 1.62 + bob, lean + .02]; L[7] = [.3 + Math.sin(t * 14) * .09, 1.9 + bob, lean + .06]; }
@@ -1223,10 +1233,28 @@ function pose(h) {
 }
 
 // ---------------- human meshes ----------------
+// merge simple shapes into one geometry (one draw call per body part)
+function mergeGeo(parts) {
+  const pos = [], nor = []; const M = new THREE.Matrix4(), Q = new THREE.Quaternion(), E = new THREE.Euler();
+  for (const [g0, x = 0, y = 0, z = 0, sx = 1, sy = 1, sz = 1, rx = 0, ry = 0, rz = 0] of parts) {
+    const g = g0.index ? g0.toNonIndexed() : g0.clone();
+    M.compose(new THREE.Vector3(x, y, z), Q.setFromEuler(E.set(rx, ry, rz)), new THREE.Vector3(sx, sy, sz)); g.applyMatrix4(M);
+    pos.push(g.attributes.position.array); nor.push(g.attributes.normal.array);
+  }
+  const cat = a => { const r = new Float32Array(a.reduce((n, x) => n + x.length, 0)); let o = 0; for (const x of a) { r.set(x, o); o += x.length; } return r; };
+  const out = new THREE.BufferGeometry(); out.setAttribute('position', new THREE.BufferAttribute(cat(pos), 3)); out.setAttribute('normal', new THREE.BufferAttribute(cat(nor), 3));
+  out.computeBoundingSphere(); return out;
+}
 const GEO = {
-  torso: new THREE.BoxGeometry(.42, .5, .22), hips: new THREE.BoxGeometry(.36, .2, .21), head: new THREE.SphereGeometry(.13, 12, 10),
-  hair: new THREE.SphereGeometry(.137, 12, 8, 0, Math.PI * 2, 0, Math.PI * .5), limb: new THREE.CylinderGeometry(1, 1, 1, 8),
-  hand: new THREE.SphereGeometry(.055, 8, 6), foot: new THREE.BoxGeometry(.11, .08, .24), eye: new THREE.BoxGeometry(.03, .03, .02), mouth: new THREE.BoxGeometry(.065, .014, .02),
+  // chest wider than the waist, oval section, rounded shoulders
+  torso: mergeGeo([[new THREE.CylinderGeometry(.205, .165, .5, 14), 0, 0, 0, 1, 1, .55], [new THREE.SphereGeometry(.072, 10, 8), -.178, .19, 0, 1, .9, 1], [new THREE.SphereGeometry(.072, 10, 8), .178, .19, 0, 1, .9, 1],
+    [new THREE.SphereGeometry(.205, 14, 6, 0, Math.PI * 2, 0, Math.PI / 2), 0, .245, 0, 1, .22, .55]]),
+  hips: mergeGeo([[new THREE.CylinderGeometry(.172, .18, .2, 14), 0, 0, 0, 1, 1, .6], [new THREE.SphereGeometry(.18, 14, 6, 0, Math.PI * 2, Math.PI / 2, Math.PI / 2), 0, -.1, 0, 1, .3, .6]]),
+  // head with a nose and ears
+  head: mergeGeo([[new THREE.SphereGeometry(.13, 18, 14), 0, 0, 0, .96, 1.04, 1], [new THREE.BoxGeometry(.03, .045, .04), 0, -.018, .126, 1, 1, 1, -.25], [new THREE.SphereGeometry(.03, 8, 6), -.124, -.008, 0, .45, 1, .75], [new THREE.SphereGeometry(.03, 8, 6), .124, -.008, 0, .45, 1, .75]]),
+  limbT: new THREE.CylinderGeometry(.68, 1, 1, 10), // thinner end slips inside the next segment (no flicker at elbows/knees)
+  hair: new THREE.SphereGeometry(.137, 16, 8, 0, Math.PI * 2, 0, Math.PI * .5), limb: new THREE.CylinderGeometry(1, 1, 1, 8),
+  hand: new THREE.SphereGeometry(.055, 10, 8), foot: mergeGeo([[new THREE.BoxGeometry(.1, .075, .2), 0, .005, -.005], [new THREE.SphereGeometry(.05, 10, 6, 0, Math.PI * 2, 0, Math.PI / 2), 0, -.03, .09, 1.05, 1.1, 1], [new THREE.BoxGeometry(.112, .022, .25), 0, -.037, .005]]), eye: new THREE.BoxGeometry(.03, .03, .02), mouth: new THREE.BoxGeometry(.065, .014, .02),
   stump: new THREE.SphereGeometry(.07, 8, 6), mask: new THREE.SphereGeometry(.135, 12, 10),
   hairBack: new THREE.BoxGeometry(.25, .2, .1), tail: new THREE.BoxGeometry(.07, .2, .06), skirt: new THREE.CylinderGeometry(.19, .27, .3, 12), brow: new THREE.BoxGeometry(.045, .012, .012)
 };
@@ -1237,7 +1265,7 @@ function buildBody(h) {
   const mk = (geo, mat) => { const m = new THREE.Mesh(geo, mat); m.castShadow = true; g.add(m); return m; };
   const parts = {
     torso: mk(GEO.torso, M.shirt), hips: mk(GEO.hips, M.pants), head: mk(h.mask ? GEO.mask : GEO.head, h.mask ? colMat('#141414') : M.skin),
-    limbs: LIMB_DEF.map(([si, r, k]) => { const m = mk(GEO.limb, M[k]); m.scale.set(r, 1, r); return { m, si }; }),
+    limbs: LIMB_DEF.map(([si, r, k]) => { const m = mk(GEO.limbT, M[k]); m.scale.set(r, 1, r); return { m, si, r }; }),
     hands: [mk(GEO.hand, M.skin), mk(GEO.hand, M.skin)], feet: [mk(GEO.foot, colMat('#151515')), mk(GEO.foot, colMat('#151515'))],
     stumps: [], weapon: null, wid: null, neck: mk(GEO.limb, M.skin)
   };
@@ -1254,10 +1282,14 @@ function buildBody(h) {
   parts.eyes = [];
   for (const sx of [-.045, .045]) { const e = new THREE.Mesh(GEO.eye, colMat(h.mask ? '#e8d0c0' : '#111')); e.position.set(sx, .02, .122); parts.head.add(e); parts.eyes.push(e); }
   { const mo = new THREE.Mesh(GEO.mouth, colMat(h.mask ? '#2a2a2a' : '#5a1a1e')); mo.position.set(0, -.055, .114); mo.rotation.x = -.35; parts.head.add(mo); parts.mouth = mo; }
-  if (!h.mask) { parts.brows = [-1, 1].map(sx => { const b = new THREE.Mesh(GEO.brow, colMat(h.team === 'dummy' ? '#8d9093' : '#2a1d14')); b.position.set(sx * .045, .058, .121); b.visible = false; parts.head.add(b); return b; }); }
+  if (!h.mask) { parts.brows = [-1, 1].map(sx => { const b = new THREE.Mesh(GEO.brow, colMat(h.team === 'dummy' ? '#8d9093' : h.hair)); b.position.set(sx * .045, .058, .121); b.visible = true; parts.head.add(b); return b; }); }
   h.mesh = g; h.parts = parts;
 }
-const _a = new THREE.Vector3(), _b = new THREE.Vector3(), _d = new THREE.Vector3(), _X = new THREE.Vector3(), _Y = new THREE.Vector3(), _Z = new THREE.Vector3(), _m4 = new THREE.Matrix4(), UP = new THREE.Vector3(0, 1, 0), FWD = new THREE.Vector3(0, 0, 1);
+const _hq = new THREE.Quaternion(), _a = new THREE.Vector3(), _b = new THREE.Vector3(), _d = new THREE.Vector3(), _X = new THREE.Vector3(), _Y = new THREE.Vector3(), _Z = new THREE.Vector3(), _m4 = new THREE.Matrix4(), UP = new THREE.Vector3(0, 1, 0), FWD = new THREE.Vector3(0, 0, 1);
+function placeSegExt(m, a, b, ea, eb) { // like placeSeg, but extended by ea before a and eb past b
+  const dx = b.x - a.x, dy = b.y - a.y, dz = b.z - a.z, l = Math.hypot(dx, dy, dz) || 1, ka = ea / l, kb = eb / l;
+  placeSeg(m, { x: a.x - dx * ka, y: a.y - dy * ka, z: a.z - dz * ka }, { x: b.x + dx * kb, y: b.y + dy * kb, z: b.z + dz * kb });
+}
 function placeSeg(m, a, b) {
   _a.set(a.x, a.y, a.z); _b.set(b.x, b.y, b.z); _d.subVectors(_b, _a);
   const len = _d.length() || .001;
@@ -1338,7 +1370,7 @@ function severAlive(h, limb, dir) {
   const len = (a, b) => Math.hypot(pts[a].x - pts[b].x, pts[a].y - pts[b].y, pts[a].z - pts[b].z);
   const g = { p: pts, sticks: [[0, 1, len(0, 1), false], [1, 2, len(1, 2), false]], emit: [{ pt: 0, t: 3 }], center: 1, group: new THREE.Group() };
   const mk = (geo, mat, r) => { const m = new THREE.Mesh(geo, mat); if (r) m.scale.set(r, 1, r); g.group.add(m); return m; };
-  g.upper = mk(GEO.limb, colMat(h.shirt), .065); g.fore = mk(GEO.limb, colMat(h.skin), .055); g.hand = mk(GEO.hand, colMat(h.skin));
+  g.upper = mk(GEO.limbT, colMat(h.shirt), .065); g.fore = mk(GEO.limbT, colMat(h.skin), .055); g.hand = mk(GEO.hand, colMat(h.skin));
   g.stump = mk(GEO.stump, colMat('#8a0a10')); g.bone = mk(GEO.limb, boneMat, .02);
   actors.add(g.group); game.gibs.push(g);
   if (game.gibs.length > 30) { const o = game.gibs.shift(); actors.remove(o.group); }
@@ -1549,12 +1581,12 @@ function faceOf(h, pa) {
   const F = FACE[ex];
   for (const e of pa.eyes) e.scale.y = F.eye;
   pa.mouth.scale.set(F.m[0], F.m[1], 1); pa.mouth.position.y = -.055 + F.m[2];
-  if (pa.brows) pa.brows.forEach((b, i) => { b.visible = !!F.brow; b.rotation.z = F.brow * (i ? -.45 : .45); b.position.y = F.brow < 0 ? .068 : .056; });
+  if (pa.brows) pa.brows.forEach((b, i) => { b.visible = true; b.rotation.z = F.brow * (i ? -.45 : .45); b.position.y = F.brow < 0 ? .068 : .056; });
 }
 function updateBodyMesh(h, P, sticks, rd) {
   const pa = h.parts;
   const hidden = rd ? rd.gone : h.lost;
-  for (const L of pa.limbs) { const s = sticks[L.si]; placeSeg(L.m, P[s[0]], P[s[1]]); L.m.visible = true; }
+  pa.limbs.forEach((L, i) => { const s = sticks[L.si], e = L.r * (h.size || 1); placeSegExt(L.m, P[s[0]], P[s[1]], i % 2 ? 0 : e * .7, i % 2 ? e * .4 : e * .7); L.m.visible = true; }); // upper segments overlap the joint, lower ones start at it
   pa.hands[0].visible = pa.hands[1].visible = pa.feet[0].visible = pa.feet[1].visible = true;
   for (const limb in hidden) { const ix = LIMB_MESH[limb]; if (!ix) continue; pa.limbs[ix[0]].m.visible = pa.limbs[ix[1]].m.visible = false; const e = LIMB_END[limb]; pa[e[0]][e[1]].visible = false; }
   const ls = P[2], rs = P[3], pel = P[rd && rd.upPel !== undefined ? rd.upPel : 8];
@@ -1579,7 +1611,7 @@ function updateBodyMesh(h, P, sticks, rd) {
     _Y.set(hd.x - nk.x, hd.y - nk.y, hd.z - nk.z);
     if (_Y.lengthSq() > 1e-6) { _Y.normalize(); _Z.set(0, 0, 1).applyQuaternion(tq); _Z.addScaledVector(_Y, -_Z.dot(_Y)).normalize(); _X.crossVectors(_Y, _Z); _m4.makeBasis(_X, _Y, _Z); pa.head.quaternion.setFromRotationMatrix(_m4); }
   } else if (rd && rd.headOff) { pa.head.rotation.x += rd.headSpin; pa.head.rotation.z += rd.headSpin * .5; rd.headSpin *= .985; }
-  else pa.head.quaternion.copy(tq);
+  else { pa.head.quaternion.copy(tq); if (h.headYaw) pa.head.quaternion.multiply(_hq.setFromAxisAngle(UP, h.headYaw)); }
   pa.head.visible = !(rd && rd.gibbed);
   if (pa.neck) {
     const n1 = P[1], kk = h.size || 1; let ux = n1.x - pel.x, uy = n1.y - pel.y, uz = n1.z - pel.z; const ul = Math.hypot(ux, uy, uz) || 1; ux /= ul; uy /= ul; uz /= ul;
@@ -2833,8 +2865,13 @@ function updateVM(dt) {
   const scoped = w.id === 'sniper' && game.adsK > .85;
   vm.visible = p.alive && !scoped;
   if (updateEmoteVM(dt)) vm.visible = false;
-  vm.position.set(Math.sin(bobT) * .012 * bob, -Math.abs(Math.cos(bobT)) * .014 * bob, game.recoil);
-  vm.rotation.x = game.recoil * 2;
+  const dyaw = angDiff(game._vmYaw ?? game.yaw, game.yaw), dpit = game.pitch - (game._vmPit ?? game.pitch); game._vmYaw = game.yaw; game._vmPit = game.pitch;
+  const sk = game.ads ? .3 : 1, lk = Math.min(1, dt * 9);
+  game.swayX = lerp(game.swayX || 0, clamp(-dyaw * 1.2, -.05, .05) * sk, lk); game.swayY = lerp(game.swayY || 0, clamp(dpit * 1.2, -.04, .04) * sk, lk);
+  game.landDip = Math.max(0, (game.landDip || 0) - dt * .45);
+  const breath = Math.sin(game.time * 1.7) * .003 * (1 - Math.min(1, p.speed / 2)) * sk;
+  vm.position.set(Math.sin(bobT) * .014 * bob + game.swayX, -Math.abs(Math.cos(bobT)) * .016 * bob - game.swayY + breath - game.landDip * .5, game.recoil);
+  vm.rotation.set(game.recoil * 2 + game.swayY * 1.5, game.swayX * 1.6, Math.sin(bobT) * .025 * bob);
   const attacking = p.attackT > 0, t = attacking ? 1 - p.attackT / p.attackDur : 1;
   const u = vmWeapon.userData;
   if (u.flash) { u.flash.visible = game.vmFlash > 0; if (u.flash.visible) u.flash.rotation.z = Math.random() * 6; }
@@ -2902,7 +2939,14 @@ function updateHuman(h, dt) {
   if (!h.held) moveBody(h, dt, isP ? (game.flying ? 9 : game.ads ? 3.6 : 6) : (h.panic ? 4.2 : h.fear > 0 ? 5.6 : 4.6));
   if (isP) { if (h.onGround) { h._step = (h._step || 0) + h.speed * dt; if (h._step > 2.3) { h._step = 0; sfx('step'); } if (h._wg === false && (h._vyAir || 0) < -7) sfx('land'); } else h._vyAir = h.vy; h._wg = h.onGround; }
   if (h.fallDmg) { const fd = h.fallDmg; h.fallDmg = 0; sfx('crunch', h); damage(h, fd, { x: 0, y: -1, z: 0 }, { x: h.x, y: h.y + .3, z: h.z }, { owner: h.thrownBy && game.time - (h.thrownT || 0) < 5 ? h.thrownBy : null, knock: 2, pt: 13 }); if (!h.alive) return; }
-  h.anim += h.speed * dt * 1.7;
+  h.anim += h.speed * dt * (h.kid ? 2.2 : 1.7);
+  if (h.onGround && h._og === false && (h._vyA || 0) < -5) { h.landT = game.time; if (isP) game.landDip = Math.min(.12, -(h._vyA) * .009); }
+  if (!h.onGround) h._vyA = h.vy; h._og = h.onGround;
+  if (!isP) { // look at the target, or at the player when they are close
+    const tg = h.tgt && h.tgt.alive ? h.tgt : h.angryAt && h.angry > 0 ? h.angryAt : (game.player && game.player.alive && Math.hypot(game.player.x - h.x, game.player.z - h.z) < 7 && !h.panic) ? game.player : null;
+    const want = tg ? clamp(angDiff(h.yaw, Math.atan2(tg.x - h.x, tg.z - h.z)), -.9, .9) : Math.sin(game.time * .4 + h.id) * .25 * (h.speed < .5 ? 1 : 0);
+    h.headYaw = (h.headYaw || 0) + (want - (h.headYaw || 0)) * Math.min(1, dt * 4);
+  }
   if (h.bleed > 0) {
     h.bleed = Math.max(0, h.bleed - dt * (h.stumpT > 0 ? .1 : .45));
     if (Math.random() < h.bleed * dt * 4 * bloodMul()) PS.blood.add({ x: h.x + rnd(-.15, .15), y: h.y + rnd(.6, 1.3), z: h.z + rnd(-.15, .15), vx: rnd(-.4, .4), vy: 0, vz: rnd(-.4, .4), life: 3 });
@@ -3167,7 +3211,7 @@ function updateCamera(dt) {
   if (Math.abs(camera.fov - tf) > .01) { camera.fov += (tf - camera.fov) * Math.min(1, dt * 14); camera.updateProjectionMatrix(); }
   if (p) {
     if (p.alive) {
-      camera.position.set(p.x, p.y + EYE + (p.onGround ? Math.abs(Math.sin(bobT)) * .03 * Math.min(1, p.speed / 5) * (game.ads ? .2 : 1) : 0), p.z);
+      camera.position.set(p.x, p.y + EYE - (game.landDip || 0) + (p.onGround ? Math.abs(Math.sin(bobT)) * .03 * Math.min(1, p.speed / 5) * (game.ads ? .2 : 1) : 0), p.z);
       camera.rotation.set(game.pitch, game.yaw, 0);
     } else {
       camera.position.y = lerp(camera.position.y, p.y + .3, .08);
