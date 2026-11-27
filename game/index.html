@@ -321,7 +321,7 @@ h2{font-weight:600;letter-spacing:2px;text-transform:uppercase}
     <div class="card"><i data-icon="rifle"></i><b>Арсенал</b><p>Круглая кнопка с оружием открывает колесо.</p></div>
     <div class="card"><i data-icon="axe"></i><b>Расчленёнка</b><p>Топор, катана, пила и снайперка отрубают руки, ноги и голову.</p></div>
     <div class="card"><i data-icon="crusher"></i><b>Реалити-крашер</b><p>Создавай, хватай, кидай, толкай, оживляй и удаляй.</p></div>
-    <div class="card"><i data-icon="s_h_rifle"></i><b>Режимы</b><p>Песочница: полная свобода, тела остаются. Выживание: волны врагов.</p></div>
+    <div class="card"><i data-icon="s_h_rifle"></i><b>Режимы</b><p>Песочница: полная свобода, возрождение в настройках. Выживание: волны врагов.</p></div>
     <div class="card"><i data-icon="m_push"></i><b>Полёт и бессмертие</b><p>В настройках, только в песочнице. ⤒ вверх, ⤓ вниз.</p></div>
     <div class="card pc"><i data-icon="pistol"></i><b>Компьютер</b><p>WASD, мышь, ПКМ — прицел, R — перезарядка, пробел — прыжок, колёсико, Q/E и Tab — оружие. Крашер: V или ПКМ — режим, Z — назад, B — каталог. Баллончик и маркер: V или ПКМ — цвет, Z — назад. F11 — полный экран.</p></div>
   </div>
@@ -409,7 +409,7 @@ const ease = t => 1 - (1 - t) * (1 - t);
 function angDiff(a, b) { let d = b - a; while (d > Math.PI) d -= 2 * Math.PI; while (d < -Math.PI) d += 2 * Math.PI; return d; }
 
 // ---------------- settings ----------------
-const settings = { blood: 1, npcStart: 0, chaos: false, vol: .7, music: true, gfx: 1, sens: 1, paint: 0, fov: 75, best: 0, fly: false, god: false };
+const settings = { blood: 1, npcStart: 0, chaos: false, vol: .7, music: true, gfx: 1, sens: 1, paint: 0, fov: 75, best: 0, fly: false, god: false, respawn: 0 };
 try { Object.assign(settings, JSON.parse(localStorage.getItem('gz_settings') || '{}')); } catch (e) {}
 function saveSettings() { try { localStorage.setItem('gz_settings', JSON.stringify(settings)); } catch (e) {} }
 const bloodMul = () => [0.4, 1, 2][settings.blood];
@@ -1132,7 +1132,7 @@ function pose(h) {
 const GEO = {
   torso: new THREE.BoxGeometry(.42, .5, .22), hips: new THREE.BoxGeometry(.36, .2, .21), head: new THREE.SphereGeometry(.13, 12, 10),
   hair: new THREE.SphereGeometry(.137, 12, 8, 0, Math.PI * 2, 0, Math.PI * .5), limb: new THREE.CylinderGeometry(1, 1, 1, 8),
-  hand: new THREE.SphereGeometry(.055, 8, 6), foot: new THREE.BoxGeometry(.11, .08, .24), eye: new THREE.BoxGeometry(.03, .03, .02),
+  hand: new THREE.SphereGeometry(.055, 8, 6), foot: new THREE.BoxGeometry(.11, .08, .24), eye: new THREE.BoxGeometry(.03, .03, .02), mouth: new THREE.BoxGeometry(.065, .014, .02),
   stump: new THREE.SphereGeometry(.07, 8, 6), mask: new THREE.SphereGeometry(.135, 12, 10)
 };
 const LIMB_DEF = [[16, .065, 'shirt'], [17, .055, 'skin'], [18, .065, 'shirt'], [19, .055, 'skin'], [20, .085, 'pants'], [21, .07, 'pants'], [22, .085, 'pants'], [23, .07, 'pants']];
@@ -1148,6 +1148,7 @@ function buildBody(h) {
   };
   if (!h.mask) { const hair = new THREE.Mesh(GEO.hair, colMat(h.hair)); hair.position.set(0, .01, -.01); hair.rotation.x = -.25; parts.head.add(hair); }
   for (const sx of [-.045, .045]) { const e = new THREE.Mesh(GEO.eye, colMat(h.mask ? '#e8d0c0' : '#111')); e.position.set(sx, .02, .122); parts.head.add(e); }
+  { const mo = new THREE.Mesh(GEO.mouth, colMat(h.mask ? '#2a2a2a' : '#5a1a1e')); mo.position.set(0, -.055, .114); mo.rotation.x = -.35; parts.head.add(mo); }
   h.mesh = g; h.parts = parts;
 }
 const _a = new THREE.Vector3(), _b = new THREE.Vector3(), _d = new THREE.Vector3(), _X = new THREE.Vector3(), _Y = new THREE.Vector3(), _Z = new THREE.Vector3(), _m4 = new THREE.Matrix4(), UP = new THREE.Vector3(0, 1, 0), FWD = new THREE.Vector3(0, 0, 1);
@@ -1289,9 +1290,10 @@ function gibHead(h) {
   rd.gibbed = true;
   const p = rd.p[0];
   blood(p.x, p.y, p.z, 0, 1, 0, 90, 7, 1.2);
-  for (let i = 0; i < 12; i++) chunk(p.x, p.y, p.z, rnd(-5, 5), rnd(2, 7), rnd(-5, 5), i < 3);
+  for (let i = 0; i < 8; i++) chunk(p.x, p.y, p.z, rnd(-5, 5), rnd(2, 7), rnd(-5, 5), i < 2);
+  headGibs(h, p);
   if (Math.hypot(p.x - camera.position.x, p.y - camera.position.y, p.z - camera.position.z) < 2.6) screenSplat(3);
-  sfx('crunch', p);
+  sfx('crunch', p); sfx('splat', p);
 }
 function gibAll(h) {
   for (const l of ['lArm', 'rArm', 'lLeg', 'rLeg']) dismember(h, l);
@@ -1618,6 +1620,65 @@ function bodyContacts() {
     }
   }
 }
+// ---------------- head gibs: eyes, jaw with teeth, brain and skull pieces ----------------
+const HG = {
+  eyeball: new THREE.SphereGeometry(.038, 14, 12), iris: new THREE.SphereGeometry(.019, 12, 10), pupil: new THREE.SphereGeometry(.01, 8, 6),
+  nerve: new THREE.CylinderGeometry(.005, .004, .05, 6), tooth: new THREE.BoxGeometry(.014, .016, .012), brain: new THREE.IcosahedronGeometry(1, 1),
+  skull: new THREE.BoxGeometry(.08, .012, .06)
+};
+const IRIS = ['#3a6ea5', '#5a3a1e', '#2f6b3f', '#6b5a3a', '#3a3a3a'];
+const debris = [];
+function addDebris(mesh, x, y, z, vx, vy, vz, r, trail) {
+  mesh.position.set(x, y, z); mesh.rotation.set(rnd(0, 6), rnd(0, 6), rnd(0, 6)); mesh.castShadow = true;
+  actors.add(mesh);
+  debris.push({ m: mesh, x, y, z, vx, vy, vz, r, trail, sx: rnd(-12, 12), sy: rnd(-12, 12), sz: rnd(-12, 12), rest: false });
+  while (debris.length > 70) { const o = debris.shift(); actors.remove(o.m); }
+}
+function makeEye(irisColor) {
+  const g = new THREE.Group();
+  g.add(new THREE.Mesh(HG.eyeball, colMat('#f2eee6')));
+  const ir = new THREE.Mesh(HG.iris, colMat(irisColor)); ir.position.z = .026; ir.scale.z = .5; g.add(ir);
+  const pu = new THREE.Mesh(HG.pupil, colMat('#050505')); pu.position.z = .035; pu.scale.z = .5; g.add(pu);
+  const nv = new THREE.Mesh(HG.nerve, colMat('#9a1a22')); nv.rotation.x = Math.PI / 2; nv.position.z = -.055; g.add(nv);
+  return g;
+}
+function makeJaw(skin) {
+  const g = new THREE.Group();
+  g.add(new THREE.Mesh(new THREE.BoxGeometry(.15, .045, .11), colMat(skin)));
+  const gum = new THREE.Mesh(new THREE.BoxGeometry(.12, .012, .08), colMat('#b8505a')); gum.position.set(0, .027, .005); g.add(gum);
+  for (let i = 0; i < 7; i++) { const a = (i / 6 - .5) * 2.2, t = new THREE.Mesh(HG.tooth, colMat('#f4efe2')); t.position.set(Math.sin(a) * .05, .04, Math.cos(a) * .04); t.rotation.y = a; g.add(t); }
+  const tongue = new THREE.Mesh(new THREE.BoxGeometry(.06, .016, .07), colMat('#c0606a')); tongue.position.set(0, .03, -.01); g.add(tongue);
+  const cut = new THREE.Mesh(new THREE.BoxGeometry(.13, .01, .03), colMat('#7a0a10')); cut.position.set(0, -.005, -.055); g.add(cut);
+  return g;
+}
+function headGibs(h, p) {
+  const iris = h.mask ? '#3a3a3a' : pick(IRIS);
+  const sp = () => [rnd(-2.2, 2.2), rnd(2, 4.5), rnd(-2.2, 2.2)];
+  for (let i = 0; i < 2; i++) { const v = sp(); addDebris(makeEye(iris), p.x + (i - .5) * .06, p.y, p.z, v[0], v[1], v[2], .038, true); }
+  { const v = sp(), j = makeJaw(h.mask ? '#141414' : h.skin); j.scale.setScalar(1.25); addDebris(j, p.x, p.y - .06, p.z, v[0] * .6, v[1] * .7, v[2] * .6, .06, true); }
+  for (let i = 0; i < 4; i++) { const v = sp(), m = new THREE.Mesh(HG.brain, colMat('#d98a96')); const s = rnd(.022, .042); m.scale.set(s, s * .8, s); addDebris(m, p.x, p.y + .03, p.z, v[0], v[1], v[2], s, true); }
+  for (let i = 0; i < 5; i++) { const v = sp(), m = new THREE.Mesh(HG.skull, i < 2 && !h.mask ? colMat(h.hair) : boneMat); addDebris(m, p.x, p.y + .05, p.z, v[0], v[1], v[2], .03, false); }
+}
+function updateDebris(dt) {
+  for (const d of debris) {
+    if (d.rest) continue;
+    d.vy -= G * dt; d.x += d.vx * dt; d.y += d.vy * dt; d.z += d.vz * dt;
+    let floor = 0; const b = boxAt(d.x, d.y, d.z);
+    if (b) { if (d.y - d.vy * dt >= b.y1 - .05) floor = b.y1; else { d.vx *= -.35; d.vz *= -.35; d.x += d.vx * dt * 2; d.z += d.vz * dt * 2; } }
+    if (d.trail && Math.random() < .3 * bloodMul()) PS.blood.add({ x: d.x, y: d.y, z: d.z, vx: 0, vy: 0, vz: 0, life: 2 });
+    if (d.y < floor + d.r) {
+      d.y = floor + d.r;
+      if (Math.abs(d.vy) > 1.6) { if (d.trail) addDecal(d.x, floor, d.z, 0, 1, 0, rnd(.06, .14)); d.vy *= -.32; d.vx *= .6; d.vz *= .6; d.sx *= .6; d.sy *= .6; d.sz *= .6; }
+      else { d.vy = 0; d.vx *= .82; d.vz *= .82; d.sx *= .8; d.sz *= .8; if (Math.hypot(d.vx, d.vz) < .05) d.rest = true; }
+    }
+    d.m.position.set(d.x, d.y, d.z);
+    d.m.rotation.x += d.sx * dt; d.m.rotation.y += d.sy * dt; d.m.rotation.z += d.sz * dt;
+  }
+}
+// explosions and the crusher push can kick debris around again
+function pushDebris(x, y, z, R, power) {
+  for (const d of debris) { const dx = d.x - x, dy = d.y - y, dz = d.z - z, l = Math.hypot(dx, dy, dz); if (l < R) { const f = (1 - l / R) * power; d.vx += dx / (l || 1) * f; d.vy += f * .6 + 1; d.vz += dz / (l || 1) * f; d.rest = false; } }
+}
 // ---------------- combat ----------------
 function rayBox(o, d, b) {
   let t0 = 0, t1 = 1e9, ax = -1;
@@ -1931,6 +1992,7 @@ function explode(x, y, z, owner) {
     const d = Math.hypot(pr.x - x, pr.y + .45 - y, pr.z - z);
     if (d < R) { const f = 1 - d / R, l = d || 1; pr.vx += (pr.x - x) / l * 12 * f; pr.vz += (pr.z - z) / l * 12 * f; pr.vy += 7 * f; if (pr.explosive && !pr.fuse) { pr.fuse = rnd(.12, .3); pr.lastHit = owner; } }
   }
+  pushDebris(x, y, z, R, 9);
   for (const g of game.gibs) for (const p of g.p) {
     const d = Math.hypot(p.x - x, p.y - y, p.z - z);
     if (d < R) { const f = 1 - d / R, l = d || 1; p.px -= (p.x - x) / l * 20 * f * DT; p.py -= ((p.y - y) / l + .8) * 20 * f * DT; p.pz -= (p.z - z) / l * 20 * f * DT; }
@@ -2078,6 +2140,7 @@ function crusherUpdate(p, dt) {
       else if (h.ragdoll) for (const q of h.ragdoll.p) { const dist = Math.hypot(q.x - c.x, q.y - c.y, q.z - c.z); if (dist < R) { const f = 1 - dist / R; q.px -= (d.x * 12 + (q.x - c.x)) * f * DT; q.py -= (6 + (q.y - c.y)) * f * DT; q.pz -= (d.z * 12 + (q.z - c.z)) * f * DT; } }
     }
     for (const g of game.gibs) for (const q of g.p) { const dist = Math.hypot(q.x - c.x, q.y - c.y, q.z - c.z); if (dist < R) { const f = 1 - dist / R; q.px -= d.x * 12 * f * DT; q.py -= 6 * f * DT; q.pz -= d.z * 12 * f * DT; } }
+    pushDebris(c.x, c.y, c.z, R, 10);
     for (const pr of game.props) { const dist = Math.hypot(pr.x - c.x, pr.y + .45 - c.y, pr.z - c.z); if (dist < R) { const f = 1 - dist / R; pr.vx += d.x * 10 * f; pr.vz += d.z * 10 * f; pr.vy += 5 * f; } }
     for (let i = 0; i < 30; i++) { const a = i / 30 * 6.283; PS.magic.add({ x: c.x, y: c.y + .1, z: c.z, vx: Math.cos(a) * 6, vy: .5, vz: Math.sin(a) * 6, life: .35 }); }
   } else if (crushMode === 'revive') {
@@ -2475,7 +2538,8 @@ function updateHuman(h, dt) {
       if (left <= 0) respawn(h);
       return;
     }
-    if (game.mode === 'survival') return;
+    if (game.mode === 'survival' || !settings.respawn) return;
+    if (game.time - h.deadAt >= settings.respawn) respawn(h);
     return;
   }
   if (isP) { h.mvx = input.mx; h.mvz = input.mz; h.jump = input.jump; h.fire = input.fire; h.yaw = game.yaw; h.pitch = game.pitch; if (!h.fire) lastMark = null; }
@@ -2512,6 +2576,7 @@ function step(dt) {
   updateProps(dt);
   updateRain(dt);
   updateParticles(dt);
+  updateDebris(dt);
   game.beamT = (game.beamT || 0) - dt; if (game.beamT <= 0) beamLine.visible = false;
   game.flying = !!(game.player && settings.fly && game.mode === 'sandbox');
   $('downBtn').classList.toggle('hidden', !game.flying);
@@ -2630,7 +2695,15 @@ function drawOverlay() {
   c.textAlign = 'center'; c.font = '12px "Russo One",sans-serif';
   for (const h of game.humans) {
     if (h === game.player) continue;
-    if (!h.alive) continue;
+    if (!h.alive) {
+      if (!settings.respawn || game.mode === 'survival' || game.demo || !h.ragdoll) continue;
+      const left = settings.respawn - (game.time - h.deadAt), q = h.ragdoll.p[8];
+      if (Math.hypot(q.x - camera.position.x, q.z - camera.position.z) > 25) continue;
+      const s = project(q.x, q.y + .7, q.z); if (!s) continue;
+      const txt = '↻ ' + (left >= 60 ? Math.floor(left / 60) + ':' + String(Math.ceil(left % 60) % 60).padStart(2, '0') : Math.ceil(left) + 'с');
+      c.fillStyle = 'rgba(0,0,0,.6)'; c.fillText(txt, s.x + 1, s.y + 1); c.fillStyle = 'rgba(255,255,255,.85)'; c.fillText(txt, s.x, s.y);
+      continue;
+    }
     if (h.alive && (h.hp < h.maxHp || (h.team === 'hostile' && !game.demo))) {
       if (Math.hypot(h.x - camera.position.x, h.z - camera.position.z) > 30) continue;
       const s = project(h.x, h.y + 2.05, h.z); if (!s) continue;
@@ -2866,7 +2939,7 @@ function buildPalette() {
 // ---- play screen: modes + maps ----
 let selMode = 'sandbox';
 const MODES = [
-  { id: 'sandbox', icon: '🧪', name: 'Песочница', desc: 'Мирные, бандиты и реалити-крашер. Тела остаются на карте — оживить можно крашером.' },
+  { id: 'sandbox', icon: '🧪', name: 'Песочница', desc: 'Мирные, бандиты и реалити-крашер. Тела остаются, возрождение — в настройках.' },
   { id: 'survival', icon: '🩸', name: 'Выживание', desc: 'Волны бандитов, с каждой сильнее. Одна жизнь.' }
 ];
 function buildMaps() {
@@ -2947,6 +3020,7 @@ function buildSettings() {
   row('Полёт', 'только в песочнице', [[false, 'Выкл'], [true, 'Вкл']], 'fly');
   row('Бессмертие', 'только в песочнице', [[false, 'Выкл'], [true, 'Вкл']], 'god');
   row('Хаос', 'все дерутся со всеми', [[false, 'Выкл'], [true, 'Вкл']], 'chaos');
+  row('Возрождение', 'убитых в песочнице', [[0, 'Выкл'], [30, '30 с'], [60, '1 мин'], [180, '3 мин']], 'respawn');
   row('Графика', '«Быстро» — для слабых телефонов', [[0, 'Быстро'], [1, 'Красиво']], 'gfx');
   row('Поле зрения', 'угол обзора камеры', [[65, '65°'], [75, '75°'], [90, '90°']], 'fov');
   row('Камера', 'скорость поворота', [[.6, 'Низк'], [1, 'Сред'], [1.6, 'Высок']], 'sens');
@@ -2961,13 +3035,13 @@ function goLandscape() {
     }
   } catch (e) {}
 }
-function clearMarks() { bloodPool.clear(); sprayPool.clear(); markerPool.clear(); for (const c of chunks) c.m.visible = false; }
+function clearMarks() { bloodPool.clear(); sprayPool.clear(); markerPool.clear(); for (const c of chunks) c.m.visible = false; for (const d of debris) actors.remove(d.m); debris.length = 0; }
 function clearActors() {
   while (actors.children.length) actors.remove(actors.children[0]);
   for (const p of game.projectiles) if (p.mesh) scene.remove(p.mesh);
   for (const k in PS) PS[k].list.length = 0;
   clearMarks();
-  tracers.length = 0; game.gibs = [];
+  tracers.length = 0; game.gibs = []; debris.length = 0;
 }
 const PSTART = { city: [-38, 0, -Math.PI / 2], ware: [-20, -12, Math.PI], canyon: [0, -8, Math.PI], test: [0, 22, 0] };
 function startGame(mi, demo, mode = 'sandbox') {
