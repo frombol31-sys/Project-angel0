@@ -191,12 +191,14 @@ h2{font-weight:600;letter-spacing:2px;text-transform:uppercase}
 .fi{font-family:var(--f-ui);font-size:13px;letter-spacing:.5px;border-right:2px solid #fff;background:rgba(0,0,0,.45)}
 #wave{top:14px;font-weight:600;letter-spacing:2px}
 #toast{top:62px;border-left-color:#fff}
-#wbox{position:absolute;right:94px;bottom:138px;text-align:right;pointer-events:none;text-shadow:0 2px 5px rgba(0,0,0,.7)}
+#wbox{position:absolute;right:94px;bottom:170px;text-align:right;pointer-events:none;text-shadow:0 2px 5px rgba(0,0,0,.7)}
 #wName{display:block;font-size:13px;letter-spacing:2px;text-transform:uppercase;opacity:.85}
 #ammo{position:static;font-size:inherit} #ammo b{font-size:32px;font-weight:600;color:#fff} #ammo small{font-size:14px;opacity:.7}
 #ammo.low b{color:var(--red2)}
-#wheelBtn{right:28px;bottom:136px;width:54px;height:54px;font-size:24px}
+#wheelBtn{right:28px;bottom:168px;width:54px;height:54px;font-size:24px}
 #wheelBtn i{font-style:normal}
+.sbtn span{font-size:10px!important;text-shadow:0 1px 2px #000} .cm{font-size:10px;text-shadow:0 1px 2px #000} .wslot small{font-size:9px!important}
+#root:not(.rot) #hud{left:env(safe-area-inset-left);right:env(safe-area-inset-right);top:env(safe-area-inset-top);bottom:env(safe-area-inset-bottom)}
 .rbtn{background:var(--hudbg);border:1.5px solid var(--hudline)}
 #fireBtn{right:24px;bottom:24px;width:96px;height:96px;background:rgba(255,255,255,.13);border:2px solid rgba(255,255,255,.6);box-shadow:none}
 #fireBtn.on{background:rgba(255,255,255,.38);transform:scale(.95)}
@@ -290,7 +292,7 @@ h2{font-weight:600;letter-spacing:2px;text-transform:uppercase}
 @media (max-height:430px), (orientation:portrait) and (max-width:430px){ .scard{padding:5px 8px;row-gap:1px} .scard small{display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;line-height:1.2} .scard b{line-height:1.1} #spawnGrid{gap:6px} }
 #hud.chatting #hpbox,#hud.chatting #emoteBtn,#hud.chatting #chatBtn{visibility:hidden}
 #wave{top:64px} #toast{top:100px}
-@media (max-width:760px){ #palette{gap:4px;padding:5px 6px;left:calc(50% - 40px)} #palette .sw{width:24px;height:24px} }
+@media (max-width:760px){ #palette{gap:4px;padding:5px 6px;left:auto;right:150px;transform:none;bottom:96px} #palette .sw{width:26px;height:26px} }
 @media (max-height:430px){ .opt{padding:4px 0} }
 .khint.pal{align-self:center;padding:0 4px} @media (pointer:fine){ .khint.pal{display:block} }
 /* player name, emotes, chat */
@@ -499,7 +501,7 @@ function initAudio() {
   try {
     if (!AC) {
       const Ctx = window.AudioContext || window.webkitAudioContext;
-      try { AC = new Ctx({ latencyHint: MOBILE_AUDIO ? 'playback' : 'interactive' }); } catch (e) { AC = new Ctx(); }
+      try { AC = new Ctx({ latencyHint: MOBILE_AUDIO ? 'balanced' : 'interactive' }); } catch (e) { AC = new Ctx(); }
       NB = AC.createBuffer(1, AC.sampleRate * 2, AC.sampleRate);
       const d = NB.getChannelData(0); for (let i = 0; i < d.length; i++) d[i] = Math.random() * 2 - 1;
       const master = AC.createGain(), comp = AC.createDynamicsCompressor();
@@ -757,7 +759,7 @@ const actors = new THREE.Group(); scene.add(actors);
 
 function applyGfx() {
   // sharpness: low 1x, medium 1.5x, high = the screen's own density (up to 2.5x)
-  renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, [1, 1.5, 2.5][settings.res] || 2.5));
+  renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, [1, 1.5, 2][settings.res] || 2));
   renderer.shadowMap.enabled = !!settings.gfx;
   sun.castShadow = !!settings.gfx;
   for (const k in matCache) matCache[k].needsUpdate = true;
@@ -765,13 +767,15 @@ function applyGfx() {
   layout();
 }
 function layout() {
+  if (typeof chatOpen !== 'undefined' && chatOpen && innerWidth === layout._w) return; // keyboard opened for chat: keep the layout
+  layout._w = innerWidth;
   const W = innerWidth, H = innerHeight;
   ROT = H > W;
   GW = ROT ? H : W; GH = ROT ? W : H;
   root.style.width = GW + 'px'; root.style.height = GH + 'px';
-  root.style.transform = ROT ? `translateX(${W}px) rotate(90deg)` : 'none';
+  root.style.transform = ROT ? `translateX(${W}px) rotate(90deg)` : 'none'; root.classList.toggle('rot', ROT);
   renderer.setSize(GW, GH, false);
-  const dpr = Math.min(window.devicePixelRatio || 1, 2.5);
+  const dpr = Math.min(window.devicePixelRatio || 1, 2);
   game._drawnFrozen = false;
   ov.width = Math.round(GW * dpr); ov.height = Math.round(GH * dpr);
   camera.aspect = vmCam.aspect = GW / GH; camera.updateProjectionMatrix(); vmCam.updateProjectionMatrix();
@@ -1250,7 +1254,8 @@ function pose(h) {
     else if (g === 'grief') { L[4] = [-.2, 1.42 + bob, lean + .18]; L[6] = [-.07, 1.6 + bob, lean + .14]; L[5] = [.2, 1.42 + bob, lean + .18]; L[7] = [.07, 1.6 + bob, lean + .14]; }
   }
   const s = Math.sin(h.yaw), c = Math.cos(h.yaw), k = h.size || 1;
-  const P = L.map(([x, y, z]) => ({ x: h.x - c * x * k + s * z * k, y: h.y + y * k, z: h.z + s * x * k + c * z * k }));
+  const P = h._pb || (h._pb = Array.from({ length: 15 }, () => ({ x: 0, y: 0, z: 0 }))); // reused every frame (ragdolls copy the values)
+  for (let i = 0; i < 15; i++) { const q = L[i], o = P[i]; o.x = h.x - c * q[0] * k + s * q[2] * k; o.y = h.y + q[1] * k; o.z = h.z + s * q[0] * k + c * q[2] * k; }
   if (h._wdir) { const d = h._wdir; h._wdirW = { x: s * d[2] - c * d[0], y: d[1], z: c * d[2] + s * d[0] }; }
   return P;
 }
@@ -1311,8 +1316,10 @@ function buildBody(h) {
 const _hq = new THREE.Quaternion(), _a = new THREE.Vector3(), _b = new THREE.Vector3(), _d = new THREE.Vector3(), _X = new THREE.Vector3(), _Y = new THREE.Vector3(), _Z = new THREE.Vector3(), _m4 = new THREE.Matrix4(), UP = new THREE.Vector3(0, 1, 0), FWD = new THREE.Vector3(0, 0, 1);
 function placeSegExt(m, a, b, ea, eb) { // like placeSeg, but extended by ea before a and eb past b
   const dx = b.x - a.x, dy = b.y - a.y, dz = b.z - a.z, l = Math.hypot(dx, dy, dz) || 1, ka = ea / l, kb = eb / l;
-  placeSeg(m, { x: a.x - dx * ka, y: a.y - dy * ka, z: a.z - dz * ka }, { x: b.x + dx * kb, y: b.y + dy * kb, z: b.z + dz * kb });
+  _pa.x = a.x - dx * ka; _pa.y = a.y - dy * ka; _pa.z = a.z - dz * ka; _pb2.x = b.x + dx * kb; _pb2.y = b.y + dy * kb; _pb2.z = b.z + dz * kb;
+  placeSeg(m, _pa, _pb2);
 }
+const _pa = { x: 0, y: 0, z: 0 }, _pb2 = { x: 0, y: 0, z: 0 };
 function placeSeg(m, a, b) {
   _a.set(a.x, a.y, a.z); _b.set(b.x, b.y, b.z); _d.subVectors(_b, _a);
   const len = _d.length() || .001;
@@ -2278,7 +2285,7 @@ function damage(h, dmg, dir, at, o) {
   const k = o.knock || 3;
   h.vx += dir.x * k * .5; h.vz += dir.z * k * .5; if (h.onGround) h.vy += 1;
   sfx(isP ? 'hurt' : 'hit', at);
-  if (isP) { game.shake = Math.max(game.shake, .5); updateHud(); if (o.owner && o.owner !== h) game.dmgInd.push({ a: Math.atan2(o.owner.x - h.x, o.owner.z - h.z), t: 1 }); }
+  if (isP) { game.shake = Math.max(game.shake, .5); buzz(25); updateHud(); if (o.owner && o.owner !== h) game.dmgInd.push({ a: Math.atan2(o.owner.x - h.x, o.owner.z - h.z), t: 1 }); }
   const ow = o.owner;
   if (ow && ow.team === 'zombie' && h.team !== 'zombie') { // zombie bites infect
     if (isP) { if (!h.infected) { h.infected = game.time + .001; toast(L('Тебя укусили! Нужен антидот'), 3000); } }
@@ -2338,7 +2345,7 @@ function kill(h, ix, iy, iz, at, o, dmg) {
   else if (w && w.gore >= 1 && Math.random() < .45) { const t = sliceNear(h, at.x, at.y, at.z); if (t) tag = t; }
   if (o.bleedOut) tag = L('истёк кровью');
   if (killer === game.player) {
-    game.kills++; updateHud();
+    game.kills++; updateHud(); buzz(12);
     if (h.female && FEM[tag]) tag = FEM[tag];
     feed(`<b class="fn">${esc(pname())}</b> ${icon(w ? w.id : o.explosive ? 'grenade' : 'knife', 'fic')}${h.team === 'hostile' ? L('бандит ') : h.team === 'zombie' ? L('зомби ') : ''}${h.name}${tag ? ' · ' + tag : ''}`);
     if (Math.random() < .25) npcNear(h, 16, n => n.team === 'civil' && n !== h, n => npcSay(n, pick([L('Он убил ') + h.name + '!!', L('Помогите!'), L('Маньяк!'), L('Бежим!')])), 1);
@@ -2449,7 +2456,7 @@ function doAttack(h) {
 function explode(x, y, z, owner) {
   sfx('boom', { x, z });
   const dist = Math.hypot(x - camera.position.x, z - camera.position.z);
-  game.shake = Math.max(game.shake, clamp(1.4 - dist / 25, 0, 1.2));
+  game.shake = Math.max(game.shake, clamp(1.4 - dist / 25, 0, 1.2)); if (dist < 14) buzz([40, 30, 40]);
   if (dist < 12) game.flash = .25;
   flashLight.position.set(x, y + .5, z); flashLight.intensity = 6;
   const R = 6.5;
@@ -2895,7 +2902,8 @@ const touch = { move: null, look: null, fire: null, jump: null, down: null };
 const keys = {};
 const STICK_R = 56;
 let mouseDown = false, locked = false;
-function sens() { return .0055 * settings.sens * (camera.fov / settings.fov); }
+const buzz = ms => { if (IS_MOBILE && navigator.vibrate) try { navigator.vibrate(ms); } catch (e) {} };
+function sens() { return .0055 * settings.sens * (IS_MOBILE ? 1.3 : 1) * (camera.fov / settings.fov); }
 function lookBy(dx, dy) { game.yaw -= dx * sens(); game.pitch = clamp(game.pitch - dy * sens(), -1.45, 1.45); }
 glc.addEventListener('pointerdown', e => {
   initAudio();
@@ -2917,7 +2925,11 @@ glc.addEventListener('pointerdown', e => {
 addEventListener('pointermove', e => {
   if (e.pointerType === 'mouse') { if (locked && game.state === 'play') lookBy(e.movementX, e.movementY); return; }
   const g = toGame(e.clientX, e.clientY);
-  for (const k of ['move', 'look', 'fire']) {
+  if (game.state === 'play' && !['move', 'look', 'fire', 'jump', 'down'].some(k => touch[k] && touch[k].id === e.pointerId) && glc.hasPointerCapture && glc.hasPointerCapture(e.pointerId) && !(wheelTap && wheelTap.id === e.pointerId)) {
+    const st = { id: e.pointerId, ox: g.x, oy: g.y, x: g.x, y: g.y };
+    if (g.x < GW * .42) { if (!touch.move) touch.move = st; } else if (!touch.look) touch.look = st;
+  }
+  for (const k of ['move', 'look', 'fire', 'jump']) {
     const s = touch[k];
     if (!s || s.id !== e.pointerId) continue;
     if (k === 'move') {
@@ -3338,7 +3350,7 @@ function openChat(prefill = '') {
   const i = $('chatIn'); i.value = prefill; try { i.focus(); } catch (e) {} setTimeout(() => { i.focus(); i.setSelectionRange(i.value.length, i.value.length); }, 30);
 }
 function closeChat() {
-  if (!chatOpen) return; chatOpen = false;
+  if (!chatOpen) return; chatOpen = false; setTimeout(layout, 300);
   $('hud').classList.remove('chatting'); $('chatBar').classList.add('hidden'); $('chatIn').blur();
 }
 const CHAT_KIND = [
@@ -3421,7 +3433,7 @@ function updateCamera(dt) {
     camera.position.set(Math.sin(game.orbit) * R, 7, Math.cos(game.orbit) * R);
     camera.lookAt(0, 1, 0);
   }
-  if (game.shake > 0) { camera.rotation.x += rnd(-1, 1) * game.shake * .03; camera.rotation.y += rnd(-1, 1) * game.shake * .03; }
+  if (game.shake > 0) { const sk = game.shake * .03; camera.rotation.x += Math.sin(game.time * 37) * sk; camera.rotation.y += Math.sin(game.time * 29 + 1) * sk; }
   if (skyMesh) skyMesh.position.copy(camera.position);
   const so = game.sunOff || [10, 30, 10];
   sun.position.set(camera.position.x + so[0], so[1], camera.position.z + so[2]);
@@ -3528,7 +3540,7 @@ function drawOverlay() {
       for (let k = 0; k < 6; k++) { const a = s.seed + k * 1.7, d = s.r * (1 + (k % 3) * .3); c.beginPath(); c.arc(x + Math.cos(a) * d, y + Math.sin(a) * d, s.r * .22, 0, 6.3); c.fill(); }
       c.fillRect(x - s.r * .12, y, s.r * .24, s.r * (1.2 + s.a));
     }
-    const coarse = matchMedia('(pointer:coarse)').matches;
+    const coarse = IS_MOBILE;
     const s = touch.move;
     if (s) {
       c.strokeStyle = 'rgba(255,255,255,.35)'; c.lineWidth = 2; c.beginPath(); c.arc(s.ox, s.oy, STICK_R, 0, 6.3); c.stroke();
@@ -3685,7 +3697,7 @@ function openInv() {
   if (document.exitPointerLock && locked) document.exitPointerLock();
 }
 function closeInv() { if (game.state !== 'inv') return; hideAll(); game.state = 'play'; $('hud').classList.remove('hidden'); }
-function releaseTouches() { touch.move = touch.look = touch.fire = touch.jump = touch.down = null; if (game.grab) releaseGrab(); mouseDown = false; $('fireBtn').classList.remove('on'); $('jumpBtn').classList.remove('on'); }
+function releaseTouches() { touch.move = touch.look = touch.fire = touch.jump = touch.down = null; if (game.grab) releaseGrab(); mouseDown = false; $('fireBtn').classList.remove('on'); $('jumpBtn').classList.remove('on'); $('downBtn').classList.remove('on'); }
 function selectWeapon(i) {
   const p = game.player; if (!p) return;
   if (!available(i)) return;
@@ -3909,7 +3921,19 @@ window.gzBack = function () {
 };
 const tap = (id, fn) => $(id).addEventListener('pointerdown', e => { e.preventDefault(); e.stopPropagation(); initAudio(); fn(); });
 tap('pauseBtn', pauseGame);
-tap('wheelBtn', openInv);
+let wheelTap = null;
+$('wheelBtn').addEventListener('pointerdown', e => {
+  e.preventDefault(); e.stopPropagation(); initAudio();
+  if (e.pointerType === 'mouse') { openInv(); return; }
+  const g = toGame(e.clientX, e.clientY); wheelTap = { id: e.pointerId, x: g.x, y: g.y };
+  try { $('wheelBtn').setPointerCapture(e.pointerId); } catch (er) {}
+});
+addEventListener('pointermove', e => { // a swipe that starts on the weapon button turns the camera instead of opening the wheel
+  if (!wheelTap || wheelTap.id !== e.pointerId) return; const g = toGame(e.clientX, e.clientY);
+  if (Math.hypot(g.x - wheelTap.x, g.y - wheelTap.y) > 12) { if (!touch.look) touch.look = { id: e.pointerId, ox: wheelTap.x, oy: wheelTap.y, x: wheelTap.x, y: wheelTap.y }; wheelTap = null; }
+});
+addEventListener('pointerup', e => { if (wheelTap && wheelTap.id === e.pointerId) { wheelTap = null; setTimeout(openInv, 40); } }); // after the click that follows, so it doesn't close the wheel
+addEventListener('pointercancel', e => { if (wheelTap && wheelTap.id === e.pointerId) wheelTap = null; });
 tap('crushCat', openSpawn);
 $('wheelScr').addEventListener('click', closeInv);
 $('spawnClose').onclick = closeSpawn;
