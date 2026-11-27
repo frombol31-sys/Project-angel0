@@ -29,6 +29,7 @@ BrandingText "${APPNAME} ${APPVER}"
 !insertmacro MUI_LANGUAGE "Russian"
 
 Section "GORE ZONE" SecMain
+  SetShellVarContext all
   SetOutPath "$INSTDIR"
   File "${EXEFILE}"
   File "icon.ico"
@@ -49,6 +50,7 @@ Section "GORE ZONE" SecMain
 SectionEnd
 
 Section "Uninstall"
+  SetShellVarContext all
   Delete "$INSTDIR\GoreZone.exe"
   Delete "$INSTDIR\icon.ico"
   Delete "$INSTDIR\Uninstall.exe"

@@ -6,6 +6,7 @@ package main
 
 import (
 	"embed"
+	"io"
 	"io/fs"
 	"net"
 	"net/http"
@@ -13,6 +14,7 @@ import (
 	"os/exec"
 	"path/filepath"
 	"runtime"
+	"strings"
 )
 
 //go:embed web
@@ -23,6 +25,15 @@ func startServer() string {
 	// a fixed port keeps the same origin, so settings and records survive between launches
 	ln, err := net.Listen("tcp", "127.0.0.1:47613")
 	if err != nil {
+		// the port is taken: if it is GORE ZONE already running, don't start a second copy on another
+		// origin (its saves would look empty); otherwise fall back to a free port
+		if r, e := http.Get("http://127.0.0.1:47613/index.html"); e == nil {
+			b, _ := io.ReadAll(io.LimitReader(r.Body, 4096))
+			r.Body.Close()
+			if r.StatusCode == 200 && strings.Contains(string(b), "GORE ZONE") {
+				os.Exit(0)
+			}
+		}
 		if ln, err = net.Listen("tcp", "127.0.0.1:0"); err != nil {
 			return ""
 		}

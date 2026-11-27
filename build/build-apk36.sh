@@ -19,7 +19,7 @@ rm -rf "$W/stage" && mkdir -p "$W/stage/res" "$W/stage/obj" "$W/stage/assets"
 python3 "$ROOT/build/make-app-assets.py" "$ROOT/game" "$W/stage/assets"
 sed 's|<manifest |<manifest package="com.gorezone.game" |' "$APP/AndroidManifest.xml" > "$W/stage/AndroidManifest.xml"
 aapt2 compile --dir "$APP/res" -o "$W/stage/res"
-VC=${VERSION_CODE:-$(date +%s | cut -c1-9)}
+VC=${VERSION_CODE:?set VERSION_CODE (CI builds use 100+run number; pick a higher one or use the CI build)}
 aapt2 link -o "$W/stage/app.unsigned.apk" -I "$W/android.jar" --manifest "$W/stage/AndroidManifest.xml" -R "$W"/stage/res/*.flat -A "$W/stage/assets" \
   --min-sdk-version 24 --target-sdk-version 36 --version-code "$VC" --version-name "1.0.$VC" \
   --java "$W/stage/gen" -0 js -0 html

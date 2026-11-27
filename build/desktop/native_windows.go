@@ -9,6 +9,7 @@ import (
 	"unsafe"
 
 	webview "github.com/jchv/go-webview2"
+	"github.com/jchv/go-webview2/webviewloader"
 )
 
 var (
@@ -23,13 +24,13 @@ var (
 )
 
 const (
-	gwlStyle            = ^uintptr(15) // GWL_STYLE (-16)
-	wsOverlappedWindow  = 0x00CF0000
-	swpNoZOrder         = 0x0004
-	swpNoOwnerZOrder    = 0x0200
-	swpFrameChanged     = 0x0020
-	monitorNearest      = 2
-	swMaximize          = 3
+	gwlStyle           = ^uintptr(15) // GWL_STYLE (-16)
+	wsOverlappedWindow = 0x00CF0000
+	swpNoZOrder        = 0x0004
+	swpNoOwnerZOrder   = 0x0200
+	swpFrameChanged    = 0x0020
+	monitorNearest     = 2
+	swMaximize         = 3
 )
 
 type rect struct{ Left, Top, Right, Bottom int32 }
@@ -75,6 +76,10 @@ func runNative(url string) (ok bool) {
 			ok = false
 		}
 	}()
+	// without the WebView2 runtime the library would leave an empty window behind: use the browser fallback
+	if v, err := webviewloader.GetInstalledVersion(); err != nil || v == "" {
+		return false
+	}
 	dataDir := filepath.Join(os.Getenv("LOCALAPPDATA"), "GoreZone")
 	w := webview.NewWithOptions(webview.WebViewOptions{
 		AutoFocus: true,

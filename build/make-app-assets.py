@@ -10,3 +10,5 @@ s = re.sub(r'<link rel="manifest"[^>]*>\n', '', s)
 open(os.path.join(out, 'index.html'), 'w').write(s)
 for f in ['three.min.js', 'icon-192.png', 'icon-512.png']:
     shutil.copy(os.path.join(src, f), out)
+# fonts are bundled (fonts/fonts.css + woff2), so the app never waits on the network
+shutil.copytree(os.path.join(src, 'fonts'), os.path.join(out, 'fonts'), dirs_exist_ok=True)

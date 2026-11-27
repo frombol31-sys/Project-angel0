@@ -1,4 +1,5 @@
 #!/usr/bin/env bash
+# OBSOLETE: builds a targetSdk 23 APK that Android 15+ refuses to install. Use build/build-apk36.sh or the CI workflow.
 # Builds GoreZone.apk without Android Studio.
 # Needs (Ubuntu): apt install aapt apksigner zipalign dalvik-exchange android-sdk-platform-23 default-jdk
 set -euo pipefail
