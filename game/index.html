@@ -1698,6 +1698,8 @@ function makeHuman(team, opts = {}) {
   return h;
 }
 // ---- relationships: couples and a parent with a son walk together and react when the other is hurt ----
+// timers in game time: they wait while paused and die with the map
+function later(sec, fn) { (game.timers = game.timers || []).push({ t: game.time + sec, run: game.runId, fn }); }
 function linkRel(a, b, roles) { a.rel = { o: b, me: roles[0] }; b.rel = { o: a, me: roles[1] }; b.follow = a; }
 const GROUPS = { couple: [{ female: false }, { female: true }, ['bf', 'gf']], mom_son: [{ female: true }, { kid: true }, ['mom', 'son']], dad_son: [{ female: false }, { kid: true }, ['dad', 'son']] };
 function spawnGroup(kind, x, z, yaw = rnd(0, 6.28), y = 0) {
@@ -1722,18 +1724,18 @@ function relHurt(h, ow) {
 }
 function relDeath(h, killer) {
   const r = h.rel; if (!r || !r.o.alive) return;
-  const o = r.o, run = game.runId; o.follow = null;
+  const o = r.o;
   o.gest = 'grief'; o.gestT = game.time + 2.6; o.fear = 8; o.fearFrom = killer || h;
   npcSay(o, pick(REL.grief[r.me] || [L('Нет!!')]));
   if ((o.rel.me === 'dad' || o.rel.me === 'bf') && killer && killer !== o)
-    setTimeout(() => { if (game.runId === run && o.alive && killer.alive && game.humans.includes(o)) { o.fear = 0; o.angry = 15; o.angryAt = killer; o.gest = 'fist'; o.gestT = game.time + 1.4; npcSay(o, pick(REL.revenge)); } }, 2600);
+    later(2.6, () => { if (o.alive && killer.alive && game.humans.includes(o) && game.humans.includes(killer) && o.team !== 'zombie') { o.fear = 0; o.angry = 15; o.angryAt = killer; o.gest = 'fist'; o.gestT = game.time + 1.4; npcSay(o, pick(REL.revenge)); } });
 }
 // ---------------- medicine, virus and zombies ----------------
 const ZSKIN = ['#7f9a6c', '#8aa07a', '#6f8a63', '#94a383'], ZSHIRT = ['#4a4f3a', '#5a4a3a', '#3a4048', '#5e3a36', '#3e3e3a'];
 function zombieLook(h) { Object.assign(h, { skin: pick(ZSKIN), shirt: pick(ZSHIRT), pants: pick(['#2a2a2a', '#2f2a24', '#23272e']), hair: '#2b2a1c', mask: false, skirt: h.skirt ? '#2a2420' : null }); }
 function zombify(h) {
   if (!h.alive || h === game.player || h.team === 'zombie') return;
-  h.orig = { team: h.team, skin: h.skin, shirt: h.shirt, pants: h.pants, hair: h.hair, mask: h.mask, skirt: h.skirt, weapon: h.weapon };
+  h.orig = { team: h.team, skin: h.skin, shirt: h.shirt, pants: h.pants, hair: h.hair, mask: h.mask, skirt: h.skirt, weapon: h.weapon, maxHp: h.maxHp, fixedWeapon: h.fixedWeapon };
   zombieLook(h);
   Object.assign(h, { team: 'zombie', infected: 0, weapon: 0, fixedWeapon: false, maxHp: 150, hp: 150, panic: false, fear: 0, angry: 0, gest: null, follow: null, tgt: null, combat: true });
   if (h.rel) { const o = h.rel.o; o.rel = null; o.follow = null; h.rel = null; if (o.alive && o.team !== 'zombie') { o.fear = 8; o.fearFrom = h; o.gest = 'grief'; o.gestT = game.time + 2; npcSay(o, L('Нет!! Что с тобой?!')); } }
@@ -1742,8 +1744,9 @@ function zombify(h) {
 }
 function cureZombie(h) {
   const o = h.orig || { team: 'civil' };
-  Object.assign(h, { team: o.team === 'hostile' ? 'hostile' : 'civil', maxHp: 100, hp: 60, infected: 0, tgt: null, combat: false, angry: 0, fear: 0, happyT: game.time + 3 });
+  Object.assign(h, { team: o.team || 'civil', maxHp: o.maxHp || 100, hp: Math.min(60, o.maxHp || 100), infected: 0, tgt: null, combat: false, angry: 0, fear: 0, happyT: game.time + 3, fixedWeapon: !!o.fixedWeapon });
   if (h.orig) Object.assign(h, { skin: o.skin, shirt: o.shirt, pants: o.pants, hair: o.hair, mask: o.mask, skirt: o.skirt, weapon: o.weapon || 0 });
+  else Object.assign(h, { skin: pick(SKINS), shirt: pick(SHIRTS), pants: pick(PANTS), hair: pick(HAIRS), skirt: null, mask: false });
   if (h.mesh) actors.remove(h.mesh); buildBody(h); h.P = pose(h);
   magic(h.x, h.y + 1, h.z, 26, 2); sfx('heal', h);
   npcSay(h, pick([L('Где я?..'), L('Что со мной было?'), L('Спасибо... я снова человек!')]));
@@ -1752,16 +1755,17 @@ function useMed(h, w, o, d) {
   const sv = game.mode === 'survival';
   game.uses = game.uses || {};
   if (sv && (game.uses[w.id] ?? w.uses) <= 0) { toast(L('Закончилось: ') + w.name, 1200); sfx('empty'); h.cd = .3; return; }
-  const r = castRay(o, d, 1.9, h), t = r.kind === 'body' && r.h !== h && r.h.alive && r.h.team !== 'zombie' ? r.h : h;
+  const r = castRay(o, d, 1.9, h), t = r.kind === 'body' && r.h !== h && r.h.alive && r.h.team !== 'zombie' && r.h.team !== 'dummy' ? r.h : h;
   if (t === h && h.hp >= h.maxHp && !(h.bleed > 0) && h === game.player) { toast(L('Ты и так здоров'), 1000); h.cd = .3; return; }
-  if (sv) game.uses[w.id] = (game.uses[w.id] ?? w.uses) - 1;
+  if (sv) { game.uses[w.id] = (game.uses[w.id] ?? w.uses) - 1; updateAmmo(); }
   t.hp = Math.min(t.maxHp, t.hp + w.heal); t.bleed = 0;
   sfx('heal', t); magic(t.x, t.y + 1.2, t.z, 16, 1.2);
   if (t === game.player) { updateHud(); toast('+' + w.heal + ' ' + L('здоровья') + (sv ? ' · ' + L('осталось') + ' ' + game.uses[w.id] : ''), 1200); }
   else { t.fear = 0; if (t.angryAt === game.player) t.angry = 0; t.happyT = game.time + 3; npcSay(t, pick([L('Спасибо!'), L('Мне лучше!'), L('Ты меня спас!')])); }
 }
 function inject(h, w, o, d) {
-  const r = castRay(o, d, w.range, h), t = (r.kind === 'body' || r.kind === 'corpse') && r.h !== h ? r.h : null;
+  const r = castRay(o, d, w.range, h); let t = (r.kind === 'body' || r.kind === 'corpse') && r.h !== h ? r.h : null;
+  if (w.id === 'antidote' && t && !(t.alive && (t.team === 'zombie' || t.infected))) t = null; // nothing to cure there: use it on yourself
   sfx('swish');
   if (!t) {
     if (w.id === 'antidote' && h === game.player && h.infected) { h.infected = 0; toast(L('Заражение вылечено'), 1500); sfx('heal'); magic(h.x, h.y + 1, h.z, 20, 1.5); }
@@ -1769,18 +1773,17 @@ function inject(h, w, o, d) {
   }
   sfx('hit', t);
   if (w.id === 'virus') {
-    if (t.team === 'zombie' || t === game.player) return;
+    if (t.team === 'zombie' || t.team === 'dummy' || t === game.player) return;
     if (!t.alive) { // a corpse gets up as a zombie
       if (t.reanim || !t.ragdoll) return; t.reanim = true; const run = game.runId, q = t.ragdoll.p[8];
       for (let i = 0; i < 12; i++) PS.smoke.add({ x: q.x + rnd(-.4, .4), y: q.y + rnd(0, .5), z: q.z + rnd(-.4, .4), vx: rnd(-.2, .2), vy: rnd(.2, .5), vz: rnd(-.2, .2), life: 1.2 });
-      setTimeout(() => { if (game.runId === run && !t.alive && t.ragdoll && game.humans.includes(t)) { t.reanim = false; revive(t); zombify(t); } }, 2500);
+      later(2.5, () => { if (!t.alive && t.ragdoll && game.humans.includes(t)) { t.reanim = false; revive(t); zombify(t); } });
       return;
     }
     if (!t.infected) { t.infected = game.time + 4; t.fear = 3; t.fearFrom = h; npcSay(t, pick([L('Ай! Что это было?!'), L('Что ты мне вколол?!')])); }
   } else if (t.alive) {
     if (t.team === 'zombie') cureZombie(t);
     else if (t.infected) { t.infected = 0; t.coughed = false; npcSay(t, L('Спасибо, мне лучше!')); }
-    else if (t === game.player && t.infected) t.infected = 0;
   }
 }
 function zombieAI(h, dt) {
@@ -2305,7 +2308,7 @@ function kill(h, ix, iy, iz, at, o, dmg) {
   h.ragdoll = makeRagdoll(h, ix, iy, iz, at);
   sfx('bodyfall', at);
   if (h.rel) relDeath(h, killer);
-  if (h.infected && h.team !== 'zombie' && game.mode === 'sandbox') { const run = game.runId; setTimeout(() => { if (game.runId === run && !h.alive && h.ragdoll && game.humans.includes(h)) { revive(h); zombify(h); } }, 3000); }
+  if (h.infected && h.team !== 'zombie' && game.mode === 'sandbox') { later(3, () => { if (!h.alive && h.ragdoll && game.humans.includes(h)) { revive(h); zombify(h); } }); }
   if (game.mode !== 'survival') {
     const corpses = game.humans.filter(x => !x.alive && x.ragdoll && x !== game.player);
     if (corpses.length > 30) { const old = corpses.sort((a, b) => a.deadAt - b.deadAt)[0]; const q = old.ragdoll.p[8]; for (let i = 0; i < 10; i++) PS.smoke.add({ x: q.x + rnd(-.4, .4), y: q.y + rnd(0, .5), z: q.z + rnd(-.4, .4), vx: rnd(-.3, .3), vy: rnd(.2, .8), vz: rnd(-.3, .3), life: .8 }); removeHuman(old); }
@@ -3149,11 +3152,12 @@ function updateHuman(h, dt) {
     if (Math.random() < dt * .4) scream(h);
     if (h.hp <= 0) kill(h, 0, 0, 0, { x: h.x, y: h.y + 1, z: h.z }, { owner: h.lastAttacker, bleedOut: true }, 0);
   }
-  if (isP && h.hp < h.maxHp && h.hurt < -3) { h.hp = Math.min(h.maxHp, h.hp + dt * 6); updateHud(); }
+  if (isP && h.hp < h.maxHp && h.hurt < -3 && !h.infected) { h.hp = Math.min(h.maxHp, h.hp + dt * 6); updateHud(); }
   if (!isP && h.alive) h.P = pose(h);
 }
 function step(dt) {
   game.time += dt;
+  if (game.timers && game.timers.length) for (let i = game.timers.length - 1; i >= 0; i--) { const q = game.timers[i]; if (game.time >= q.t) { game.timers.splice(i, 1); if (q.run === game.runId) q.fn(); } }
   game.zc = 0; for (const h of game.humans) if (h.team === 'zombie' && h.alive) game.zc++;
   for (const h of game.humans.slice()) updateHuman(h, dt);
   for (const g of game.gibs) updateGib(g);
@@ -3309,7 +3313,7 @@ function doEmote(kind) {
   game.emote = { kind, t: 0, dur: kind === 'fak' ? 1.5 : kind === 'facepalm' ? 1.9 : 1.7 };
   sfx('swish');
   chatMsg(null, pname() + EMOTE_TXT[kind], 'sys');
-  npcNear(p, 14, h => inFront(h) && h.team !== 'dummy', h => { npcGesture(h, kind); npcSay(h, say((h.panic ? { civil: [L('Не до тебя!!'), L('Помогите!')] } : EMOTE_REPLY[kind])[h.team] || EMOTE_REPLY[kind].civil)); }, 2);
+  npcNear(p, 14, h => inFront(h) && h.team !== 'dummy' && h.team !== 'zombie', h => { npcGesture(h, kind); npcSay(h, say((h.panic ? { civil: [L('Не до тебя!!'), L('Помогите!')] } : EMOTE_REPLY[kind])[h.team] || EMOTE_REPLY[kind].civil)); }, 2);
 }
 let emotesOpen = false;
 function openEmotes() { if (game.state !== 'play') return; emotesOpen = !emotesOpen; $('emoteMenu').classList.toggle('hidden', !emotesOpen); $('hud').classList.toggle('emoting', emotesOpen); if (emotesOpen) { closeChat(); $('toast').classList.add('hidden'); } }
@@ -3353,7 +3357,7 @@ function sendChat(t) {
   sfx('ui'); chatMsg(pname(), t, 'me');
   const p = game.player; if (!p) return;
   const kind = (CHAT_KIND.find(([, re]) => re.test(t)) || ['other'])[0];
-  npcNear(p, 20, () => true, h => {
+  npcNear(p, 20, h => h.team !== 'zombie', h => {
     if (h.panic && h.team === 'civil') { npcSay(h, pick([L('Помогите!!'), L('Не убивай!'), L('А-а-а!')])); return; }
     const tab = CHAT_REPLY[h.team] || CHAT_REPLY.civil; npcSay(h, say(tab[kind] || tab.other));
   }, Math.random() < .4 ? 2 : 1);
@@ -3389,8 +3393,9 @@ function screenSplat(n) { for (let i = 0; i < n; i++) game.splats.push({ x: rnd(
 function updateAmmo() {
   const p = game.player; if (!p) return;
   const w = WEAPONS[p.weapon], el = $('ammo');
-  const gun = !!w.mag;
-  el.classList.toggle('hidden', !gun); $('reloadBtn').classList.toggle('hidden', !gun); $('aimBtn').classList.toggle('hidden', !w.zoom);
+  const gun = !!w.mag, med = w.type === 'med' && game.mode === 'survival';
+  el.classList.toggle('hidden', !gun && !med);
+  if (med) $('ammoN').textContent = (game.uses && game.uses[w.id] !== undefined) ? game.uses[w.id] : w.uses; $('reloadBtn').classList.toggle('hidden', !gun); $('aimBtn').classList.toggle('hidden', !w.zoom);
   $('aimBtn').classList.toggle('on', !!game.ads);
   if (gun) { $('ammoN').textContent = game.reloadT > 0 && game.reloadW === p.weapon ? '…' : game.ammo[p.weapon]; el.classList.toggle('low', game.ammo[p.weapon] <= Math.ceil(w.mag / 4)); }
 }
@@ -3830,7 +3835,7 @@ function startGame(mi, demo, mode = 'sandbox') {
   clearActors();
   game.map = m; game.mapIndex = mi; m.pstart = PSTART[m.id]; buildWorld(m);
   saveBest(); game.runId = (game.runId || 0) + 1; $('toast').classList.add('hidden'); $('chatLog').innerHTML = '';
-  Object.assign(game, { uses: {}, clickT: 0, humans: [], projectiles: [], time: 0, kills: 0, demo, shake: 0, recoil: 0, flash: 0, mode: demo ? 'sandbox' : mode, wave: 0, waveT: 3, toSpawn: 0, spawnT: 0,
+  Object.assign(game, { timers: [], uses: {}, clickT: 0, humans: [], projectiles: [], time: 0, kills: 0, demo, shake: 0, recoil: 0, flash: 0, mode: demo ? 'sandbox' : mode, wave: 0, waveT: 3, toSpawn: 0, spawnT: 0,
     reloadT: 0, autoReload: 0, ads: false, adsK: 0, vmFlash: 0, dmgInd: [], splats: [], props: [], grab: null, crushLabel: '', ammo: WEAPONS.map(w => w.mag || 0) });
   game.player = null;
   $('feed').innerHTML = '';
