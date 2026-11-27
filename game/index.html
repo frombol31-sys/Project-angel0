@@ -285,7 +285,7 @@ h2{font-weight:600;letter-spacing:2px;text-transform:uppercase}
 .screen:not(.hidden) ~ #msg, .screen:not(.hidden) ~ #toast{display:none!important}
 #tip{min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .atile span{white-space:normal;line-height:1.1;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow-wrap:anywhere;text-align:center}
-.card b{min-width:0;overflow-wrap:anywhere}
+.card b{min-width:0;overflow-wrap:break-word;hyphens:auto}
 #hud.emoting #chatLog{visibility:hidden}
 @media (max-height:430px), (orientation:portrait) and (max-width:430px){ .scard{padding:5px 8px;row-gap:1px} .scard small{display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;line-height:1.2} .scard b{line-height:1.1} #spawnGrid{gap:6px} }
 #hud.chatting #hpbox,#hud.chatting #emoteBtn,#hud.chatting #chatBtn{visibility:hidden}
@@ -327,7 +327,7 @@ h2{font-weight:600;letter-spacing:2px;text-transform:uppercase}
     <div class="tag">рэгдолл · кровь · граффити</div>
     <nav class="mlist">
       <button class="mi primary" id="bPlay"><span>ИГРАТЬ</span><em>песочница или выживание · 4 карты</em></button>
-      <button class="mi" id="bArm"><span>АРСЕНАЛ</span><em>15 видов оружия и инструментов</em></button>
+      <button class="mi" id="bArm"><span>АРСЕНАЛ</span><em id="armCount">15 видов оружия и инструментов</em></button>
       <button class="mi" id="bSet"><span>НАСТРОЙКИ</span><em>графика, кровь, звук, люди</em></button>
       <button class="mi" id="bHelp"><span>КАК ИГРАТЬ</span><em>управление и советы</em></button>
       <button class="mi danger hidden" id="bQuit"><span>ВЫЙТИ</span><em>закрыть игру</em></button>
@@ -404,7 +404,7 @@ h2{font-weight:600;letter-spacing:2px;text-transform:uppercase}
     <div class="qp" id="chatQuick"></div></div>
   <div id="feed"></div>
   <div id="palette" class="hidden"></div>
-  <div id="crushCol" class="hidden"><button class="cm cat" id="crushCat"><i id="crushCatIcon"></i>каталог<span class="kb"> · B</span></button><div id="crushModes"></div><div class="kb khint">V / ПКМ<br>режим</div></div>
+  <div id="crushCol" class="hidden"><button class="cm cat" id="crushCat"><i id="crushCatIcon"></i><span>каталог<span class="kb"> · B</span></span></button><div id="crushModes"></div><div class="kb khint">V / ПКМ<br>режим</div></div>
   <div id="wbox"><span id="wName">Кулаки</span><div id="ammo" class="hidden"><b id="ammoN">12</b><small> / ∞</small></div></div>
   <button class="hb" id="wheelBtn" aria-label="Колесо оружия"><i id="wIcon"></i></button>
   <div class="rbtn sbtn hidden" id="downBtn">⤓<span>вниз</span></div>
@@ -1393,7 +1393,7 @@ function severAlive(h, limb, dir) {
   const len = (a, b) => Math.hypot(pts[a].x - pts[b].x, pts[a].y - pts[b].y, pts[a].z - pts[b].z);
   const g = { p: pts, sticks: [[0, 1, len(0, 1), false], [1, 2, len(1, 2), false]], emit: [{ pt: 0, t: 3 }], center: 1, group: new THREE.Group() };
   const mk = (geo, mat, r) => { const m = new THREE.Mesh(geo, mat); if (r) m.scale.set(r, 1, r); g.group.add(m); return m; };
-  g.upper = mk(GEO.limbT, colMat(h.shirt), .065); g.fore = mk(GEO.limbT, colMat(h.skin), .055); g.hand = mk(GEO.hand, colMat(h.skin));
+  const ks = h.size || 1; g.upper = mk(GEO.limbT, colMat(h.shirt), .065 * ks); g.fore = mk(GEO.limbT, colMat(h.skin), .055 * ks); g.hand = mk(GEO.hand, colMat(h.skin)); g.hand.scale.setScalar(ks);
   g.stump = mk(GEO.stump, colMat('#8a0a10')); g.bone = mk(GEO.limb, boneMat, .02);
   actors.add(g.group); game.gibs.push(g);
   if (game.gibs.length > 30) { const o = game.gibs.shift(); actors.remove(o.group); }
@@ -1418,10 +1418,10 @@ function makeRagdoll(h, ix, iy, iz, hit) {
   if (hit) P.forEach((p, i) => { const d = (p.x - hit.x) ** 2 + (p.y - hit.y) ** 2 + (p.z - hit.z) ** 2; if (d < nd) { nd = d; near = i; } });
   const pts = P.map((p, i) => {
     const k = i === near ? 1 : .45 + Math.random() * .25;
-    return { x: p.x, y: p.y, z: p.z, px: p.x - (h.vx * .7 + ix * k) * DT, py: p.y - (h.vy * .7 + iy * k) * DT, pz: p.z - (h.vz * .7 + iz * k) * DT, r: PRAD[i] };
+    return { x: p.x, y: p.y, z: p.z, px: p.x - (h.vx * .7 + ix * k) * DT, py: p.y - (h.vy * .7 + iy * k) * DT, pz: p.z - (h.vz * .7 + iz * k) * DT, r: PRAD[i] * (h.size || 1) };
   });
   const sticks = STICKS.map(([a, b]) => [a, b, Math.hypot(P[a].x - P[b].x, P[a].y - P[b].y, P[a].z - P[b].z), false]);
-  const rd = { p: pts, sticks, stumps: [], gibbed: false, headOff: false, headSpin: 0, lost: {}, gone: {}, emit: [] };
+  const rd = { p: pts, sticks, stumps: [], gibbed: false, headOff: false, headSpin: 0, lost: {}, gone: {}, emit: [], k: h.size || 1 };
   for (const limb in h.lost) {
     const L = LIMBS[limb]; if (!L) continue;
     rd.gone[limb] = true; rd.lost[limb] = true; sticks[L.root][3] = true;
@@ -1739,7 +1739,7 @@ function zombify(h) {
   zombieLook(h);
   Object.assign(h, { team: 'zombie', infected: 0, weapon: 0, fixedWeapon: false, maxHp: 150, hp: 150, panic: false, fear: 0, angry: 0, gest: null, follow: null, tgt: null, combat: true });
   if (h.rel) { const o = h.rel.o; o.rel = null; o.follow = null; h.rel = null; if (o.alive && o.team !== 'zombie') { o.fear = 8; o.fearFrom = h; o.gest = 'grief'; o.gestT = game.time + 2; npcSay(o, L('Нет!! Что с тобой?!')); } }
-  if (h.mesh) actors.remove(h.mesh); buildBody(h); h.P = pose(h);
+  h.wounds = []; if (h.mesh) actors.remove(h.mesh); buildBody(h); h.P = pose(h);
   sfx('groan', h); for (let i = 0; i < 14; i++) PS.smoke.add({ x: h.x + rnd(-.3, .3), y: rnd(.3, 1.7), z: h.z + rnd(-.3, .3), vx: rnd(-.3, .3), vy: rnd(.2, .6), vz: rnd(-.3, .3), life: .9 });
 }
 function cureZombie(h) {
@@ -1747,7 +1747,7 @@ function cureZombie(h) {
   Object.assign(h, { team: o.team || 'civil', maxHp: o.maxHp || 100, hp: Math.min(60, o.maxHp || 100), infected: 0, tgt: null, combat: false, angry: 0, fear: 0, happyT: game.time + 3, fixedWeapon: !!o.fixedWeapon });
   if (h.orig) Object.assign(h, { skin: o.skin, shirt: o.shirt, pants: o.pants, hair: o.hair, mask: o.mask, skirt: o.skirt, weapon: o.weapon || 0 });
   else Object.assign(h, { skin: pick(SKINS), shirt: pick(SHIRTS), pants: pick(PANTS), hair: pick(HAIRS), skirt: null, mask: false });
-  if (h.mesh) actors.remove(h.mesh); buildBody(h); h.P = pose(h);
+  h.wounds = []; if (h.mesh) actors.remove(h.mesh); buildBody(h); h.P = pose(h);
   magic(h.x, h.y + 1, h.z, 26, 2); sfx('heal', h);
   npcSay(h, pick([L('Где я?..'), L('Что со мной было?'), L('Спасибо... я снова человек!')]));
 }
@@ -2046,8 +2046,8 @@ function updateRagdoll(rd) {
       if (m[3].some(k => lost[k] || (rd.gone && rd.gone[k]))) continue;
       const a = pts[m[0]], b = pts[m[1]];
       const dx = b.x - a.x, dy = b.y - a.y, dz = b.z - a.z, d = Math.hypot(dx, dy, dz) || .0001;
-      if (d >= m[2]) continue;
-      const wa = PINV[m[0]], wb = PINV[m[1]], k = (d - m[2]) / (d * (wa + wb));
+      const mn = m[2] * (rd.k || 1); if (d >= mn) continue;
+      const wa = PINV[m[0]], wb = PINV[m[1]], k = (d - mn) / (d * (wa + wb));
       a.x += dx * k * wa; a.y += dy * k * wa; a.z += dz * k * wa; b.x -= dx * k * wb; b.y -= dy * k * wb; b.z -= dz * k * wb;
     }
     for (const p of pts) collideP(p, boxes);
@@ -2234,7 +2234,7 @@ function castRay(o, d, maxT, owner, skip) {
     if (h === owner || h === skip) continue;
     if (h.alive) {
       if (h === game.player) { for (const [c, r, i] of playerSpheres(h)) { const t = raySphere(o, d, c, r); if (t !== null && t < best) { best = t; res = { kind: 'body', h, i }; } } }
-      else if (h.P) for (const [i, r] of HITS) { if (ptGone(h, i)) continue; const t = raySphere(o, d, h.P[i], r); if (t !== null && t < best) { best = t; res = { kind: 'body', h, i }; } }
+      else if (h.P) for (const [i, r] of HITS) { if (ptGone(h, i)) continue; const t = raySphere(o, d, h.P[i], r * (h.size || 1)); if (t !== null && t < best) { best = t; res = { kind: 'body', h, i }; } }
     } else if (h.ragdoll) {
       h.ragdoll.p.forEach((p, i) => { if (ptGone(h, i)) return; const t = raySphere(o, d, p, Math.max(p.r, .1)); if (t !== null && t < best) { best = t; res = { kind: 'corpse', h, i }; } });
     }
@@ -2533,8 +2533,9 @@ function propOverlap(pr) {
   for (const b of game.boxes) { if (b === a) continue; if (a.x0 < b.x1 && a.x1 > b.x0 && a.y0 < b.y1 - .001 && a.y1 > b.y0 + .001 && a.z0 < b.z1 && a.z1 > b.z0) return b; }
   return null;
 }
+function disposeProp(pr) { pr.mesh.traverse(o => { if (o.geometry && o.geometry !== BARREL_GEO && o.geometry !== BAND_GEO) o.geometry.dispose(); }); }
 function removeProp(pr) {
-  actors.remove(pr.mesh);
+  actors.remove(pr.mesh); disposeProp(pr);
   const i = game.props.indexOf(pr); if (i >= 0) game.props.splice(i, 1);
   const j = game.boxes.indexOf(pr.box); if (j >= 0) game.boxes.splice(j, 1);
   if (game.grab && game.grab.ref === pr) game.grab = null;
@@ -2793,7 +2794,7 @@ function ai(h, dt) {
   if (h.team === 'zombie') { zombieAI(h, dt); return; }
   if (h.team === 'dummy') { h.mvx = h.mvz = 0; h.fire = false; h.jump = false; h.combat = false; return; }
   h.aiT -= dt; h.fear = Math.max(0, h.fear - dt); h.angry = Math.max(0, h.angry - dt); h.tgtT -= dt; h.avoidT -= dt;
-  const chaos = settings.chaos || game.demo, p = game.player;
+  const chaos = (settings.chaos && game.mode === 'sandbox') || game.demo, p = game.player;
   if (game.zc) { // people react to zombies nearby: civilians run, armed people fight
     let nz = null, nzd = 8; for (const z of game.humans) if (z.team === 'zombie' && z.alive) { const dd = Math.hypot(z.x - h.x, z.z - h.z); if (dd < nzd) { nzd = dd; nz = z; } }
     if (nz) {
@@ -2965,6 +2966,7 @@ addEventListener('keydown', e => {
     if (e.code === 'Tab') { e.preventDefault(); openInv(); return; }
   }
   if (game.state === 'inv' && (e.code === 'Tab' || e.code === 'Escape')) { e.preventDefault(); closeInv(); closeSpawn(); return; }
+  if (e.code === 'Escape' && emotesOpen) { closeEmotes(); return; }
   if (e.code === 'Escape' || e.code === 'KeyP') { if (game.state === 'play') pauseGame(); else if (e.code === 'Escape' && game.state !== 'inv') gzBack(); }
 });
 addEventListener('keyup', e => { keys[e.code] = false; });
@@ -3789,7 +3791,7 @@ function buildSettings() {
     const sg = document.createElement('div'); sg.className = 'seg';
     opts.forEach(([v, t]) => {
       const b = document.createElement('button'); b.textContent = t; b.classList.toggle('on', settings[key] === v);
-      b.addEventListener('click', () => { if (key === 'lang' && v !== LANG) { settings.lang = v; saveSettings(); location.reload(); return; } settings[key] = v; saveSettings(); buildSettings(); if (key === 'vol' || key === 'music') { initAudio(); applyVolume(); } if (key === 'gfx' || key === 'res') applyGfx(); });
+      b.addEventListener('click', () => { if (key === 'lang' && v !== LANG) { settings.lang = v; saveBest(); saveSettings(); location.reload(); return; } settings[key] = v; saveSettings(); buildSettings(); if (key === 'vol' || key === 'music') { initAudio(); applyVolume(); } if (key === 'gfx' || key === 'res') applyGfx(); });
       sg.appendChild(b);
     });
     r.appendChild(sg); P.appendChild(r);
@@ -3804,7 +3806,7 @@ function buildSettings() {
   row(L('Людей при старте'), L('в песочнице; 0 — пустая карта'), [[0, '0'], [4, '4'], [8, '8'], [16, '16']], 'npcStart');
   row(L('Полёт'), L('только в песочнице'), [[false, L('Выкл')], [true, L('Вкл')]], 'fly');
   row(L('Бессмертие'), L('только в песочнице'), [[false, L('Выкл')], [true, L('Вкл')]], 'god');
-  row(L('Хаос'), L('все дерутся со всеми'), [[false, L('Выкл')], [true, L('Вкл')]], 'chaos');
+  row(L('Хаос'), L('только в песочнице'), [[false, L('Выкл')], [true, L('Вкл')]], 'chaos');
   row(L('Возрождение'), L('убитых в песочнице'), [[0, L('Выкл')], [30, L('30 с')], [60, L('1 мин')], [180, L('3 мин')]], 'respawn');
   row(L('Графика'), L('«Быстро» — для слабых телефонов'), [[0, L('Быстро')], [1, L('Красиво')]], 'gfx');
   row(L('Чёткость'), L('резкость картинки; ниже — быстрее'), [[0, L('Низк')], [1, L('Сред')], [2, L('Высок')]], 'res');
@@ -3823,6 +3825,7 @@ function goLandscape() {
 }
 function clearMarks() { bloodPool.clear(); sprayPool.clear(); markerPool.clear(); for (const c of chunks) c.m.visible = false; for (const d of debris) actors.remove(d.m); debris.length = 0; }
 function clearActors() {
+  for (const pr of game.props || []) disposeProp(pr);
   while (actors.children.length) actors.remove(actors.children[0]);
   for (const p of game.projectiles) if (p.mesh) scene.remove(p.mesh);
   for (const k in PS) PS[k].list.length = 0;
@@ -3947,6 +3950,7 @@ function frame(now) {
   drawOverlay();
   requestAnimationFrame(frame);
 }
+{ const n = WEAPONS.length, t = { 'en-GB': n + ' weapons and tools', 'en-US': n + ' weapons and tools', uk: n + ' видів зброї та інструментів' }[LANG] || n + ' видов оружия и инструментов'; $('armCount').textContent = t; }
 applyGfx();
 makeIcons();
 updateName();
