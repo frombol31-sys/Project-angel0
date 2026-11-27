@@ -469,6 +469,10 @@ function toGame(cx, cy) { return ROT ? { x: cy, y: innerWidth - cx } : { x: cx, 
 // ---------------- audio: everything is synthesized live with Web Audio ----------------
 let AC = null, NB = null, BUS = null;
 const lastS = {};
+// phones: bigger audio buffer, cheap echo instead of convolution reverb, fewer voices at once
+const MOBILE_AUDIO = /Android|iPhone|iPad|iPod/i.test(navigator.userAgent) || (window.matchMedia && matchMedia('(pointer:coarse)').matches);
+const MAX_VOICES = MOBILE_AUDIO ? 14 : 32;
+let liveVoices = 0;
 const soundOn = () => settings.vol > 0;
 function makeImpulse(sec, decay) {
   const len = Math.floor(AC.sampleRate * sec), b = AC.createBuffer(2, len, AC.sampleRate);
@@ -479,7 +483,8 @@ function initAudio() {
   if (!soundOn()) return;
   try {
     if (!AC) {
-      AC = new (window.AudioContext || window.webkitAudioContext)();
+      const Ctx = window.AudioContext || window.webkitAudioContext;
+      try { AC = new Ctx({ latencyHint: MOBILE_AUDIO ? 'playback' : 'interactive' }); } catch (e) { AC = new Ctx(); }
       NB = AC.createBuffer(1, AC.sampleRate * 2, AC.sampleRate);
       const d = NB.getChannelData(0); for (let i = 0; i < d.length; i++) d[i] = Math.random() * 2 - 1;
       const master = AC.createGain(), comp = AC.createDynamicsCompressor();
@@ -487,12 +492,16 @@ function initAudio() {
       master.connect(comp); comp.connect(AC.destination);
       const sfxBus = AC.createGain(), musicBus = AC.createGain(), ambBus = AC.createGain();
       sfxBus.connect(master); musicBus.connect(master); ambBus.connect(master);
-      const verb = AC.createConvolver(); verb.buffer = makeImpulse(2.2, 3.2);
-      const verbIn = AC.createGain(); verbIn.gain.value = .25; verbIn.connect(verb); verb.connect(master);
+      const verbIn = AC.createGain(); verbIn.gain.value = .25;
+      if (MOBILE_AUDIO) { // a short filtered feedback echo: sounds like a room, costs almost nothing
+        const dl = AC.createDelay(.5), fb = AC.createGain(), lp = AC.createBiquadFilter(), out = AC.createGain();
+        dl.delayTime.value = .085; fb.gain.value = .38; lp.type = 'lowpass'; lp.frequency.value = 2200; out.gain.value = .9;
+        verbIn.connect(dl); dl.connect(lp); lp.connect(fb); fb.connect(dl); lp.connect(out); out.connect(master);
+      } else { const verb = AC.createConvolver(); verb.buffer = makeImpulse(2.2, 3.2); verbIn.connect(verb); verb.connect(master); }
       BUS = { master, sfx: sfxBus, music: musicBus, amb: ambBus, verbIn, loops: {} };
       applyVolume();
     }
-    if (AC.state === 'suspended') AC.resume();
+    if (AC.state !== 'running' && !document.hidden) AC.resume().catch(() => {});
   } catch (e) { AC = null; }
 }
 function applyVolume() {
@@ -503,9 +512,11 @@ function applyVolume() {
   BUS.amb.gain.setTargetAtTime(.9, t, .3);
 }
 // a voice: filter (distance) -> pan -> sfx bus, plus a reverb send
-function voice(pos, wet = .25) {
-  const g = AC.createGain(), lp = AC.createBiquadFilter(); lp.type = 'lowpass'; lp.frequency.value = 20000;
+function voice(pos, wet = .25, life = 1.2) {
   let vol = 1, pan = 0;
+  if (pos && typeof camera !== 'undefined') vol = clamp(1.15 - Math.hypot(pos.x - camera.position.x, pos.z - camera.position.z) / 48, 0, 1);
+  if (liveVoices >= MAX_VOICES && (vol < .6 || liveVoices >= MAX_VOICES * 1.5)) return null;
+  const g = AC.createGain(), lp = AC.createBiquadFilter(); lp.type = 'lowpass'; lp.frequency.value = 20000;
   if (pos && typeof camera !== 'undefined') {
     const dx = pos.x - camera.position.x, dz = pos.z - camera.position.z, d = Math.hypot(dx, dz);
     vol = clamp(1.15 - d / 48, 0, 1);
@@ -519,7 +530,12 @@ function voice(pos, wet = .25) {
   let tail = lp;
   if (AC.createStereoPanner) { const p = AC.createStereoPanner(); p.pan.value = pan; lp.connect(p); tail = p; }
   tail.connect(BUS.sfx);
-  const s = AC.createGain(); s.gain.value = wet * (game.map ? ({ city: 1, ware: 1.8, canyon: .5, test: .8 }[game.map.id] || 1) : 1); tail.connect(s); s.connect(BUS.verbIn);
+  let s = null;
+  if (!MOBILE_AUDIO || wet >= .3) { s = AC.createGain(); s.gain.value = wet * (game.map ? ({ city: 1, ware: 1.8, canyon: .5, test: .8 }[game.map.id] || 1) : 1); tail.connect(s); s.connect(BUS.verbIn); }
+  // disconnect the chain once the sound has played out, otherwise every shot stays in the audio graph forever
+  liveVoices++;
+  const nodes = [g, lp, tail, s];
+  setTimeout(() => { liveVoices--; for (const n of nodes) if (n) try { n.disconnect(); } catch (e) {} }, life * 1000 + 200);
   return g;
 }
 // building blocks
@@ -596,13 +612,14 @@ const R = {
   gameover(v) { [392, 330, 262, 196].forEach((f, i) => tn(v, { type: 'triangle', f, dur: .5, g: .16, at: i * .28, lp: 1500 })); tn(v, { f: 50, dur: 1.8, g: .3, at: .2 }); },
   hit_marker(v) { tn(v, { type: 'triangle', f: 1800, dur: .03, g: .06 }); }
 };
+const LIFE = { boom: 3.2, rocket: 2.4, scream: 2.4, gameover: 4, wave: 3, sniper: 1.8, shotgun: 1.6, bodyfall: 1.4, spawn: 1.6 };
 const WET = { boom: .6, sniper: .55, shotgun: .45, pistol: .35, rifle: .3, rocket: .4, scream: .35, wave: .3, gameover: .4 };
 function sfx(n, pos) {
   if (!AC || !BUS || !soundOn() || !R[n]) return;
   const now = AC.currentTime;
-  if (lastS[n] && now - lastS[n] < .035) return;
+  if (lastS[n] && now - lastS[n] < (MOBILE_AUDIO ? .06 : .035)) return;
   lastS[n] = now;
-  try { const v = voice(pos, WET[n] !== undefined ? WET[n] : .2); if (v) R[n](v); } catch (e) {}
+  try { const v = voice(pos, WET[n] !== undefined ? WET[n] : .2, LIFE[n] || 1.2); if (v) R[n](v); } catch (e) {}
 }
 function scream(pos) { sfx('scream', pos); }
 // continuous loops: saw engine, spray hiss, grab hum, map ambience, menu music
@@ -658,7 +675,9 @@ function updateAudio(dt) {
     }
   }
 }
-document.addEventListener('visibilitychange', () => { if (!AC) return; if (document.hidden) AC.suspend(); else if (soundOn()) AC.resume(); });
+document.addEventListener('visibilitychange', () => { if (!AC) return; if (document.hidden) AC.suspend().catch(() => {}); else if (soundOn()) AC.resume().catch(() => {}); });
+addEventListener('pageshow', () => { if (AC && soundOn() && AC.state !== 'running') AC.resume().catch(() => {}); });
+addEventListener('pointerdown', () => { if (AC && soundOn() && AC.state !== 'running') AC.resume().catch(() => {}); }, true);
 document.addEventListener('pointerdown', e => { initAudio(); if (e.target.closest && e.target.closest('.mi,.btn,.tab,.scard,.atile,.map,.mode,.seg button,.wslot,.cm,.sw,.back,.hb')) sfx('ui'); }, true);
 addEventListener('keydown', () => initAudio(), true);
 
