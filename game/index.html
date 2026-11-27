@@ -409,7 +409,7 @@ const ease = t => 1 - (1 - t) * (1 - t);
 function angDiff(a, b) { let d = b - a; while (d > Math.PI) d -= 2 * Math.PI; while (d < -Math.PI) d += 2 * Math.PI; return d; }
 
 // ---------------- settings ----------------
-const settings = { blood: 1, npcStart: 0, chaos: false, sound: true, gfx: 1, sens: 1, paint: 0, fov: 75, best: 0, fly: false, god: false };
+const settings = { blood: 1, npcStart: 0, chaos: false, vol: .7, music: true, gfx: 1, sens: 1, paint: 0, fov: 75, best: 0, fly: false, god: false };
 try { Object.assign(settings, JSON.parse(localStorage.getItem('gz_settings') || '{}')); } catch (e) {}
 function saveSettings() { try { localStorage.setItem('gz_settings', JSON.stringify(settings)); } catch (e) {} }
 const bloodMul = () => [0.4, 1, 2][settings.blood];
@@ -418,49 +418,201 @@ const bloodMul = () => [0.4, 1, 2][settings.blood];
 let GW = 800, GH = 400, ROT = false;
 function toGame(cx, cy) { return ROT ? { x: cy, y: innerWidth - cx } : { x: cx, y: cy }; }
 
-// ---------------- audio ----------------
-let AC = null, NB = null;
+// ---------------- audio: everything is synthesized live with Web Audio ----------------
+let AC = null, NB = null, BUS = null;
 const lastS = {};
+const soundOn = () => settings.vol > 0;
+function makeImpulse(sec, decay) {
+  const len = Math.floor(AC.sampleRate * sec), b = AC.createBuffer(2, len, AC.sampleRate);
+  for (let c = 0; c < 2; c++) { const d = b.getChannelData(c); for (let i = 0; i < len; i++) d[i] = (Math.random() * 2 - 1) * Math.pow(1 - i / len, decay); }
+  return b;
+}
 function initAudio() {
-  if (!settings.sound) return;
+  if (!soundOn()) return;
   try {
     if (!AC) {
       AC = new (window.AudioContext || window.webkitAudioContext)();
-      NB = AC.createBuffer(1, AC.sampleRate, AC.sampleRate);
-      const d = NB.getChannelData(0);
-      for (let i = 0; i < d.length; i++) d[i] = Math.random() * 2 - 1;
+      NB = AC.createBuffer(1, AC.sampleRate * 2, AC.sampleRate);
+      const d = NB.getChannelData(0); for (let i = 0; i < d.length; i++) d[i] = Math.random() * 2 - 1;
+      const master = AC.createGain(), comp = AC.createDynamicsCompressor();
+      comp.threshold.value = -14; comp.ratio.value = 4; comp.attack.value = .003; comp.release.value = .2;
+      master.connect(comp); comp.connect(AC.destination);
+      const sfxBus = AC.createGain(), musicBus = AC.createGain(), ambBus = AC.createGain();
+      sfxBus.connect(master); musicBus.connect(master); ambBus.connect(master);
+      const verb = AC.createConvolver(); verb.buffer = makeImpulse(2.2, 3.2);
+      const verbIn = AC.createGain(); verbIn.gain.value = .25; verbIn.connect(verb); verb.connect(master);
+      BUS = { master, sfx: sfxBus, music: musicBus, amb: ambBus, verbIn, loops: {} };
+      applyVolume();
     }
     if (AC.state === 'suspended') AC.resume();
-  } catch (e) {}
+  } catch (e) { AC = null; }
 }
-const SFX = {
-  pistol: [.14, 1900, .55], shotgun: [.3, 1100, .8], rifle: [.09, 2300, .4], hit: [.1, 500, .6, 'lowpass', 150],
-  swish: [.12, 2600, .18, 'bandpass'], boom: [1.1, 420, 1, 'lowpass', 90], splat: [.2, 650, .45], slash: [.16, 3200, .3, 'highpass'],
-  throw: [.1, 1500, .15, 'bandpass'], sniper: [.55, 1300, 1, 'lowpass', 120], saw: [.09, 700, .3, 'bandpass', 60], reload: [.07, 3200, .22, 'bandpass'], crunch: [.28, 450, .7, 'lowpass', 70], empty: [.04, 4000, .2, 'highpass'], zap: [.22, 2400, .3, 'bandpass', 320], spray: [.13, 6000, .1, 'highpass'], marker: [.05, 2500, .035, 'bandpass'], rocket: [.4, 900, .5, 'bandpass'], hurt: [.15, 300, .5, 'lowpass', 110]
+function applyVolume() {
+  if (!BUS) return;
+  const t = AC.currentTime;
+  BUS.master.gain.setTargetAtTime(settings.vol, t, .05);
+  BUS.music.gain.setTargetAtTime(settings.music ? .55 : 0, t, .3);
+  BUS.amb.gain.setTargetAtTime(.9, t, .3);
+}
+// a voice: filter (distance) -> pan -> sfx bus, plus a reverb send
+function voice(pos, wet = .25) {
+  const g = AC.createGain(), lp = AC.createBiquadFilter(); lp.type = 'lowpass'; lp.frequency.value = 20000;
+  let vol = 1, pan = 0;
+  if (pos && typeof camera !== 'undefined') {
+    const dx = pos.x - camera.position.x, dz = pos.z - camera.position.z, d = Math.hypot(dx, dz);
+    vol = clamp(1.15 - d / 48, 0, 1);
+    if (vol <= .02) return null;
+    const rx = Math.cos(game.yaw), rz = -Math.sin(game.yaw);
+    pan = d > .5 ? clamp((dx * rx + dz * rz) / d, -1, 1) * .75 : 0;
+    lp.frequency.value = 600 + 19000 * Math.pow(clamp(1 - d / 55, 0, 1), 2);
+  }
+  g.gain.value = vol;
+  g.connect(lp);
+  let tail = lp;
+  if (AC.createStereoPanner) { const p = AC.createStereoPanner(); p.pan.value = pan; lp.connect(p); tail = p; }
+  tail.connect(BUS.sfx);
+  const s = AC.createGain(); s.gain.value = wet * (game.map ? ({ city: 1, ware: 1.8, canyon: .5, test: .8 }[game.map.id] || 1) : 1); tail.connect(s); s.connect(BUS.verbIn);
+  return g;
+}
+// building blocks
+function nz(dst, o) {
+  const t = AC.currentTime + (o.at || 0), dur = o.dur || .1;
+  const src = AC.createBufferSource(); src.buffer = NB; src.loop = true;
+  const f = AC.createBiquadFilter(); f.type = o.type || 'lowpass'; f.Q.value = o.q || .8;
+  f.frequency.setValueAtTime(o.f || 1000, t); if (o.f2) f.frequency.exponentialRampToValueAtTime(o.f2, t + dur);
+  const g = AC.createGain(); const a = o.att || .002;
+  g.gain.setValueAtTime(.0001, t); g.gain.exponentialRampToValueAtTime(o.g || .5, t + a); g.gain.exponentialRampToValueAtTime(.0001, t + dur);
+  src.connect(f); f.connect(g); g.connect(dst); src.start(t, Math.random() * 1.5); src.stop(t + dur + .05);
+}
+function tn(dst, o) {
+  const t = AC.currentTime + (o.at || 0), dur = o.dur || .1;
+  const os = AC.createOscillator(); os.type = o.type || 'sine';
+  os.frequency.setValueAtTime(o.f || 200, t); if (o.f2) os.frequency.exponentialRampToValueAtTime(o.f2, t + dur);
+  const g = AC.createGain(); const a = o.att || .002;
+  g.gain.setValueAtTime(.0001, t); g.gain.exponentialRampToValueAtTime(o.g || .4, t + a); g.gain.exponentialRampToValueAtTime(.0001, t + dur);
+  let out = g;
+  if (o.lp) { const f = AC.createBiquadFilter(); f.type = 'lowpass'; f.frequency.value = o.lp; g.connect(f); out = f; }
+  os.connect(g); out.connect(dst); os.start(t); os.stop(t + dur + .05);
+}
+const R = {
+  pistol(v) { tn(v, { type: 'square', f: 2200, f2: 700, dur: .02, g: .25 }); nz(v, { type: 'highpass', f: 1800, dur: .07, g: .9 }); nz(v, { f: 1500, f2: 300, dur: .28, g: .8 }); tn(v, { f: 150, f2: 45, dur: .2, g: .9 }); },
+  rifle(v) { nz(v, { type: 'highpass', f: 2000, dur: .05, g: .8 }); nz(v, { f: 1800, f2: 400, dur: .16, g: .7 }); tn(v, { f: 130, f2: 50, dur: .12, g: .7 }); },
+  shotgun(v) { nz(v, { type: 'highpass', f: 1200, dur: .08, g: .9 }); nz(v, { f: 900, f2: 150, dur: .5, g: 1.1 }); tn(v, { f: 110, f2: 32, dur: .35, g: 1.2 }); nz(v, { type: 'bandpass', f: 2500, dur: .04, g: .25, at: .38 }); nz(v, { type: 'bandpass', f: 1800, dur: .05, g: .25, at: .5 }); },
+  sniper(v) { nz(v, { type: 'highpass', f: 2500, dur: .06, g: 1 }); nz(v, { f: 1200, f2: 120, dur: .9, g: 1.1 }); tn(v, { f: 95, f2: 28, dur: .55, g: 1.3 }); nz(v, { f: 600, f2: 150, dur: .8, g: .35, at: .28 }); nz(v, { type: 'bandpass', f: 1600, dur: .05, g: .2, at: .7 }); },
+  rocket(v) { nz(v, { type: 'bandpass', f: 400, f2: 2400, dur: .7, g: .7, att: .03, q: 1.5 }); tn(v, { f: 90, f2: 40, dur: .3, g: .8 }); },
+  boom(v) { tn(v, { f: 75, f2: 22, dur: 1.6, g: 1.5 }); nz(v, { f: 1100, f2: 120, dur: 1.8, g: 1.3 }); nz(v, { type: 'highpass', f: 2500, dur: .15, g: .6 }); for (let i = 0; i < 9; i++) nz(v, { type: 'highpass', f: 1500 + Math.random() * 3000, dur: .03, g: .25, at: .15 + Math.random() * .9 }); },
+  hit(v) { tn(v, { f: 190, f2: 55, dur: .13, g: .9 }); nz(v, { f: 900, f2: 200, dur: .09, g: .6 }); },
+  slash(v) { nz(v, { type: 'bandpass', f: 3500, f2: 1100, dur: .16, g: .5, q: 2 }); nz(v, { f: 700, f2: 200, dur: .22, g: .6, at: .03 }); tn(v, { type: 'triangle', f: 2600, f2: 2400, dur: .25, g: .05, at: .01 }); },
+  swish(v) { nz(v, { type: 'bandpass', f: 700, f2: 3200, dur: .22, g: .5, att: .07, q: 2 }); },
+  throw(v) { nz(v, { type: 'bandpass', f: 500, f2: 2000, dur: .25, g: .25, att: .06, q: 2 }); },
+  splat(v) { nz(v, { f: 1400, f2: 180, dur: .32, g: .75, q: 4 }); tn(v, { f: 95, f2: 48, dur: .16, g: .45 }); nz(v, { f: 600, f2: 250, dur: .2, g: .35, at: .08, q: 6 }); },
+  crunch(v) { for (let i = 0; i < 7; i++) nz(v, { type: 'highpass', f: 1500 + Math.random() * 2500, dur: .02 + Math.random() * .03, g: .6, at: i * (.012 + Math.random() * .03) }); nz(v, { f: 700, f2: 150, dur: .3, g: .6, q: 5 }); tn(v, { f: 120, f2: 50, dur: .2, g: .5 }); },
+  hurt(v) { tn(v, { f: 130, f2: 55, dur: .22, g: .9 }); nz(v, { f: 500, f2: 150, dur: .18, g: .5 }); },
+  grunt(v) {
+    const t = AC.currentTime, f0 = rnd(105, 175), o = AC.createOscillator(); o.type = 'sawtooth';
+    o.frequency.setValueAtTime(f0 * 1.15, t); o.frequency.exponentialRampToValueAtTime(f0 * .75, t + .22);
+    const g = AC.createGain(); g.gain.setValueAtTime(.0001, t); g.gain.exponentialRampToValueAtTime(.65, t + .02); g.gain.exponentialRampToValueAtTime(.0001, t + .24);
+    for (const [ff, q] of [[700, 4], [1150, 6]]) { const f = AC.createBiquadFilter(); f.type = 'bandpass'; f.frequency.value = ff * rnd(.9, 1.1); f.Q.value = q; o.connect(f); f.connect(g); }
+    g.connect(v); o.start(t); o.stop(t + .3);
+  },
+  scream(v) {
+    const t = AC.currentTime, f0 = rnd(380, 640), o = AC.createOscillator(), l = AC.createOscillator(), lg = AC.createGain(); o.type = 'sawtooth';
+    o.frequency.setValueAtTime(f0, t); o.frequency.linearRampToValueAtTime(f0 * 1.25, t + .15); o.frequency.exponentialRampToValueAtTime(f0 * .5, t + .95);
+    l.frequency.value = rnd(6, 10); lg.gain.value = 30; l.connect(lg); lg.connect(o.frequency);
+    const g = AC.createGain(); g.gain.setValueAtTime(.0001, t); g.gain.exponentialRampToValueAtTime(.28, t + .05); g.gain.exponentialRampToValueAtTime(.0001, t + 1);
+    for (const [ff, q] of [[1000, 2], [2400, 4]]) { const f = AC.createBiquadFilter(); f.type = 'bandpass'; f.frequency.value = ff; f.Q.value = q; o.connect(f); f.connect(g); }
+    g.connect(v); o.start(t); l.start(t); o.stop(t + 1.05); l.stop(t + 1.05);
+  },
+  bodyfall(v) { tn(v, { f: 95, f2: 38, dur: .28, g: .7, at: .35 }); nz(v, { f: 350, f2: 120, dur: .22, g: .5, at: .35 }); },
+  step(v) { nz(v, { f: rnd(300, 450), f2: 120, dur: .07, g: .22 }); tn(v, { f: 80, f2: 50, dur: .06, g: .18 }); },
+  land(v) { nz(v, { f: 400, f2: 100, dur: .14, g: .5 }); tn(v, { f: 90, f2: 40, dur: .14, g: .5 }); },
+  reload(v) {
+    if (game.reloadT > 0) { nz(v, { type: 'bandpass', f: 1800, dur: .04, g: .45, q: 3 }); tn(v, { type: 'square', f: 700, f2: 500, dur: .03, g: .12 }); nz(v, { type: 'bandpass', f: 900, dur: .12, g: .2, at: .12, q: 2 }); }
+    else { nz(v, { type: 'bandpass', f: 1400, dur: .05, g: .5, q: 3 }); tn(v, { f: 300, f2: 150, dur: .05, g: .3 }); nz(v, { type: 'bandpass', f: 2600, f2: 1400, dur: .09, g: .4, at: .12, q: 2 }); nz(v, { type: 'bandpass', f: 2200, dur: .04, g: .45, at: .22, q: 3 }); }
+  },
+  empty(v) { tn(v, { type: 'square', f: 2600, f2: 1800, dur: .012, g: .2 }); },
+  switch(v) { nz(v, { type: 'bandpass', f: 1300, dur: .09, g: .35, att: .02, q: 1 }); nz(v, { type: 'bandpass', f: 3000, dur: .03, g: .25, at: .08, q: 4 }); },
+  shell(v) { tn(v, { f: 3400, f2: 3100, dur: .06, g: .07, at: .32 }); tn(v, { f: 3600, f2: 3300, dur: .04, g: .04, at: .45 }); },
+  ricochet(v) { tn(v, { f: rnd(2200, 3200), f2: rnd(700, 1100), dur: .3, g: .12 }); },
+  sawcut(v) { nz(v, { type: 'bandpass', f: rnd(1500, 2500), dur: .07, g: .35, q: 3 }); nz(v, { f: 600, dur: .06, g: .3, q: 6 }); },
+  zap(v) { tn(v, { f: 500, f2: 1800, dur: .22, g: .18 }); tn(v, { type: 'square', f: 1400, f2: 300, dur: .18, g: .05, lp: 3000 }); nz(v, { type: 'highpass', f: 5000, dur: .15, g: .12 }); },
+  spawn(v) { [523, 659, 784, 1047].forEach((f, i) => tn(v, { type: 'triangle', f, dur: .22, g: .14, at: i * .05 })); nz(v, { type: 'highpass', f: 6000, dur: .3, g: .08, att: .05 }); },
+  poof(v) { nz(v, { type: 'bandpass', f: 3500, f2: 250, dur: .4, g: .45, q: 1.5 }); tn(v, { f: 420, f2: 90, dur: .3, g: .25 }); },
+  push(v) { nz(v, { f: 2500, f2: 150, dur: .5, g: .6, att: .02 }); tn(v, { f: 120, f2: 35, dur: .4, g: .8 }); },
+  grab(v) { tn(v, { f: 300, f2: 700, dur: .15, g: .15 }); },
+  marker(v) { tn(v, { f: rnd(2000, 2600), f2: rnd(2400, 3000), dur: .05, g: .03 }); },
+  spray(v) { nz(v, { type: 'highpass', f: 4500, dur: .1, g: .05 }); },
+  saw(v) { },
+  ui(v) { tn(v, { type: 'triangle', f: 1300, f2: 900, dur: .05, g: .1 }); },
+  wave(v) { [110, 165, 220].forEach((f, i) => tn(v, { type: 'sawtooth', f, dur: 1.4, g: .1 - i * .02, att: .08, lp: 700 })); tn(v, { f: 55, dur: 1.4, g: .3, att: .05 }); },
+  gameover(v) { [392, 330, 262, 196].forEach((f, i) => tn(v, { type: 'triangle', f, dur: .5, g: .16, at: i * .28, lp: 1500 })); tn(v, { f: 50, dur: 1.8, g: .3, at: .2 }); },
+  hit_marker(v) { tn(v, { type: 'triangle', f: 1800, dur: .03, g: .06 }); }
 };
+const WET = { boom: .6, sniper: .55, shotgun: .45, pistol: .35, rifle: .3, rocket: .4, scream: .35, wave: .3, gameover: .4 };
 function sfx(n, pos) {
-  if (!AC || !settings.sound) return;
+  if (!AC || !BUS || !soundOn() || !R[n]) return;
   const now = AC.currentTime;
   if (lastS[n] && now - lastS[n] < .035) return;
   lastS[n] = now;
-  let vol = 1;
-  if (pos) { const d = Math.hypot(pos.x - camera.position.x, pos.z - camera.position.z); vol = clamp(1.1 - d / 45, 0, 1); if (vol < .03) return; }
-  const p = SFX[n];
-  try {
-    const src = AC.createBufferSource(); src.buffer = NB;
-    const f = AC.createBiquadFilter(); f.type = p[3] || 'lowpass'; f.frequency.value = p[1];
-    const g = AC.createGain();
-    g.gain.setValueAtTime(p[2] * .55 * vol, now); g.gain.exponentialRampToValueAtTime(.001, now + p[0]);
-    src.connect(f); f.connect(g); g.connect(AC.destination);
-    src.start(now, Math.random() * .5); src.stop(now + p[0] + .05);
-    if (p[4]) {
-      const o = AC.createOscillator(), og = AC.createGain();
-      o.frequency.setValueAtTime(p[4], now); o.frequency.exponentialRampToValueAtTime(35, now + p[0]);
-      og.gain.setValueAtTime(.6 * vol, now); og.gain.exponentialRampToValueAtTime(.001, now + p[0]);
-      o.connect(og); og.connect(AC.destination); o.start(now); o.stop(now + p[0] + .05);
-    }
-  } catch (e) {}
+  try { const v = voice(pos, WET[n] !== undefined ? WET[n] : .2); if (v) R[n](v); } catch (e) {}
 }
+function scream(pos) { sfx('scream', pos); }
+// continuous loops: saw engine, spray hiss, grab hum, map ambience, menu music
+function loopNode(make) { const g = AC.createGain(); g.gain.value = 0; make(g); return g; }
+function noiseLoop(dst, type, f, q) { const s = AC.createBufferSource(); s.buffer = NB; s.loop = true; const fl = AC.createBiquadFilter(); fl.type = type; fl.frequency.value = f; fl.Q.value = q || .7; s.connect(fl); fl.connect(dst); s.start(); return { s, fl }; }
+function ensureLoops() {
+  const L = BUS.loops;
+  if (L.saw) return;
+  L.saw = loopNode(g => {
+    const o = AC.createOscillator(); o.type = 'sawtooth'; o.frequency.value = 55;
+    const trem = AC.createOscillator(), tg = AC.createGain(); trem.frequency.value = 28; tg.gain.value = .35; trem.connect(tg);
+    const amp = AC.createGain(); amp.gain.value = .65; tg.connect(amp.gain);
+    const f = AC.createBiquadFilter(); f.type = 'lowpass'; f.frequency.value = 1600;
+    o.connect(amp); amp.connect(f); f.connect(g); o.start(); trem.start(); L.sawOsc = o; L.sawTrem = trem;
+  }); L.saw.connect(BUS.sfx);
+  L.spray = loopNode(g => noiseLoop(g, 'highpass', 4200)); L.spray.connect(BUS.sfx);
+  L.grab = loopNode(g => { for (const f of [140, 211]) { const o = AC.createOscillator(); o.frequency.value = f; o.connect(g); o.start(); } }); L.grab.connect(BUS.sfx);
+  L.amb = {};
+  L.amb.low = loopNode(g => { L.ambLow = noiseLoop(g, 'lowpass', 180); }); L.amb.low.connect(BUS.amb);
+  L.amb.wind = loopNode(g => { L.ambWind = noiseLoop(g, 'bandpass', 500, 1.2); const lfo = AC.createOscillator(), lg = AC.createGain(); lfo.frequency.value = .12; lg.gain.value = 250; lfo.connect(lg); lg.connect(L.ambWind.fl.frequency); lfo.start(); }); L.amb.wind.connect(BUS.amb);
+  L.amb.rain = loopNode(g => { const r = noiseLoop(g, 'highpass', 1400); const f2 = AC.createBiquadFilter(); }); L.amb.rain.connect(BUS.amb);
+  L.amb.hum = loopNode(g => { for (const f of [60, 120]) { const o = AC.createOscillator(); o.frequency.value = f; const og = AC.createGain(); og.gain.value = f === 60 ? 1 : .4; o.connect(og); og.connect(g); o.start(); } }); L.amb.hum.connect(BUS.amb);
+}
+const AMB = { city: { low: .06, wind: .015, rain: 0, hum: 0 }, ware: { low: .02, wind: 0, rain: 0, hum: .025 }, canyon: { low: .01, wind: .07, rain: 0, hum: 0 }, test: { low: .015, wind: .02, rain: .05, hum: 0 } };
+let carT = 4, musicStep = 0, musicNext = 0;
+const SCALE = [110, 130.81, 146.83, 164.81, 196, 220, 261.63, 293.66];
+const PATTERN = [0, 4, 2, 5, 0, 4, 6, 5, 0, 3, 2, 4, 1, 4, 7, 5];
+function updateAudio(dt) {
+  if (!AC || !BUS || AC.state !== 'running') return;
+  ensureLoops();
+  const L = BUS.loops, t = AC.currentTime, set = (node, v, tc = .08) => node.gain.setTargetAtTime(v, t, tc);
+  const p = game.player, playing = game.state === 'play' && p && p.alive, w = p ? WEAPONS[p.weapon] : null;
+  const sawOn = playing && w.type === 'saw', sawRev = sawOn && p.fire;
+  set(L.saw, sawOn ? (sawRev ? .2 : .07) : 0); L.sawOsc.frequency.setTargetAtTime(sawRev ? 115 : 52, t, .12); L.sawTrem.frequency.setTargetAtTime(sawRev ? 60 : 26, t, .12);
+  set(L.spray, playing && w.id === 'spray' && p.fire ? .07 : 0, .03);
+  set(L.grab, playing && game.grab ? .05 : 0, .05);
+  const inGame = (game.state === 'play' || game.state === 'pause' || game.state === 'inv') && game.map;
+  const amb = game.map ? AMB[game.map.id] : null;
+  for (const k of ['low', 'wind', 'rain', 'hum']) set(L.amb[k], amb ? amb[k] * (inGame ? 1 : .35) : 0, .5);
+  if (inGame && game.map.id === 'city') { carT -= dt; if (carT <= 0) { carT = rnd(5, 12); const v = voice({ x: camera.position.x + rnd(-30, 30), z: camera.position.z + rnd(-15, 15) }, .2); if (v) nz(v, { type: 'bandpass', f: 200, f2: 700, dur: 3, g: .12, att: 1.4, q: 1 }); } }
+  // menu music: slow dark arpeggio over a drone
+  const menuish = game.state === 'menu' || game.state === 'armory';
+  if (!L.drone) { L.drone = loopNode(g => { for (const f of [55, 55.4, 82.5]) { const o = AC.createOscillator(); o.type = 'sawtooth'; o.frequency.value = f; const fl = AC.createBiquadFilter(); fl.type = 'lowpass'; fl.frequency.value = 320; o.connect(fl); fl.connect(g); o.start(); } }); L.drone.connect(BUS.music); }
+  set(L.drone, menuish ? .05 : 0, .8);
+  if (menuish) {
+    if (musicNext < t) musicNext = t + .05;
+    while (musicNext < t + .2) {
+      const f = SCALE[PATTERN[musicStep % PATTERN.length]] * (musicStep % 32 < 16 ? 2 : 1.5);
+      const at = musicNext - t;
+      tn(BUS.music, { type: 'triangle', f, dur: .55, g: .07, at, lp: 1800 });
+      if (musicStep % 8 === 0) tn(BUS.music, { f: 55, dur: 1.2, g: .12, at });
+      musicStep++; musicNext += .3;
+    }
+  }
+}
+document.addEventListener('visibilitychange', () => { if (!AC) return; if (document.hidden) AC.suspend(); else if (soundOn()) AC.resume(); });
+document.addEventListener('pointerdown', e => { initAudio(); if (e.target.closest && e.target.closest('.mi,.btn,.tab,.scard,.atile,.map,.mode,.seg button,.wslot,.cm,.sw,.back,.hb')) sfx('ui'); }, true);
+addEventListener('keydown', () => initAudio(), true);
 
 // ---------------- weapons ----------------
 const WEAPONS = [
@@ -1059,20 +1211,6 @@ function addWound(h, i, at) {
   const wm = new THREE.Mesh(woundGeo, woundMat); const r = rnd(.022, .038); wm.scale.set(r, r, r * .6);
   h.mesh.add(wm); h.wounds.push({ m, local, wm });
 }
-function scream(pos) {
-  if (!AC || !settings.sound) return;
-  let vol = 1;
-  if (pos) { const d = Math.hypot(pos.x - camera.position.x, pos.z - camera.position.z); vol = clamp(1.1 - d / 40, 0, 1); if (vol < .05) return; }
-  try {
-    const now = AC.currentTime, o = AC.createOscillator(), l = AC.createOscillator(), lg = AC.createGain(), f = AC.createBiquadFilter(), g = AC.createGain();
-    o.type = 'sawtooth'; const f0 = rnd(380, 640);
-    o.frequency.setValueAtTime(f0, now); o.frequency.linearRampToValueAtTime(f0 * 1.25, now + .15); o.frequency.exponentialRampToValueAtTime(f0 * .5, now + .9);
-    l.frequency.value = rnd(6, 10); lg.gain.value = 30; l.connect(lg); lg.connect(o.frequency);
-    f.type = 'bandpass'; f.frequency.value = 1100; f.Q.value = 1.4;
-    g.gain.setValueAtTime(.0001, now); g.gain.exponentialRampToValueAtTime(.25 * vol, now + .05); g.gain.exponentialRampToValueAtTime(.001, now + .95);
-    o.connect(f); f.connect(g); g.connect(AC.destination); o.start(now); l.start(now); o.stop(now + 1); l.stop(now + 1);
-  } catch (e) {}
-}
 function severAlive(h, limb, dir) {
   if (h.lost[limb]) return;
   h.lost[limb] = true;
@@ -1492,6 +1630,7 @@ function shoot(owner, o, d, w, muzzle, skip) {
   if (r.kind === 'wall') {
     for (let i = 0; i < 5; i++) PS.spark.add({ x: r.at.x, y: r.at.y, z: r.at.z, vx: r.n[0] * rnd(1, 4) + rnd(-2, 2), vy: r.n[1] * rnd(1, 4) + rnd(0, 3), vz: r.n[2] * rnd(1, 4) + rnd(-2, 2), life: .25 });
     PS.smoke.add({ x: r.at.x, y: r.at.y, z: r.at.z, vx: r.n[0] * .5, vy: .3, vz: r.n[2] * .5, life: .5 });
+    if (owner === game.player && Math.random() < .2) sfx('ricochet', r.at);
     if (r.box && r.box.prop) hitProp(r.box.prop, d, w.dmg * (w.pellets > 1 ? 1 : 1.5), owner);
     else addDecal(r.at.x, r.at.y, r.at.z, r.n[0], r.n[1], r.n[2], w.id === 'sniper' ? .1 : .06, true);
   } else if (r.kind === 'body') {
@@ -1517,6 +1656,7 @@ function damage(h, dmg, dir, at, o) {
   blood(at.x, at.y, at.z, dir.x, dir.y, dir.z, 8 + dmg * .35, 3 + dmg * .04, .6);
   blood(at.x, at.y, at.z, -dir.x, -dir.y, -dir.z, 3 + dmg * .1, 2, .8);
   if (!isP && pt !== undefined) addWound(h, pt, at);
+  if (!isP && h.hp > 0 && Math.random() < .45) sfx('grunt', at);
   const k = o.knock || 3;
   h.vx += dir.x * k * .5; h.vz += dir.z * k * .5; if (h.onGround) h.vy += 1;
   sfx(isP ? 'hurt' : 'hit', at);
@@ -1543,6 +1683,7 @@ function kill(h, ix, iy, iz, at, o, dmg) {
   blood(at.x, at.y, at.z, ix / 10, .3, iz / 10, 30, 5, 1);
   if (h === game.player) { h.deathRoll = rnd(-.9, .9); feed('Ты погиб' + (killer ? ' · ' + killer.name : '')); onPlayerDeath(); return; }
   h.ragdoll = makeRagdoll(h, ix, iy, iz, at);
+  sfx('bodyfall', at);
   if (Math.random() < .35) scream(at);
   const w = o.w;
   let tag = '';
@@ -1601,6 +1742,7 @@ function sawTick(h, o, d, w) {
   }
   if (!best) return;
   const { t, p, i } = best;
+  sfx('sawcut', p);
   blood(p.x, p.y, p.z, -d.x, .6, -d.z, 7, 4, 1.1);
   if (Math.random() < .25) PS.mist.add({ x: p.x, y: p.y, z: p.z, vx: rnd(-.5, .5), vy: rnd(0, .5), vz: rnd(-.5, .5), life: .4 });
   if (h === game.player) { game.hitMarker = .08; if (Math.random() < .15) screenSplat(1); }
@@ -1646,7 +1788,7 @@ function doAttack(h) {
     flashLight.position.set(muzzle.x, muzzle.y, muzzle.z); flashLight.intensity = Math.max(flashLight.intensity, 1.6);
     sfx(w.snd, h);
     if (isP) {
-      game.vmFlash = .05;
+      game.vmFlash = .05; sfx('shell');
       PS.shell.add({ x: o.x + rx * .2 + d.x * .3, y: o.y - .12, z: o.z + rz * .2 + d.z * .3, vx: rx * rnd(1.5, 2.5), vy: rnd(1.5, 2.5), vz: rz * rnd(1.5, 2.5), life: .9 });
       const kick = w.id === 'sniper' ? .06 : w.pellets > 1 ? .035 : .008;
       game.recoil = w.id === 'sniper' ? .14 : w.pellets > 1 ? .09 : .035;
@@ -1828,6 +1970,7 @@ function crusherUpdate(p, dt) {
   p.attackT = p.attackDur = .2;
   if (!r.kind) { toast('Наведи прицел на землю или объект', 1400); return; }
   setBeam(mz, r.at); magic(r.at.x, r.at.y, r.at.z, 14); sfx('zap', r.at);
+  if (r.kind) sfx(crushMode === 'spawn' ? 'spawn' : crushMode === 'delete' ? 'poof' : crushMode === 'push' ? 'push' : crushMode === 'revive' ? 'spawn' : 'zap', r.at);
   game.recoil = .05;
   if (crushMode === 'spawn') {
     let x = r.at.x, z = r.at.z, y = r.at.y;
@@ -1864,7 +2007,7 @@ function startGrab(r) {
   else if (r.kind === 'corpse') game.grab = { kind: 'corpse', ref: r.h, pt: r.i, dist };
   else if (r.kind === 'gib') game.grab = { kind: 'gib', ref: r.g, pt: r.i, dist };
   else if (r.kind === 'wall' && r.box && r.box.prop) { r.box.prop.held = true; game.grab = { kind: 'prop', ref: r.box.prop, dist }; }
-  if (game.grab) sfx('zap');
+  if (game.grab) sfx('grab');
 }
 function holdGrab(o, d, dt, mz) {
   const g = game.grab, T = { x: o.x + d.x * g.dist, y: o.y + d.y * g.dist, z: o.z + d.z * g.dist };
@@ -2253,6 +2396,7 @@ function updateHuman(h, dt) {
   if (isP && WEAPONS[h.weapon].type === 'crusher') crusherUpdate(h, dt);
   else if (h.fire) doAttack(h);
   if (!h.held) moveBody(h, dt, isP ? (game.flying ? 9 : game.ads ? 3.6 : 6) : (h.panic ? 4.2 : h.fear > 0 ? 5.6 : 4.6));
+  if (isP) { if (h.onGround) { h._step = (h._step || 0) + h.speed * dt; if (h._step > 2.3) { h._step = 0; sfx('step'); } if (h._wg === false && (h._vyAir || 0) < -7) sfx('land'); } else h._vyAir = h.vy; h._wg = h.onGround; }
   if (h.fallDmg) { const fd = h.fallDmg; h.fallDmg = 0; sfx('crunch', h); damage(h, fd, { x: 0, y: -1, z: 0 }, { x: h.x, y: h.y + .3, z: h.z }, { owner: h.thrownBy || null, knock: 2, pt: 13 }); if (!h.alive) return; }
   h.anim += h.speed * dt * 1.7;
   if (h.bleed > 0) {
@@ -2308,7 +2452,7 @@ function spawnHostile() {
 function survivalTick(dt) {
   const p = game.player; if (!p || !p.alive) return;
   const alive = game.humans.filter(h => h !== p && h.alive).length;
-  if (game.waveT > 0) { game.waveT -= dt; if (game.waveT <= 0) { game.wave++; game.toSpawn = 2 + game.wave * 2; game.spawnT = 0; banner('ВОЛНА ' + game.wave, 'бандитов: ' + game.toSpawn); } }
+  if (game.waveT > 0) { game.waveT -= dt; if (game.waveT <= 0) { game.wave++; game.toSpawn = 2 + game.wave * 2; game.spawnT = 0; banner('ВОЛНА ' + game.wave, 'бандитов: ' + game.toSpawn); sfx('wave'); } }
   else if (game.toSpawn > 0) { game.spawnT -= dt; if (game.spawnT <= 0 && alive < 12) { spawnHostile(); game.toSpawn--; game.spawnT = .7; } }
   else if (alive === 0) {
     game.waveT = 6; p.hp = Math.min(p.maxHp, p.hp + 40); updateHud();
@@ -2610,7 +2754,7 @@ function selectWeapon(i) {
   const p = game.player; if (!p) return;
   if (!available(i)) return;
   if (game.grab) releaseGrab();
-  if (p.weapon !== i) { game.reloadT = 0; game.autoReload = 0; game.ads = false; }
+  if (p.weapon !== i) { game.reloadT = 0; game.autoReload = 0; game.ads = false; if (game.state === 'play') sfx('switch'); }
   p.weapon = i; p.cd = Math.max(p.cd, .15); lastMark = null;
   const w = WEAPONS[i];
   $('wIcon').innerHTML = icon(w.id); $('wName').textContent = w.name;
@@ -2711,7 +2855,7 @@ function buildSettings() {
     const sg = document.createElement('div'); sg.className = 'seg';
     opts.forEach(([v, t]) => {
       const b = document.createElement('button'); b.textContent = t; b.classList.toggle('on', settings[key] === v);
-      b.addEventListener('click', () => { settings[key] = v; saveSettings(); buildSettings(); if (key === 'sound' && v) initAudio(); if (key === 'gfx') applyGfx(); });
+      b.addEventListener('click', () => { settings[key] = v; saveSettings(); buildSettings(); if (key === 'vol' || key === 'music') { initAudio(); applyVolume(); } if (key === 'gfx') applyGfx(); });
       sg.appendChild(b);
     });
     r.appendChild(sg); P.appendChild(r);
@@ -2724,7 +2868,8 @@ function buildSettings() {
   row('Графика', '«Быстро» — для слабых телефонов', [[0, 'Быстро'], [1, 'Красиво']], 'gfx');
   row('Поле зрения', 'угол обзора камеры', [[65, '65°'], [75, '75°'], [90, '90°']], 'fov');
   row('Камера', 'скорость поворота', [[.6, 'Низк'], [1, 'Сред'], [1.6, 'Высок']], 'sens');
-  row('Звук', '', [[true, 'Вкл'], [false, 'Выкл']], 'sound');
+  row('Звук', '', [[0, 'Выкл'], [.4, 'Тихо'], [.7, 'Сред'], [1, 'Громко']], 'vol');
+  row('Музыка', 'в меню', [[true, 'Вкл'], [false, 'Выкл']], 'music');
 }
 function goLandscape() {
   try {
@@ -2784,7 +2929,7 @@ function gameOver(record) {
   const t = Math.floor(game.time), mm = Math.floor(t / 60), ss = String(t % 60).padStart(2, '0');
   $('oStats').innerHTML = `<span>Волна: <b>${game.wave}</b></span><span>Убито: <b>${game.kills}</b></span><span>Время: <b>${mm}:${ss}</b></span><span>Рекорд: <b>${settings.best || 0}</b></span>`;
   $('oRecord').classList.toggle('hidden', !record);
-  show('overScr');
+  show('overScr'); sfx('gameover');
   if (document.exitPointerLock && locked) document.exitPointerLock();
 }
 function resume() { game.state = 'play'; hideAll(); $('hud').classList.remove('hidden'); }
@@ -2820,6 +2965,7 @@ document.addEventListener('visibilitychange', () => { if (document.hidden) pause
 let last = performance.now(), acc = 0;
 function frame(now) {
   const dt = Math.min(.1, (now - last) / 1000); last = now;
+  updateAudio(dt);
   if (game.state === 'play' || game.state === 'menu') {
     acc += dt; let n = 0;
     while (acc >= DT && n < 4) { if (game.state === 'play') readInput(); step(DT); acc -= DT; n++; }
