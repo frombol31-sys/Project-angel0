@@ -274,6 +274,10 @@ h2{font-weight:600;letter-spacing:2px;text-transform:uppercase}
 #setPanel{grid-template-columns:minmax(0,1fr) minmax(0,1fr)}
 .opt > span{min-width:0} .seg{flex:0 0 auto}
 @media (max-width:760px){ .opt small{display:none} .seg button{padding:5px 8px} #setPanel{column-gap:18px} .scard .ic{width:44px;height:44px} .scard b{font-size:13px} }
+.kb{display:none}
+.khint{font-family:var(--f-text);font-size:8.5px;font-weight:700;text-align:center;color:rgba(255,255,255,.7);padding:2px 0;line-height:1.3}
+.card.pc{display:none}
+@media (pointer:fine){ .kb{display:inline} .khint{display:block} .card.pc{display:grid} }
 </style>
 </head>
 <body>
@@ -317,7 +321,7 @@ h2{font-weight:600;letter-spacing:2px;text-transform:uppercase}
     <div class="card"><i data-icon="crusher"></i><b>Реалити-крашер</b><p>Создавай, хватай, кидай, толкай, оживляй и удаляй.</p></div>
     <div class="card"><i data-icon="s_h_rifle"></i><b>Режимы</b><p>Песочница: возрождение через минуту. Выживание: волны врагов.</p></div>
     <div class="card"><i data-icon="m_push"></i><b>Полёт и бессмертие</b><p>В настройках, только в песочнице. ⤒ вверх, ⤓ вниз.</p></div>
-    <div class="card" style="display:none"><i data-icon="pistol"></i><b>Компьютер</b><p>WASD, мышь, ПКМ — прицел, R — перезарядка, пробел — прыжок, Q/E и Tab — оружие.</p></div>
+    <div class="card pc"><i data-icon="pistol"></i><b>Компьютер</b><p>WASD, мышь, ПКМ — прицел, R — перезарядка, пробел — прыжок, колёсико, Q/E и Tab — оружие. Крашер: V или ПКМ — режим, Z — назад, B — каталог.</p></div>
   </div>
 </div>
 
@@ -357,7 +361,7 @@ h2{font-weight:600;letter-spacing:2px;text-transform:uppercase}
   <div id="wave" class="hidden"></div>
   <div id="feed"></div>
   <div id="palette" class="hidden"></div>
-  <div id="crushCol" class="hidden"><button class="cm cat" id="crushCat"><i id="crushCatIcon"></i>каталог</button><div id="crushModes"></div></div>
+  <div id="crushCol" class="hidden"><button class="cm cat" id="crushCat"><i id="crushCatIcon"></i>каталог<span class="kb"> · B</span></button><div id="crushModes"></div><div class="kb khint">V / ПКМ<br>режим</div></div>
   <div id="wbox"><span id="wName">Кулаки</span><div id="ammo" class="hidden"><b id="ammoN">12</b><small> / ∞</small></div></div>
   <button class="hb" id="wheelBtn" aria-label="Колесо оружия"><i id="wIcon"></i></button>
   <div class="rbtn sbtn hidden" id="downBtn">⤓<span>вниз</span></div>
@@ -1898,6 +1902,12 @@ function buildCrushPanel() {
   $('crushCatIcon').innerHTML = icon('s_' + crushSpawn);
   if (game.player && WEAPONS[game.player.weapon].type === 'crusher') $('fireLbl').textContent = CRUSH_LBL[crushMode];
 }
+function cycleCrush(d) {
+  if (game.grab) releaseGrab();
+  const i = CRUSH_MODES.findIndex(m => m[0] === crushMode);
+  const m = CRUSH_MODES[(i + d + CRUSH_MODES.length) % CRUSH_MODES.length];
+  crushMode = m[0]; buildCrushPanel(); toast('Режим крашера: ' + m[2], 900);
+}
 function buildSpawnCatalog() {
   const T = $('spawnTabs'), G = $('spawnGrid'); T.innerHTML = ''; G.innerHTML = '';
   for (const [id, nm] of [['people', 'Люди'], ['props', 'Предметы']]) {
@@ -2039,6 +2049,7 @@ glc.addEventListener('pointerdown', e => {
   initAudio();
   if (game.state !== 'play') return;
   if (e.pointerType === 'mouse') {
+    if (e.button === 2 && game.player && WEAPONS[game.player.weapon].type === 'crusher') { cycleCrush(1); return; }
     if (e.button === 2) { const w = game.player && WEAPONS[game.player.weapon]; if (w && w.zoom && game.reloadT <= 0) { game.ads = true; updateAmmo(); } return; }
     if (!locked && glc.requestPointerLock) { try { const r = glc.requestPointerLock(); if (r && r.catch) r.catch(() => {}); } catch (er) {} }
     mouseDown = true; return;
@@ -2083,6 +2094,10 @@ addEventListener('keydown', e => {
   if (game.state === 'play' && game.player) {
     const n = parseInt(e.key, 10); if (!isNaN(n)) { const i = n === 0 ? 9 : n - 1; if (i < WEAPONS.length) selectWeapon(i); }
     if (e.code === 'KeyR') startReload();
+    if (WEAPONS[game.player.weapon].type === 'crusher') {
+      if (e.code === 'KeyV') cycleCrush(1); if (e.code === 'KeyZ') cycleCrush(-1);
+      if (e.code === 'KeyB') { openSpawn(); return; }
+    }
     if (e.code === 'KeyQ') cycleWeapon(-1); if (e.code === 'KeyE') cycleWeapon(1);
     if (e.code === 'Tab') { e.preventDefault(); openInv(); return; }
   }
