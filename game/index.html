@@ -278,6 +278,7 @@ h2{font-weight:600;letter-spacing:2px;text-transform:uppercase}
 .khint{font-family:var(--f-text);font-size:8.5px;font-weight:700;text-align:center;color:rgba(255,255,255,.7);padding:2px 0;line-height:1.3}
 .card.pc{display:none}
 @media (pointer:fine){ .kb{display:inline} .khint{display:block} .card.pc{display:grid} }
+.khint.pal{align-self:center;padding:0 4px} @media (pointer:fine){ .khint.pal{display:block} }
 </style>
 </head>
 <body>
@@ -321,7 +322,7 @@ h2{font-weight:600;letter-spacing:2px;text-transform:uppercase}
     <div class="card"><i data-icon="crusher"></i><b>Реалити-крашер</b><p>Создавай, хватай, кидай, толкай, оживляй и удаляй.</p></div>
     <div class="card"><i data-icon="s_h_rifle"></i><b>Режимы</b><p>Песочница: возрождение через минуту. Выживание: волны врагов.</p></div>
     <div class="card"><i data-icon="m_push"></i><b>Полёт и бессмертие</b><p>В настройках, только в песочнице. ⤒ вверх, ⤓ вниз.</p></div>
-    <div class="card pc"><i data-icon="pistol"></i><b>Компьютер</b><p>WASD, мышь, ПКМ — прицел, R — перезарядка, пробел — прыжок, колёсико, Q/E и Tab — оружие. Крашер: V или ПКМ — режим, Z — назад, B — каталог.</p></div>
+    <div class="card pc"><i data-icon="pistol"></i><b>Компьютер</b><p>WASD, мышь, ПКМ — прицел, R — перезарядка, пробел — прыжок, колёсико, Q/E и Tab — оружие. Крашер: V или ПКМ — режим, Z — назад, B — каталог. Баллончик и маркер: V или ПКМ — цвет, Z — назад.</p></div>
   </div>
 </div>
 
@@ -2050,6 +2051,7 @@ glc.addEventListener('pointerdown', e => {
   if (game.state !== 'play') return;
   if (e.pointerType === 'mouse') {
     if (e.button === 2 && game.player && WEAPONS[game.player.weapon].type === 'crusher') { cycleCrush(1); return; }
+    if (e.button === 2 && game.player && WEAPONS[game.player.weapon].type === 'paint') { cyclePaint(1); return; }
     if (e.button === 2) { const w = game.player && WEAPONS[game.player.weapon]; if (w && w.zoom && game.reloadT <= 0) { game.ads = true; updateAmmo(); } return; }
     if (!locked && glc.requestPointerLock) { try { const r = glc.requestPointerLock(); if (r && r.catch) r.catch(() => {}); } catch (er) {} }
     mouseDown = true; return;
@@ -2094,6 +2096,7 @@ addEventListener('keydown', e => {
   if (game.state === 'play' && game.player) {
     const n = parseInt(e.key, 10); if (!isNaN(n)) { const i = n === 0 ? 9 : n - 1; if (i < WEAPONS.length) selectWeapon(i); }
     if (e.code === 'KeyR') startReload();
+    if (WEAPONS[game.player.weapon].type === 'paint') { if (e.code === 'KeyV') cyclePaint(1); if (e.code === 'KeyZ') cyclePaint(-1); }
     if (WEAPONS[game.player.weapon].type === 'crusher') {
       if (e.code === 'KeyV') cycleCrush(1); if (e.code === 'KeyZ') cycleCrush(-1);
       if (e.code === 'KeyB') { openSpawn(); return; }
@@ -2610,6 +2613,12 @@ function selectWeapon(i) {
   updateAmmo();
 }
 function cycleWeapon(d) { const p = game.player; if (!p) return; let i = p.weapon; for (let k = 0; k < WEAPONS.length; k++) { i = (i + d + WEAPONS.length) % WEAPONS.length; if (available(i)) break; } selectWeapon(i); }
+const PAINT_NAMES = ['красный', 'оранжевый', 'жёлтый', 'зелёный', 'голубой', 'синий', 'фиолетовый', 'розовый', 'белый', 'чёрный'];
+function cyclePaint(d) {
+  settings.paint = (settings.paint + d + PAINT_COLORS.length) % PAINT_COLORS.length; saveSettings(); recolorVM();
+  [...$('palette').querySelectorAll('.sw')].forEach((x, j) => x.classList.toggle('on', j === settings.paint));
+  toast('Цвет: ' + PAINT_NAMES[settings.paint], 800);
+}
 function buildPalette() {
   const P = $('palette'); P.innerHTML = '';
   PAINT_COLORS.forEach((c, i) => {
@@ -2618,6 +2627,7 @@ function buildPalette() {
     b.addEventListener('pointerdown', e => { e.preventDefault(); e.stopPropagation(); settings.paint = i; saveSettings(); recolorVM(); [...P.children].forEach((x, j) => x.classList.toggle('on', j === i)); });
     P.appendChild(b);
   });
+  const k = document.createElement('span'); k.className = 'kb khint pal'; k.innerHTML = 'V / ПКМ<br>цвет'; P.appendChild(k);
 }
 // ---- play screen: modes + maps ----
 let selMode = 'sandbox';
