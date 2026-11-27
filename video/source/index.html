@@ -1,0 +1,254 @@
+<!doctype html>
+<html><head><meta charset="utf-8">
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{width:1080px;height:1920px;overflow:hidden;font-family:"Inter Display","Inter",sans-serif}
+#bg{position:absolute;inset:0}
+#text{position:absolute;left:64px;top:120px;width:960px;font-weight:800;font-size:78px;line-height:1.2;letter-spacing:-1px}
+.w{display:inline-block;position:relative;margin-right:20px;white-space:nowrap}
+.w .hl{position:absolute;left:-6px;right:-8px;bottom:6px;height:34px;background:#ffc81e;border-radius:4px;transform-origin:left;z-index:-1}
+.w span{position:relative}
+#stage{position:absolute;left:0;top:0;width:1080px;height:1920px}
+.card{position:absolute;background:#fff;border-radius:44px;box-shadow:0 30px 70px rgba(120,70,0,.16),0 4px 12px rgba(0,0,0,.06);overflow:hidden}
+.dark{background:#1d1d22}
+.lbl{position:absolute;left:44px;top:36px;font-size:24px;font-weight:700;letter-spacing:2px;color:#9a948a;text-transform:uppercase}
+.dark .lbl{color:#8d8d96}
+.big{position:absolute;font-weight:900;color:#1c1c1c;letter-spacing:-3px}
+.stamp{position:absolute;border:8px solid #e8452c;color:#e8452c;font-weight:900;border-radius:18px;padding:4px 26px;letter-spacing:2px;background:rgba(255,255,255,.85)}
+.bar{position:absolute;height:22px;border-radius:11px;background:#eee;overflow:hidden}
+.bar i{position:absolute;left:0;top:0;bottom:0;border-radius:11px}
+.btn{position:absolute;background:#1b1b1f;color:#fff;font-weight:900;border-radius:28px;text-align:center}
+</style></head>
+<body>
+<div id="bg"></div>
+<div id="stage"></div>
+<div id="text"></div>
+<script>
+const BPM=130, BEAT=60/BPM, BAR=BEAT*4, T0=0.10;
+// lyrics: word|style  (k = yellow marker, r = red, kr = both)
+const LINES=[
+ ["Смертельная|k","битва!|r"],
+ ["Руки|k","словно","биты,|r"],
+ ["Ногти|k","словно","бритвы|r"],
+ ["Начался","твой","смертный|k","бой!|r"],
+ ["Смертельная|k","битва|r"],
+ ["Лишь","не","быть","убитым|r"],
+ ["Каждый|k","хочет","выжить|r","в","этом"],
+ ["Сражении|k","с","судьбой!|r"],
+ ["Каждый","боец|k","тут","натренированный|r"],
+ ["Сотни|k","приёмов|k","им","отработаны|r"],
+ ["Лучшие|k","воины|k","вместе","собраны|r"],
+ ["Насмерть|k","ведут","друг","с","другом","тут","бой!|r"],
+];
+const RED_BG=new Set([0,3,11]);
+const vowels=/[аеёиоуыэюяАЕЁИОУЫЭЮЯ]/g;
+const syl=w=>Math.max(1,(w.match(vowels)||[]).length);
+// word timings: distribute by syllables across part of the bar
+const TIM=LINES.map((ln,i)=>{
+  const s=T0+i*BAR; const tot=ln.reduce((a,w)=>a+syl(w.split('|')[0]),0);
+  const span=BAR*(tot>=9?0.9:0.78); let acc=0;
+  return ln.map(w=>{const t=s+span*acc/tot; acc+=syl(w.split('|')[0]); return t;});
+});
+const lineStart=i=>T0+i*BAR;
+// easing
+const cl=(x,a=0,b=1)=>Math.min(b,Math.max(a,x));
+const eo=x=>1-Math.pow(1-cl(x),3);
+const eb=x=>{x=cl(x);const c=1.9;return 1+(c+1)*Math.pow(x-1,3)+c*Math.pow(x-1,2)};
+const lerp=(a,b,x)=>a+(b-a)*x;
+const pop=(t,t0,d=.28)=>eb((t-t0)/d);
+
+// ---------- character (original flat fighter) ----------
+function fighter(o={}){
+  const band=o.band||'#e8452c', gi=o.gi||'#ffffff', mood=o.mood||'angry', hair=o.hair||'#1d1d22', skin=o.skin||'#f1b184';
+  const brow = mood==='angry'? `<path d="M70 92 L100 104 M150 92 L120 104" stroke="#1d1d22" stroke-width="9" stroke-linecap="round"/>`
+             : mood==='worried'? `<path d="M72 104 L100 94 M148 104 L120 94" stroke="#1d1d22" stroke-width="8" stroke-linecap="round"/>`
+             : `<path d="M72 98 L100 98 M120 98 L148 98" stroke="#1d1d22" stroke-width="8" stroke-linecap="round"/>`;
+  const mouth = mood==='worried'? `<ellipse cx="110" cy="158" rx="12" ry="9" fill="#7a2b1c"/>`
+             : mood==='yell'? `<path d="M90 150 Q110 180 130 150 Z" fill="#7a2b1c"/>`
+             : `<path d="M94 156 L126 156" stroke="#7a2b1c" stroke-width="7" stroke-linecap="round"/>`;
+  return `<svg viewBox="0 0 220 260" width="${o.w||220}" height="${(o.w||220)*260/220}" style="${o.style||''}">
+   <ellipse cx="110" cy="252" rx="96" ry="10" fill="rgba(0,0,0,.08)"/>
+   <path d="M14 260 Q20 196 70 186 L150 186 Q200 196 206 260 Z" fill="${gi}" stroke="#e7dccd" stroke-width="3"/>
+   <path d="M86 186 L110 232 L134 186" fill="${skin}"/>
+   <path d="M80 186 L110 238 L140 186" fill="none" stroke="#d9cbb7" stroke-width="6"/>
+   <rect x="92" y="160" width="36" height="34" fill="${skin}"/>
+   <rect x="58" y="44" width="104" height="132" rx="48" fill="${skin}"/>
+   <ellipse cx="56" cy="116" rx="10" ry="16" fill="${skin}"/><ellipse cx="164" cy="116" rx="10" ry="16" fill="${skin}"/>
+   <path d="M54 82 Q52 30 110 26 Q168 30 166 82 L150 70 L138 80 L122 66 L104 80 L88 66 L74 80 Z" fill="${hair}"/>
+   <rect x="54" y="70" width="112" height="18" rx="6" fill="${band}"/>
+   <path d="M164 76 Q190 70 204 88 Q186 84 166 86 Z M164 82 Q186 92 194 112 Q178 98 164 90 Z" fill="${band}"/>
+   ${brow}
+   <circle cx="88" cy="118" r="8" fill="#1d1d22"/><circle cx="132" cy="118" r="8" fill="#1d1d22"/>
+   <path d="M108 124 Q104 142 114 142" stroke="#d48a5f" stroke-width="5" fill="none" stroke-linecap="round"/>
+   ${mouth}
+   <rect x="70" y="196" width="80" height="0" />
+  </svg>`;
+}
+function fist(w=200,c='#f1b184'){return `<svg viewBox="0 0 120 130" width="${w}" height="${w*130/120}">
+  <rect x="14" y="20" width="92" height="76" rx="22" fill="${c}" stroke="#d48a5f" stroke-width="4"/>
+  <path d="M37 22 V58 M60 22 V58 M83 22 V58" stroke="#d48a5f" stroke-width="4"/>
+  <rect x="6" y="52" width="46" height="30" rx="14" fill="${c}" stroke="#d48a5f" stroke-width="4"/>
+  <rect x="28" y="96" width="64" height="26" rx="6" fill="#e8452c"/></svg>`}
+function bat(w=90){return `<svg viewBox="0 0 60 260" width="${w}" height="${w*260/60}">
+  <path d="M22 250 L18 120 Q14 30 30 10 Q46 30 42 120 L38 250 Z" fill="#c98a4b" stroke="#9c6533" stroke-width="4"/>
+  <rect x="16" y="214" width="28" height="36" rx="5" fill="#1d1d22"/><ellipse cx="30" cy="252" rx="16" ry="6" fill="#1d1d22"/></svg>`}
+function claw(w=220){return `<svg viewBox="0 0 160 170" width="${w}" height="${w*170/160}">
+  <rect x="30" y="80" width="100" height="80" rx="26" fill="#f1b184" stroke="#d48a5f" stroke-width="4"/>
+  ${[0,1,2,3].map(i=>`<rect x="${34+i*24}" y="34" width="20" height="62" rx="10" fill="#f1b184" stroke="#d48a5f" stroke-width="4"/><path d="M${36+i*24} 40 L${44+i*24} 4 L${52+i*24} 40 Z" fill="#e8452c"/>`).join('')}
+  <rect x="4" y="96" width="36" height="22" rx="11" fill="#f1b184" stroke="#d48a5f" stroke-width="4"/></svg>`}
+function razor(w=230){return `<svg viewBox="0 0 200 110" width="${w}" height="${w*110/200}">
+  <path d="M10 20 H190 V90 H10 Z" fill="#cfd5dc" stroke="#8b949e" stroke-width="5"/>
+  <rect x="62" y="44" width="76" height="22" rx="11" fill="#8b949e"/><circle cx="50" cy="55" r="9" fill="#8b949e"/><circle cx="150" cy="55" r="9" fill="#8b949e"/>
+  <path d="M10 20 H190" stroke="#fff" stroke-width="4"/></svg>`}
+function skull(w=120,c='#fff',e='#1d1d22'){return `<svg viewBox="0 0 100 100" width="${w}" height="${w}"><path d="M50 8 C24 8 12 26 12 46 C12 60 20 66 26 70 V86 H74 V70 C80 66 88 60 88 46 C88 26 76 8 50 8Z" fill="${c}"/><circle cx="35" cy="48" r="11" fill="${e}"/><circle cx="65" cy="48" r="11" fill="${e}"/><path d="M50 58 L44 70 H56Z" fill="${e}"/><path d="M38 78V86M50 78V86M62 78V86" stroke="${e}" stroke-width="4"/></svg>`}
+function warn(w=360){return `<svg viewBox="0 0 200 180" width="${w}" height="${w*.9}"><path d="M100 10 L192 170 H8 Z" fill="#ffc81e" stroke="#1d1d22" stroke-width="14" stroke-linejoin="round"/><rect x="91" y="60" width="18" height="62" rx="9" fill="#1d1d22"/><circle cx="100" cy="144" r="11" fill="#1d1d22"/></svg>`}
+
+// ---------- helpers ----------
+const card=(x,y,w,h,inner,t,t0,cls='')=>{const s=lerp(.86,1,pop(t,t0,.32)),o=cl((t-t0)/.12);
+  return `<div class="card ${cls}" style="left:${x}px;top:${y}px;width:${w}px;height:${h}px;transform:scale(${s});opacity:${o}">${inner}</div>`};
+const W=(i,j)=>TIM[i][j];
+const shake=(t,t0,amp=14,d=.3)=>{const k=cl(1-(t-t0)/d);if(t<t0||k<=0)return '';return `translate(${Math.sin(t*90)*amp*k}px,${Math.cos(t*77)*amp*k}px)`};
+
+// ---------- scenes ----------
+const S=[];
+// 1 Смертельная битва!
+S[0]=(t,i)=>{const s=lineStart(i);const p=eo((t-s-.05)/.8);const n=Math.round(p*100);
+  const st=W(i,1)+.05; const sp=cl((t-st)/.18); const ss=lerp(2.2,1,eo(sp));
+  return card(110,760,860,520,`<div class="lbl">Бой · уровень опасности</div>
+   <div class="big" style="left:44px;top:90px;font-size:190px;color:#e8452c">${n}%</div>
+   <div class="bar" style="left:48px;top:320px;width:764px"><i style="width:${p*100}%;background:#e8452c"></i></div>
+   ${t>st?`<div class="stamp" style="left:70px;top:370px;font-size:78px;transform:rotate(-5deg) scale(${ss});opacity:${sp}">СМЕРТЕЛЬНАЯ</div>`:''}`,t,s)
+  +(t>st?`<div style="position:absolute;left:0;top:0;width:1080px;height:1920px;background:#fff;opacity:${.5*cl(1-(t-st)/.15)}"></div>`:'');};
+// 2 Руки словно биты
+S[1]=(t,i)=>{const s=lineStart(i);
+  const a=pop(t,W(i,0)), b=pop(t,W(i,1)), c=pop(t,W(i,2),.35);
+  const hard=eo((t-W(i,2))/.6);
+  return card(90,740,900,640,`<div class="lbl">Сравнение · ударная сила</div>
+   <div style="position:absolute;left:70px;top:130px;transform:scale(${a}) rotate(${-8+8*a}deg)">${fist(250)}</div>
+   <div class="big" style="left:390px;top:180px;font-size:180px;color:#e8452c;transform:scale(${b})">=</div>
+   <div style="position:absolute;left:650px;top:96px;transform:rotate(${lerp(70,22,eo((t-W(i,2))/.35))}deg) scale(${c});transform-origin:50% 90%">${bat(80)}</div>
+   <div style="position:absolute;left:48px;top:520px;font-size:26px;font-weight:800;color:#1c1c1c">ТВЁРДОСТЬ</div>
+   <div class="bar" style="left:250px;top:526px;width:510px"><i style="width:${hard*100}%;background:#ffc81e"></i></div>
+   <div style="position:absolute;left:780px;top:516px;font-size:32px;font-weight:900">${Math.round(hard*100)}%</div>`,t,s);};
+// 3 Ногти словно бритвы
+S[2]=(t,i)=>{const s=lineStart(i);const a=pop(t,W(i,0)),c=pop(t,W(i,2));
+  const gl=cl((t-W(i,2)-.1)/.5); const sharp=eo((t-W(i,1))/.9);
+  return card(90,740,900,640,`<div class="lbl">Заточка · ногти</div>
+   <div style="position:absolute;left:60px;top:100px;transform:scale(${a})">${claw(270)}</div>
+   <div style="position:absolute;left:470px;top:200px;transform:scale(${c}) rotate(-10deg)">${razor(330)}
+     <div style="position:absolute;top:0;left:${lerp(-60,330,gl)}px;width:40px;height:180px;background:rgba(255,255,255,.85);transform:skewX(-20deg)"></div></div>
+   <div style="position:absolute;left:48px;top:520px;font-size:26px;font-weight:800">ОСТРОТА</div>
+   <div class="bar" style="left:220px;top:526px;width:540px"><i style="width:${sharp*100}%;background:#e8452c"></i></div>
+   <div style="position:absolute;left:780px;top:516px;font-size:32px;font-weight:900;color:#e8452c">${Math.round(sharp*100)}%</div>`,t,s);};
+// 4 Начался твой смертный бой!
+S[3]=(t,i)=>{const s=lineStart(i);let txt='',col='#fff',k=0,t0=s;
+  const marks=[[W(i,0),'3'],[W(i,1),'2'],[W(i,2),'1'],[W(i,3),'БОЙ!']];
+  for(const [m,v] of marks) if(t>=m){txt=v;t0=m;}
+  const sc=lerp(1.6,1,eo((t-t0)/.2));
+  const fight=txt==='БОЙ!';
+  return `<div style="position:absolute;left:0;top:0;width:1080px;height:1920px;transform:${shake(t,W(i,3),18,.4)}">`+
+   card(150,700,780,720,`<div class="lbl">Раунд 1 · старт</div>
+   <svg style="position:absolute;left:140px;top:110px" width="500" height="500"><circle cx="250" cy="250" r="${200+20*Math.sin(t*14)}" fill="none" stroke="#ffc81e" stroke-width="4" opacity=".5"/><circle cx="250" cy="250" r="170" fill="${fight?'#e8452c':'#ffc81e'}"/></svg>
+   <div class="big" style="left:0;width:780px;text-align:center;top:${fight?285:220}px;font-size:${fight?150:260}px;color:${fight?'#fff':'#1d1d22'};transform:scale(${sc})">${txt}</div>`,t,s,'dark')+'</div>';};
+// 5 Смертельная битва (VS)
+S[4]=(t,i)=>{const s=lineStart(i);const a=eo((t-s)/.35),b=eo((t-W(i,1))/.3);const vs=pop(t,W(i,1)+.05,.3);
+  const viewers=Math.round(47982+ (t-s)*3171);
+  return card(60,720,960,700,`<div class="lbl">Матч · прямой эфир</div>
+   <div style="position:absolute;right:40px;top:28px;background:#e8452c;color:#fff;font-weight:900;font-size:24px;padding:6px 16px;border-radius:10px">● LIVE ${viewers.toLocaleString('ru')}</div>
+   <div style="position:absolute;left:${lerp(-300,40,a)}px;top:220px">${fighter({w:330,mood:'angry'})}</div>
+   <div style="position:absolute;left:${lerp(1100,590,b)}px;top:220px;transform:scaleX(-1)">${fighter({w:330,band:'#2f6fe0',gi:'#1d1d22',hair:'#6b3a1e',skin:'#e3a06f',mood:'angry'})}</div>
+   <div class="big" style="left:380px;top:300px;width:200px;text-align:center;font-size:150px;color:#e8452c;font-style:italic;transform:scale(${vs})">VS</div>`,t,s);};
+// 6 Лишь не быть убитым
+S[5]=(t,i)=>{const s=lineStart(i);const p=eo((t-W(i,3))/.45);const hp=Math.max(1,Math.round(100-99*p));
+  const col=hp>50?'#22b35b':hp>20?'#ffb21e':'#e8452c'; const blink=hp<10&&Math.floor(t*8)%2;
+  return `<div style="position:absolute;inset:0;transform:${shake(t,W(i,3),16,.35)}">`+card(90,760,900,560,`<div class="lbl">Игрок · HP</div>
+   <div class="big" style="left:48px;top:110px;font-size:200px;color:${blink?'#e8452c':'#1c1c1c'}">${hp}</div>
+   <div style="position:absolute;right:50px;top:60px">${fighter({w:270,mood:hp<50?'worried':'neutral'})}</div>
+   <div class="bar" style="left:50px;top:400px;width:800px;height:34px;border-radius:17px"><i style="width:${hp}%;background:${col}"></i></div>
+   <div style="position:absolute;left:50px;top:460px;font-size:28px;font-weight:800;color:#9a948a">СТАТУС: <span style="color:${col}">${hp>50?'ЖИВ':hp>5?'ОПАСНО':'ДЕРЖИСЬ!'}</span></div>`,t,s)+'</div>';};
+// 7 Каждый хочет выжить в этом (radar)
+S[6]=(t,i)=>{const s=lineStart(i);const ang=(t-s)*260;const pts=[[60,-120],[-140,-40],[120,90],[-60,140],[170,-20],[-170,100],[20,40],[-90,-150]];
+  let found=0; const blips=pts.map((p,k)=>{const tt=s+.15+k*.17; if(t<tt) return ''; found++; const sc=pop(t,tt,.25);
+    return `<g transform="translate(${300+p[0]},${300+p[1]}) scale(${sc})"><circle r="22" fill="#e8452c"/><circle r="10" fill="#fff"/></g>`}).join('');
+  return card(140,700,800,800,`<div class="lbl">Радар · выжившие</div>
+   <svg style="position:absolute;left:100px;top:90px" width="600" height="600" viewBox="0 0 600 600">
+    <circle cx="300" cy="300" r="260" fill="none" stroke="#3a3a42" stroke-width="3"/><circle cx="300" cy="300" r="170" fill="none" stroke="#3a3a42" stroke-width="3"/><circle cx="300" cy="300" r="80" fill="none" stroke="#3a3a42" stroke-width="3"/>
+    <path d="M40 300H560M300 40V560" stroke="#3a3a42" stroke-width="3"/>
+    <g transform="rotate(${ang} 300 300)"><path d="M300 300 L300 40 A260 260 0 0 1 484 116 Z" fill="url(#g)"/></g>
+    <defs><radialGradient id="g" cx="300" cy="300" r="260" gradientUnits="userSpaceOnUse"><stop offset="0" stop-color="#ffc81e" stop-opacity=".9"/><stop offset="1" stop-color="#ffc81e" stop-opacity=".1"/></radialGradient></defs>
+    ${blips}<circle cx="300" cy="300" r="9" fill="#ffc81e"/></svg>
+   <div style="position:absolute;left:44px;bottom:40px;color:#8d8d96;font-size:24px;font-weight:700;letter-spacing:2px">ХОТЯТ ВЫЖИТЬ</div>
+   <div style="position:absolute;right:44px;bottom:28px;color:#e8452c;font-size:64px;font-weight:900">${found}</div>`,t,s,'dark');};
+// 8 Сражении с судьбой! (incoming call)
+S[7]=(t,i)=>{const s=lineStart(i);const r=(t*1.6)%1;
+  return card(230,690,620,860,`<div class="lbl" style="left:0;width:620px;text-align:center">Входящий вызов</div>
+   <div style="position:absolute;top:90px;width:620px;text-align:center;color:#fff;font-size:64px;font-weight:900">Судьба</div>
+   <svg style="position:absolute;left:110px;top:200px" width="400" height="400">
+     <circle cx="200" cy="200" r="${120+70*r}" fill="none" stroke="#ffc81e" stroke-width="4" opacity="${1-r}"/>
+     <circle cx="200" cy="200" r="${120+70*((r+.5)%1)}" fill="none" stroke="#ffc81e" stroke-width="4" opacity="${1-(r+.5)%1}"/>
+     <circle cx="200" cy="200" r="120" fill="#ffc81e"/></svg>
+   <div style="position:absolute;left:250px;top:330px;transform:rotate(${Math.sin(t*30)*8}deg)">${skull(120,'#1d1d22','#ffc81e')}</div>
+   <div style="position:absolute;left:110px;top:680px;width:110px;height:110px;border-radius:55px;background:#e8452c"><div style="margin:50px 28px;height:10px;background:#fff;border-radius:5px"></div></div>
+   <div style="position:absolute;right:110px;top:680px;width:110px;height:110px;border-radius:55px;background:#22b35b;transform:scale(${1+.08*Math.sin(t*18)})"><div style="margin:50px 28px;height:10px;background:#fff;border-radius:5px"></div></div>`,t,s,'dark');};
+// 9 Каждый боец тут натренированный
+S[8]=(t,i)=>{const s=lineStart(i);const p=eo((t-W(i,1))/(BAR*.75));const st=W(i,3)+.55; const sp=cl((t-st)/.16);
+  const lift=Math.abs(Math.sin((t-s)*Math.PI/BEAT))*40;
+  return card(110,720,860,720,`<div class="lbl">Тренировка · боец</div>
+   <div style="position:absolute;left:280px;top:110px">${fighter({w:300,mood:'yell'})}</div>
+   <svg style="position:absolute;left:150px;top:${170-lift}px" width="560" height="80"><rect x="60" y="34" width="440" height="12" rx="6" fill="#555"/><rect x="20" y="0" width="50" height="80" rx="12" fill="#1d1d22"/><rect x="490" y="0" width="50" height="80" rx="12" fill="#1d1d22"/></svg>
+   <div class="bar" style="left:50px;top:600px;width:620px"><i style="width:${p*100}%;background:#22b35b"></i></div>
+   <div style="position:absolute;left:690px;top:588px;font-size:36px;font-weight:900">${Math.round(p*100)}%</div>
+   ${t>st?`<div class="stamp" style="left:520px;top:440px;font-size:56px;border-color:#22b35b;color:#22b35b;transform:rotate(-8deg) scale(${lerp(2,1,eo(sp))});opacity:${sp}">ГОТОВ</div>`:''}`,t,s);};
+// 10 Сотни приёмов им отработаны
+S[9]=(t,i)=>{const s=lineStart(i);const n=Math.round(eo((t-s)/(BAR*.6))*347);
+  const items=['Удар ногой','Захват','Бросок','Блок','Апперкот'];
+  const rows=items.map((it,k)=>{const tt=W(i,3)-.25+k*.14;const ok=t>tt;const sc=pop(t,tt,.2);
+    return `<div style="position:absolute;left:50px;top:${250+k*86}px;font-size:40px;font-weight:800;color:${ok?'#1c1c1c':'#bbb'}">${it}</div>
+      <div style="position:absolute;right:50px;top:${244+k*86}px;width:56px;height:56px;border-radius:14px;background:${ok?'#22b35b':'#eee'};color:#fff;font-size:40px;font-weight:900;text-align:center;line-height:56px;transform:scale(${ok?sc:1})">${ok?'✓':''}</div>`}).join('');
+  return card(110,700,860,740,`<div class="lbl">Приёмы · отработано</div>
+   <div class="big" style="left:44px;top:70px;font-size:150px">${n}</div>
+   <div style="position:absolute;left:${n>99?370:250}px;top:150px;font-size:34px;font-weight:800;color:#e8452c">приёмов</div>${rows}`,t,s);};
+// 11 Лучшие воины вместе собраны
+S[10]=(t,i)=>{const s=lineStart(i);
+  const opts=[{band:'#e8452c'},{band:'#2f6fe0',gi:'#1d1d22',hair:'#6b3a1e',skin:'#e3a06f'},{band:'#22b35b',hair:'#c9a227'},{band:'#8e44ad',gi:'#ffc81e',skin:'#c88458'}];
+  const tt=[W(i,0),W(i,1),W(i,2),W(i,3)];
+  const g=opts.map((o,k)=>{const sc=pop(t,tt[k],.3);if(t<tt[k])return '';
+    return `<div style="position:absolute;left:${70+(k%2)*400}px;top:${150+Math.floor(k/2)*370}px;transform:scale(${sc})"><div style="width:340px;height:340px;border-radius:30px;background:#faf3e3;display:flex;justify-content:center;align-items:flex-end;overflow:hidden">${fighter({...o,w:300,mood:'angry'})}</div></div>`}).join('');
+  const x4=pop(t,W(i,3)+.2,.3);
+  return card(90,640,900,920,`<div class="lbl">Состав · лучшие воины</div>${g}
+   <div class="big" style="right:50px;top:40px;font-size:80px;color:#e8452c;transform:scale(${t>W(i,3)+.2?x4:0})">×4</div>`,t,s);};
+// 12 Насмерть ведут друг с другом тут бой!
+S[11]=(t,i)=>{const s=lineStart(i);const go=W(i,6);const ws=pop(t,s,.3);
+  const bars=Array.from({length:44},(_,k)=>{const h=20+Math.abs(Math.sin(k*1.7+t*13)*Math.cos(k*.6+t*7))*90;return `<rect x="${k*16}" y="${60-h/2}" width="8" height="${h}" rx="4" fill="#e8452c"/>`}).join('');
+  const bs=pop(t,go,.3);
+  return `<div style="position:absolute;inset:0;transform:${shake(t,go,22,.5)}">
+   <div style="position:absolute;left:340px;top:760px;transform:scale(${ws*(1+.04*Math.sin(t*Math.PI*2/BEAT))})">${warn(400)}</div>
+   ${t>=go?`<div class="btn" style="left:160px;top:1190px;width:760px;height:170px;line-height:170px;font-size:110px;transform:scale(${bs}) rotate(-2deg)">В БОЙ!</div>`:''}
+   <svg style="position:absolute;left:190px;top:1450px" width="704" height="120">${bars}</svg></div>`;};
+
+// ---------- text ----------
+function renderText(t,i){
+  const ln=LINES[i];let h='';
+  ln.forEach((w,j)=>{const [word,st='']=w.split('|');const tw=TIM[i][j];
+    const next = j>0 ? TIM[i][j-1] : lineStart(i)-0.01;
+    if(t<next) return;               // preview only the next word
+    const on=t>=tw; const k=eo((t-tw)/.12);
+    let color= on? (st.includes('r')?'#e8452c':'#1c1c1c') : '#c9c2b6';
+    const sc= on? lerp(1.08,1,k):1;
+    const hl= st.includes('k')&&on ? `<b class="hl" style="transform:scaleX(${eo((t-tw)/.2)})"></b>`:'';
+    h+=`<div class="w" style="color:${color};transform:scale(${sc});transform-origin:left bottom">${hl}<span>${word}</span></div>`;
+  });
+  return h;
+}
+const bgEl=document.getElementById('bg'),stEl=document.getElementById('stage'),txEl=document.getElementById('text');
+window.render=function(t){
+  let i=Math.floor((t-T0)/BAR); i=cl(i,0,LINES.length-1);
+  const red=RED_BG.has(i)&&(i!==3||t>=TIM[3][3])&&(i!==11||t>=TIM[11][6]-BEAT);
+  const pulse=1+0.012*Math.max(0,1-((t-T0)%BEAT)/.15);
+  bgEl.style.background= red? 'linear-gradient(180deg,#fbe9df 0%,#f9b8a6 45%,#f7a693 100%)':'linear-gradient(180deg,#f8f2e7 0%,#fbecc4 45%,#fbe2a0 100%)';
+  stEl.style.transform=`scale(${pulse})`;
+  stEl.innerHTML=S[i](t,i);
+  txEl.innerHTML=renderText(t,i);
+};
+render(0.5);
+</script></body></html>
