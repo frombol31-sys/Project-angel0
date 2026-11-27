@@ -167,7 +167,7 @@ h2{font-weight:400;font-size:24px;margin:0;letter-spacing:1px}
 #downBtn{right:218px;bottom:92px}
 #downBtn.on{background:rgba(255,255,255,.3)}
 .tile.off{opacity:.38}
-@media (max-height:430px){.sidepanel{padding-left:28px;gap:6px} .mi{padding-top:5px;padding-bottom:5px} .full{padding:10px 20px 12px} .bar{margin-bottom:8px}}
+@media (max-height:430px), (orientation:portrait) and (max-width:430px){.sidepanel{padding-left:28px;gap:6px} .mi{padding-top:5px;padding-bottom:5px} .full{padding:10px 20px 12px} .bar{margin-bottom:8px}}
 @media (max-width:760px){.maps{gap:10px} .map .ds{display:none} #wCur{min-width:120px} .hp{width:96px}}
 @media (prefers-reduced-motion: reduce){*{transition:none!important}}
 /* ---- HUD v3: thin white UI anchored to the corners ---- */
@@ -262,7 +262,7 @@ h2{font-weight:600;letter-spacing:2px;text-transform:uppercase}
 .atile{flex-direction:column;gap:3px;padding:6px 3px;align-items:center;text-align:center}
 .atile span{font-size:11px;max-width:100%}
 .atile .ic{width:32px;height:32px}
-@media (max-height:430px){
+@media (max-height:430px), (orientation:portrait) and (max-width:430px){
   .opt{padding:5px 0;font-size:13px} .opt small{font-size:10px} .seg button{padding:5px 9px;font-size:12px}
   .help{gap:8px} .card p{font-size:11px;line-height:1.3}
   .modes{margin-bottom:8px;gap:8px} .mode{padding:6px 12px;font-size:11px} .mode .ic{width:44px;height:44px} .mode b{font-size:15px}
@@ -277,6 +277,14 @@ h2{font-weight:600;letter-spacing:2px;text-transform:uppercase}
 .khint{font-family:var(--f-text);font-size:8.5px;font-weight:700;text-align:center;color:rgba(255,255,255,.7);padding:2px 0;line-height:1.3}
 .card.pc{display:none}
 @media (pointer:fine){ .kb{display:inline} .khint{display:block} .card.pc{display:grid} }
+.screen:not(.hidden) ~ #msg, .screen:not(.hidden) ~ #toast{display:none!important}
+#tip{min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.atile span{white-space:normal;line-height:1.1;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow-wrap:anywhere;text-align:center}
+.card b{min-width:0;overflow-wrap:anywhere}
+#hud.chatting #hpbox,#hud.chatting #emoteBtn,#hud.chatting #chatBtn{visibility:hidden}
+#wave{top:64px} #toast{top:100px}
+@media (max-width:760px){ #palette{gap:4px;padding:5px 6px;left:calc(50% - 40px)} #palette .sw{width:24px;height:24px} }
+@media (max-height:430px){ .opt{padding:4px 0} }
 .khint.pal{align-self:center;padding:0 4px} @media (pointer:fine){ .khint.pal{display:block} }
 /* player name, emotes, chat */
 .hpbox .pn{font:600 12px var(--f-ui);letter-spacing:1.5px;color:#fff;opacity:.8;margin-bottom:1px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
@@ -2600,6 +2608,7 @@ addEventListener('keydown', e => {
     else if (document.exitFullscreen) document.exitFullscreen().catch(() => {});
     return;
   }
+  if (chatOpen) { if (e.code === 'Escape') closeChat(); return; }
   keys[e.code] = true; initAudio();
   if (game.state === 'play' && game.player) {
     const n = parseInt(e.key, 10); if (!isNaN(n)) { const i = n === 0 ? 9 : n - 1; if (i < WEAPONS.length) selectWeapon(i); }
@@ -2618,6 +2627,7 @@ addEventListener('keydown', e => {
   if (e.code === 'Escape' || e.code === 'KeyP') { if (game.state === 'play') pauseGame(); else if (e.code === 'Escape' && game.state !== 'inv') gzBack(); }
 });
 addEventListener('keyup', e => { keys[e.code] = false; });
+addEventListener('blur', () => { for (const k in keys) keys[k] = false; releaseTouches(); });
 document.addEventListener('gesturestart', e => e.preventDefault());
 document.addEventListener('touchmove', e => e.preventDefault(), { passive: false });
 addEventListener('contextmenu', e => e.preventDefault());
@@ -2968,6 +2978,7 @@ function chatCommand(t) {
 }
 $('chatIn').addEventListener('keydown', e => {
   e.stopPropagation();
+  if (e.key === 'Tab') { e.preventDefault(); return; }
   if (e.key === 'Enter') { e.preventDefault(); sendChat($('chatIn').value); closeChat(); }
   else if (e.key === 'Escape') { e.preventDefault(); closeChat(); }
 });
@@ -3039,14 +3050,14 @@ function drawOverlay() {
   if (game.state === 'armory') return;
   c.setTransform(dpr, 0, 0, dpr, 0, 0);
   c.textAlign = 'center'; c.font = '12px "Russo One",sans-serif';
-  for (const h of game.humans) {
+  if (game.state === 'play' || game.state === 'menu') for (const h of game.humans) {
     if (h === game.player) continue;
     if (!h.alive) {
       if (!settings.respawn || game.mode === 'survival' || game.demo || !h.ragdoll) continue;
       const left = settings.respawn - (game.time - h.deadAt), q = h.ragdoll.p[8];
       if (Math.hypot(q.x - camera.position.x, q.z - camera.position.z) > 25) continue;
       const s = project(q.x, q.y + .7, q.z); if (!s) continue;
-      const txt = '↻ ' + (left >= 60 ? Math.floor(left / 60) + ':' + String(Math.ceil(left % 60) % 60).padStart(2, '0') : Math.ceil(left) + L('с'));
+      const sec = Math.ceil(left), txt = '↻ ' + (sec >= 60 ? Math.floor(sec / 60) + ':' + String(sec % 60).padStart(2, '0') : sec + L('с'));
       c.fillStyle = 'rgba(0,0,0,.6)'; c.fillText(txt, s.x + 1, s.y + 1); c.fillStyle = 'rgba(255,255,255,.85)'; c.fillText(txt, s.x, s.y);
       continue;
     }
@@ -3410,7 +3421,7 @@ function startGame(mi, demo, mode = 'sandbox') {
   const m = MAPS[mi];
   clearActors();
   game.map = m; game.mapIndex = mi; m.pstart = PSTART[m.id]; buildWorld(m);
-  saveBest(); game.runId = (game.runId || 0) + 1;
+  saveBest(); game.runId = (game.runId || 0) + 1; $('toast').classList.add('hidden');
   Object.assign(game, { clickT: 0, humans: [], projectiles: [], time: 0, kills: 0, demo, shake: 0, recoil: 0, flash: 0, mode: demo ? 'sandbox' : mode, wave: 0, waveT: 3, toSpawn: 0, spawnT: 0,
     reloadT: 0, autoReload: 0, ads: false, adsK: 0, vmFlash: 0, dmgInd: [], splats: [], props: [], grab: null, crushLabel: '', ammo: WEAPONS.map(w => w.mag || 0) });
   game.player = null;
