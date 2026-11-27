@@ -54,7 +54,7 @@ button:focus-visible{outline:2px solid var(--red2);outline-offset:2px}
 .back:active{background:var(--red)}
 h2{font-weight:400;font-size:24px;margin:0;letter-spacing:1px}
 .bar small{margin-left:auto;color:var(--mut);font-family:var(--f-text);font-size:12px}
-.maps{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:14px;flex:1;min-height:0}
+.maps{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:14px;flex:1;min-height:0}
 .map{position:relative;border-radius:16px;overflow:hidden;border:1px solid var(--line);padding:0;text-align:left;background:#141012;display:flex;flex-direction:column;transition:transform .12s,border-color .12s}
 .map:hover,.map:active{border-color:var(--red2);transform:translateY(-2px)}
 .map .pv{flex:1;min-height:70px;position:relative;display:flex;align-items:flex-end;justify-content:flex-end;padding:8px 12px;font-size:40px}
@@ -160,6 +160,14 @@ h2{font-weight:400;font-size:24px;margin:0;letter-spacing:1px}
 .sbtn span{font-size:8px;letter-spacing:.5px;margin-top:2px}
 #aimBtn{right:152px;bottom:94px} #aimBtn.on{background:rgba(200,16,26,.65);border-color:var(--red2)}
 #reloadBtn{right:220px;bottom:24px}
+#crushPanel{position:absolute;left:50%;transform:translateX(-50%);bottom:10px;display:flex;flex-direction:column;gap:5px;align-items:center}
+.crow{display:flex;gap:3px;padding:4px;background:var(--glass);border:1px solid var(--line);border-radius:14px}
+.cb{height:42px;min-width:56px;padding:0 6px;border-radius:10px;border:1px solid transparent;background:none;font-size:10px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;color:#ddd;font-family:var(--f-text);font-weight:600}
+.cb i{font-style:normal;font-size:17px;line-height:1}
+.cb.on{background:rgba(150,60,255,.5);border-color:#c48bff;color:#fff}
+#downBtn{right:218px;bottom:92px}
+#downBtn.on{background:rgba(255,255,255,.3)}
+.tile.off{opacity:.38}
 @media (max-height:430px){.sidepanel{padding-left:28px;gap:6px} .mi{padding-top:5px;padding-bottom:5px} .full{padding:10px 20px 12px} .bar{margin-bottom:8px}}
 @media (max-width:760px){.maps{gap:10px} .map .ds{display:none} #wCur{min-width:120px} .hp{width:96px}}
 @media (prefers-reduced-motion: reduce){*{transition:none!important}}
@@ -203,9 +211,10 @@ h2{font-weight:400;font-size:24px;margin:0;letter-spacing:1px}
     <div class="card"><i>◎</i><b>Прицел и патроны</b><p>◎ — прицелиться (у снайперки ×4). ⟳ — перезарядка, она включается и сама.</p></div>
     <div class="card"><i>🗡️</i><b>Арсенал</b><p>Нажми на название оружия сверху или листай стрелками ‹ ›.</p></div>
     <div class="card"><i>🦴</i><b>Расчленёнка</b><p>Топор, катана, пила и снайперка отрубают конечности даже у живых. Без руки человек истекает кровью.</p></div>
-    <div class="card"><i>🎨</i><b>Граффити</b><p>Баллончик и маркер рисуют на стенах и машинах. Цвет — палитра внизу.</p></div>
+    <div class="card"><i>🌀</i><b>Реалити-крашер</b><p>Создавай людей и предметы, хватай и кидай, толкай, оживляй и удаляй. Режимы — внизу экрана.</p></div>
     <div class="card"><i>🩸</i><b>Режимы</b><p>Песочница: люди возрождаются через минуту. Выживание: волны бандитов, одна жизнь.</p></div>
-    <div class="card"><i>⌨️</i><b>Компьютер</b><p>WASD, мышь, ПКМ — прицел, R — перезарядка, пробел — прыжок, Q/E и Tab — оружие.</p></div>
+    <div class="card"><i>🕊️</i><b>Полёт и бессмертие</b><p>Включаются в настройках, работают только в песочнице. В полёте ⤒ — вверх, ⤓ — вниз.</p></div>
+    <div class="card" style="display:none"><i>⌨️</i><b>Компьютер</b><p>WASD, мышь, ПКМ — прицел, R — перезарядка, пробел — прыжок, Q/E и Tab — оружие.</p></div>
   </div>
 </div>
 
@@ -236,6 +245,8 @@ h2{font-weight:400;font-size:24px;margin:0;letter-spacing:1px}
   <div id="wsel"><button id="wPrev" aria-label="Предыдущее оружие">‹</button><button id="wCur"><i id="wIcon">✊</i><span id="wName">Кулаки</span><small>▼</small></button><button id="wNext" aria-label="Следующее оружие">›</button></div>
   <div class="tr"><button class="tbtn" id="npcBtn">+ 👤</button><button class="tbtn" id="pauseBtn" aria-label="Пауза">❚❚</button></div>
   <div id="palette" class="hidden"></div>
+  <div id="crushPanel" class="hidden"><div class="crow" id="crushSpawn"></div><div class="crow" id="crushModes"></div></div>
+  <div class="rbtn sbtn hidden" id="downBtn">⤓<span>ВНИЗ</span></div>
   <div id="feed"></div>
   <div id="wave" class="hidden"></div>
   <div id="ammo" class="hidden"><b id="ammoN">12</b> / ∞</div>
@@ -280,7 +291,7 @@ const ease = t => 1 - (1 - t) * (1 - t);
 function angDiff(a, b) { let d = b - a; while (d > Math.PI) d -= 2 * Math.PI; while (d < -Math.PI) d += 2 * Math.PI; return d; }
 
 // ---------------- settings ----------------
-const settings = { blood: 1, npc: 8, chaos: false, sound: true, gfx: 1, sens: 1, paint: 0, fov: 75, best: 0 };
+const settings = { blood: 1, npcStart: 0, chaos: false, sound: true, gfx: 1, sens: 1, paint: 0, fov: 75, best: 0, fly: false, god: false };
 try { Object.assign(settings, JSON.parse(localStorage.getItem('gz_settings') || '{}')); } catch (e) {}
 function saveSettings() { try { localStorage.setItem('gz_settings', JSON.stringify(settings)); } catch (e) {} }
 const bloodMul = () => [0.4, 1, 2][settings.blood];
@@ -307,7 +318,7 @@ function initAudio() {
 const SFX = {
   pistol: [.14, 1900, .55], shotgun: [.3, 1100, .8], rifle: [.09, 2300, .4], hit: [.1, 500, .6, 'lowpass', 150],
   swish: [.12, 2600, .18, 'bandpass'], boom: [1.1, 420, 1, 'lowpass', 90], splat: [.2, 650, .45], slash: [.16, 3200, .3, 'highpass'],
-  throw: [.1, 1500, .15, 'bandpass'], sniper: [.55, 1300, 1, 'lowpass', 120], saw: [.09, 700, .3, 'bandpass', 60], reload: [.07, 3200, .22, 'bandpass'], crunch: [.28, 450, .7, 'lowpass', 70], empty: [.04, 4000, .2, 'highpass'], spray: [.13, 6000, .1, 'highpass'], marker: [.05, 2500, .035, 'bandpass'], rocket: [.4, 900, .5, 'bandpass'], hurt: [.15, 300, .5, 'lowpass', 110]
+  throw: [.1, 1500, .15, 'bandpass'], sniper: [.55, 1300, 1, 'lowpass', 120], saw: [.09, 700, .3, 'bandpass', 60], reload: [.07, 3200, .22, 'bandpass'], crunch: [.28, 450, .7, 'lowpass', 70], empty: [.04, 4000, .2, 'highpass'], zap: [.22, 2400, .3, 'bandpass', 320], spray: [.13, 6000, .1, 'highpass'], marker: [.05, 2500, .035, 'bandpass'], rocket: [.4, 900, .5, 'bandpass'], hurt: [.15, 300, .5, 'lowpass', 110]
 };
 function sfx(n, pos) {
   if (!AC || !settings.sound) return;
@@ -347,8 +358,9 @@ const WEAPONS = [
   { id: 'sniper', name: 'Снайперка', icon: '🎯', cat: 'gun', desc: 'прицел ×4, пробивает насквозь', type: 'gun', dmg: 120, cd: 1.1, spread: .002, pellets: 1, knock: 14, snd: 'sniper', two: 1, mag: 5, reload: 2.1, gore: 3, zoom: 4, pierce: 1, st: [100, 15, 100] },
   { id: 'grenade', name: 'Граната', icon: '💣', cat: 'boom', desc: 'взрыв через 2 с', type: 'throw', cd: .9, dur: .35, st: [95, 20, 90] },
   { id: 'rpg', name: 'РПГ', icon: '🚀', cat: 'boom', desc: 'ракета, разрывает в клочья', type: 'rocket', cd: 1.3, two: 1, mag: 1, reload: 2.2, zoom: 1.3, st: [100, 10, 100] },
-  { id: 'spray', name: 'Баллончик', icon: '🎨', cat: 'paint', desc: 'широкое граффити', type: 'paint', cd: 0, range: 7, st: [0, 100, 0] },
-  { id: 'marker', name: 'Маркер', icon: '🖊️', cat: 'paint', desc: 'тонкие линии вблизи', type: 'paint', cd: 0, range: 2.6, st: [0, 100, 0] }
+  { id: 'spray', name: 'Баллончик', icon: '🎨', cat: 'tool', desc: 'широкое граффити', type: 'paint', cd: 0, range: 7, st: [0, 100, 0] },
+  { id: 'marker', name: 'Маркер', icon: '🖊️', cat: 'tool', desc: 'тонкие линии вблизи', type: 'paint', cd: 0, range: 2.6, st: [0, 100, 0] },
+  { id: 'crusher', name: 'Реалити-крашер', icon: '🌀', cat: 'tool', desc: 'создавай, двигай, удаляй', type: 'crusher', cd: .3, sandboxOnly: 1, st: [0, 100, 0] }
 ];
 const widx = id => WEAPONS.findIndex(w => w.id === id);
 const MUZZLE = { pistol: .17, shotgun: .56, rifle: .6, sniper: .9, rpg: .78 };
@@ -425,6 +437,7 @@ function makeTextures() {
   TEX.container = canvasTex(256, 128, (g, w, h) => { g.fillStyle = '#2f5d7a'; g.fillRect(0, 0, w, h); for (let x = 0; x < w; x += 16) { g.fillStyle = 'rgba(0,0,0,.22)'; g.fillRect(x, 0, 7, h); } });
   TEX.sand = canvasTex(256, 256, (g, w, h) => { g.fillStyle = '#c99556'; g.fillRect(0, 0, w, h); noise(g, w, h, .1, 8000); });
   TEX.rock = canvasTex(256, 256, (g, w, h) => { g.fillStyle = '#a8673a'; g.fillRect(0, 0, w, h); for (let y = 0; y < h; y += 24 + Math.random() * 20) { g.fillStyle = `rgba(${Math.random() < .5 ? '60,25,10' : '220,160,110'},.25)`; g.fillRect(0, y, w, 6 + Math.random() * 10); } noise(g, w, h, .1, 3000); });
+  TEX.grid = canvasTex(256, 256, (g, w, h) => { g.fillStyle = '#8b8e91'; g.fillRect(0, 0, w, h); noise(g, w, h, .08, 7000); g.strokeStyle = 'rgba(40,42,45,.55)'; g.lineWidth = 3; g.strokeRect(0, 0, w, h); g.strokeStyle = 'rgba(40,42,45,.22)'; g.lineWidth = 1.5; g.beginPath(); g.moveTo(w / 2, 0); g.lineTo(w / 2, h); g.moveTo(0, h / 2); g.lineTo(w, h / 2); g.stroke(); });
   TEX.metal = canvasTex(64, 64, (g, w, h) => { g.fillStyle = '#55575c'; g.fillRect(0, 0, w, h); noise(g, w, h, .08, 300); });
   TEX.dot = canvasTex(32, 32, (g, w, h) => { const gr = g.createRadialGradient(16, 16, 0, 16, 16, 16); gr.addColorStop(0, 'rgba(255,255,255,1)'); gr.addColorStop(.6, 'rgba(255,255,255,.9)'); gr.addColorStop(1, 'rgba(255,255,255,0)'); g.fillStyle = gr; g.fillRect(0, 0, w, h); });
   TEX.soft = canvasTex(64, 64, (g, w, h) => { const gr = g.createRadialGradient(32, 32, 0, 32, 32, 32); gr.addColorStop(0, 'rgba(255,255,255,.9)'); gr.addColorStop(1, 'rgba(255,255,255,0)'); g.fillStyle = gr; g.fillRect(0, 0, w, h); });
@@ -438,7 +451,7 @@ makeTextures();
 const LOOKS = {
   road: ['road', 8, '#fff'], asphalt: ['asphalt', 4, '#fff'], sidewalk: ['sidewalk', 2, '#fff'], facadeA: ['facadeA', 6, '#fff'], facadeB: ['facadeB', 6, '#fff'],
   facadeC: ['facadeC', 6, '#fff'], brick: ['brick', 3, '#fff'], crate: ['crate', 1.1, '#fff'], concrete: ['concrete', 3, '#fff'], wall: ['wall', 4, '#fff'],
-  container: ['container', 3, '#fff'], sand: ['sand', 6, '#fff'], rock: ['rock', 5, '#fff'], adobe: ['rock', 4, '#d9a76a'], metal: ['metal', 1, '#fff'],
+  container: ['container', 3, '#fff'], sand: ['sand', 6, '#fff'], rock: ['rock', 5, '#fff'], adobe: ['rock', 4, '#d9a76a'], metal: ['metal', 1, '#fff'], grid: ['grid', 4, '#fff'], block: ['concrete', 2, '#b9bbbd'],
   carRed: [null, 1, '#8b1d22'], carBlue: [null, 1, '#1d4f8b'], carWhite: [null, 1, '#c8c8cc'], carYellow: [null, 1, '#d9a91f'], bus: [null, 1, '#c9a227'],
   dump: [null, 1, '#2f5a3a'], shelf: ['metal', 1, '#c08a3a'], barrier: ['concrete', 2, '#d0ccc4'], cactus: [null, 1, '#3e6b3a'], lamp: [null, 1, '#ffe2a8']
 };
@@ -527,6 +540,22 @@ const MAPS = [
       for (let i = 0; i < 14; i++) { const x = (r() - .5) * 100, z = (r() - .5) * 100; if (Math.hypot(x, z) < 10) continue; a.push(B(x, z, .35, .35, 2.2, 'cactus'), B(x + .35, z, .25, .25, .8, 'cactus', 1, { deco: 1 })); }
       return a;
     }
+  },
+  {
+    id: 'test', emoji: '🌧️', tags: ['Пасмурно', 'Бетон', 'Полигон'], name: 'Полигон', desc: 'Серый бетон, дождь, невидимые стены по краям', bx: 45, bz: 45,
+    sky: ['#5b6065', '#7d8287', '#a2a6a9'], fog: [0x8e9397, 22, 115], hemi: [0xe3e7ea, 0x5a5e62, 1.0], sun: [0xe8ecef, .3, [20, 40, 10]],
+    ground: ['grid', 170, 170], pv: 'linear-gradient(#5b6065,#a2a6a9 55%,#7b7e81 55%)', rain: true,
+    props: [['crate', -6, 4], ['crate', -6.95, 4], ['crate', -6.5, 4, .9], ['barrel', 4, -3], ['barrel', 4.7, -3.4], ['xbarrel', 8, -8], ['xbarrel', 8.7, -8], ['xbarrel', 8.35, -8.6], ['crate', -14, -10]],
+    build() {
+      const a = [];
+      a.push(B(-12, 10, 4, 4, 1, 'block'), B(-12, 10, 2, 2, 1, 'block', 1));
+      a.push(B(14, -14, 6, 6, 4, 'block'));
+      for (let k = 1; k <= 9; k++) a.push(B(11 - (9.5 - k) * .6, -14, .6, 2, k * .44, 'block'));
+      a.push(B(0, -24, 14, .5, 1.2, 'block'), B(-24, 0, .5, 10, 1.2, 'block'));
+      for (const [x, z] of [[20, 14], [24, 14], [20, 18], [24, 18]]) a.push(B(x, z, 1, 1, 3, 'block'));
+      a.push(B(22, 16, 6, 6, .3, 'block', 3));
+      return a;
+    }
   }
 ];
 
@@ -564,6 +593,8 @@ const PS = {
   fire: new PSys(0xff8a30, 1.1, true, .85, TEX.soft),
   smoke: new PSys(0x8a8a8a, 1.2, false, .32, TEX.soft),
   shell: new PSys(0xd4a640, .035, false, 1, TEX.dot),
+  magic: new PSys(0xb455ff, .22, true, .9, TEX.soft),
+  rain: new PSys(0xc8d0d8, .05, false, .55, TEX.dot),
   paint: new PSys(0xffffff, .18, false, .5, TEX.soft, true)
 };
 class DecalPool {
@@ -678,7 +709,7 @@ function updateParticles(dt) {
     }
     if (p.life <= 0) bl.splice(i, 1);
   }
-  for (const k of ['mist', 'spark', 'fire', 'smoke', 'paint', 'shell']) {
+  for (const k of ['mist', 'spark', 'fire', 'smoke', 'paint', 'shell', 'magic']) {
     const L = PS[k].list;
     for (let i = L.length - 1; i >= 0; i--) {
       const p = L[i]; p.life -= dt;
@@ -1127,6 +1158,7 @@ function makeHuman(team) {
     pants: pick(PANTS), skin: pick(SKINS), hair: pick(HAIRS), mask: team === 'hostile' && Math.random() < .75
   };
   h.weapon = team === 'player' ? 0 : team === 'hostile' ? widx(pick(HOSTILE_POOL)) : (Math.random() < .2 ? widx('knife') : 0);
+  if (team === 'dummy') Object.assign(h, { shirt: '#a3a6a9', pants: '#8d9093', skin: '#c4c6c8', hair: '#b9bbbd', mask: false, name: 'Манекен', weapon: 0 });
   limbHpInit(h);
   if (team !== 'player') buildBody(h);
   return h;
@@ -1139,7 +1171,8 @@ function respawn(h) {
   else {
     if (h.team === 'civil' && Math.random() < .2) h.weapon = widx('knife'); else if (h.team === 'civil') h.weapon = 0;
     if (h.team === 'hostile') h.weapon = widx(pick(HOSTILE_POOL));
-    placeHuman(h);
+    if (h.home) { h.x = h.home.x; h.z = h.home.z; h.y = h.home.y || 0; h.vx = h.vy = h.vz = 0; } else placeHuman(h);
+    h.held = false;
     if (h.mesh) actors.remove(h.mesh);
     buildBody(h);
     h.P = pose(h);
@@ -1194,6 +1227,12 @@ function makeWeaponModel(id) {
       add(.12, .15, .3, '#e0661a', 0, 0, 0); add(.1, .05, .18, '#222', 0, .1, -.02); add(.02, .09, .12, '#222', -.07, .03, .05);
       add(.016, .07, .6, '#a9adb3', 0, -.02, .43); add(.02, .012, .62, '#333', 0, .018, .43); add(.02, .012, .62, '#333', 0, -.058, .43);
       { const m = add(0, 0, 0, '#a9adb3', 0, -.02, .73, new THREE.CylinderGeometry(.035, .035, .016, 12)); m.rotation.z = Math.PI / 2; }
+      break;
+    case 'crusher':
+      add(.08, .09, .32, '#2a2830', 0, 0, .02); add(.05, .12, .06, '#1d1b22', 0, -.08, -.06).rotation.x = -.2; add(.09, .02, .22, '#3a3742', 0, .055, 0);
+      { const core = add(0, 0, 0, glowMat, 0, 0, .12, new THREE.CylinderGeometry(.032, .032, .17, 10)); core.rotation.x = Math.PI / 2; }
+      for (const sx of [-1, 1]) add(.015, .015, .22, '#55525e', sx * .045, .03, .26); add(.015, .015, .22, '#55525e', 0, -.045, .26);
+      add(0, 0, 0, glowMat, 0, 0, .38, new THREE.SphereGeometry(.036, 10, 8));
       break;
     case 'grenade': add(0, 0, 0, '#3d5a2a', 0, 0, 0, new THREE.SphereGeometry(.06, 10, 8)); add(.03, .03, .03, '#999', 0, .06, 0); add(.006, .05, .02, '#888', .03, .05, 0); break;
     case 'spray': {
@@ -1311,7 +1350,7 @@ function updateProjectiles(dt) {
 function castRay(o, d, maxT, owner, skip) {
   let best = maxT, res = { kind: null };
   if (d.y < -1e-6) { const t = -o.y / d.y; if (t < best) { best = t; res = { kind: 'wall', n: [0, 1, 0] }; } }
-  for (const b of game.boxes) { const r = rayBox(o, d, b); if (r && r.t < best) { best = r.t; res = { kind: 'wall', n: r.n }; } }
+  for (const b of game.boxes) { const r = rayBox(o, d, b); if (r && r.t < best) { best = r.t; res = { kind: 'wall', n: r.n, box: b }; } }
   for (const h of game.humans) {
     if (h === owner || h === skip) continue;
     if (h.alive) {
@@ -1330,7 +1369,8 @@ function shoot(owner, o, d, w, muzzle, skip) {
   if (r.kind === 'wall') {
     for (let i = 0; i < 5; i++) PS.spark.add({ x: r.at.x, y: r.at.y, z: r.at.z, vx: r.n[0] * rnd(1, 4) + rnd(-2, 2), vy: r.n[1] * rnd(1, 4) + rnd(0, 3), vz: r.n[2] * rnd(1, 4) + rnd(-2, 2), life: .25 });
     PS.smoke.add({ x: r.at.x, y: r.at.y, z: r.at.z, vx: r.n[0] * .5, vy: .3, vz: r.n[2] * .5, life: .5 });
-    addDecal(r.at.x, r.at.y, r.at.z, r.n[0], r.n[1], r.n[2], w.id === 'sniper' ? .1 : .06, true);
+    if (r.box && r.box.prop) hitProp(r.box.prop, d, w.dmg * (w.pellets > 1 ? 1 : 1.5), owner);
+    else addDecal(r.at.x, r.at.y, r.at.z, r.n[0], r.n[1], r.n[2], w.id === 'sniper' ? .1 : .06, true);
   } else if (r.kind === 'body') {
     const head = r.i === 0;
     damage(r.h, w.dmg * (head ? 2.4 : 1) * (owner === game.player ? 1 : .55), d, r.at, { owner, w, knock: w.knock, head, pt: r.i });
@@ -1345,6 +1385,7 @@ function shoot(owner, o, d, w, muzzle, skip) {
 function damage(h, dmg, dir, at, o) {
   if (!h.alive || h.inv > 0) return;
   const isP = h === game.player;
+  if (isP && settings.god && game.mode === 'sandbox') return;
   if (isP && o.owner && o.owner !== game.player) dmg *= .55;
   const w = o.w, pt = o.pt;
   h.hp -= dmg; h.hurt = .25;
@@ -1533,9 +1574,213 @@ function explode(x, y, z, owner) {
       });
     }
   }
+  for (const pr of game.props) {
+    const d = Math.hypot(pr.x - x, pr.y + .45 - y, pr.z - z);
+    if (d < R) { const f = 1 - d / R, l = d || 1; pr.vx += (pr.x - x) / l * 12 * f; pr.vz += (pr.z - z) / l * 12 * f; pr.vy += 7 * f; if (pr.explosive && !pr.fuse) { pr.fuse = rnd(.12, .3); pr.lastHit = owner; } }
+  }
   for (const g of game.gibs) for (const p of g.p) {
     const d = Math.hypot(p.x - x, p.y - y, p.z - z);
     if (d < R) { const f = 1 - d / R, l = d || 1; p.px -= (p.x - x) / l * 20 * f * DT; p.py -= ((p.y - y) / l + .8) * 20 * f * DT; p.pz -= (p.z - z) / l * 20 * f * DT; }
+  }
+}
+// ---------------- props ----------------
+const glowMat = new THREE.MeshBasicMaterial({ color: '#b455ff' });
+const PROP_DEF = {
+  crate: { w: .9, h: .9, d: .9, name: 'Ящик' },
+  barrel: { w: .6, h: .9, d: .6, name: 'Бочка' },
+  xbarrel: { w: .6, h: .9, d: .6, name: 'Взрывная бочка', explosive: true }
+};
+function spawnProp(type, x, z, y = 0) {
+  const D = PROP_DEF[type];
+  let mesh;
+  if (type === 'crate') mesh = new THREE.Mesh(boxGeo(D.w, D.h, D.d, .9), lookMat('crate'));
+  else {
+    mesh = new THREE.Mesh(new THREE.CylinderGeometry(.3, .3, .9, 14), colMat(type === 'xbarrel' ? '#b3121a' : '#2f5d7a'));
+    const band = new THREE.Mesh(new THREE.CylinderGeometry(.306, .306, .1, 14), colMat(type === 'xbarrel' ? '#ffd23a' : '#22475e'));
+    band.position.y = .2; mesh.add(band); const b2 = band.clone(); b2.position.y = -.22; mesh.add(b2);
+  }
+  mesh.castShadow = mesh.receiveShadow = true; actors.add(mesh);
+  const pr = { type, w: D.w, h: D.h, d: D.d, x, y, z, vx: 0, vy: 0, vz: 0, mesh, hp: 40, explosive: !!D.explosive, name: D.name, fuse: 0, held: false };
+  pr.box = { x0: 0, x1: 0, y0: 0, y1: 0, z0: 0, z1: 0, prop: pr };
+  syncProp(pr);
+  game.props.push(pr); game.boxes.push(pr.box);
+  for (let k = 0; k < 8 && propOverlap(pr); k++) { pr.y += .45; syncProp(pr); }
+  return pr;
+}
+function syncProp(pr) { const b = pr.box; b.x0 = pr.x - pr.w / 2; b.x1 = pr.x + pr.w / 2; b.y0 = pr.y; b.y1 = pr.y + pr.h; b.z0 = pr.z - pr.d / 2; b.z1 = pr.z + pr.d / 2; pr.mesh.position.set(pr.x, pr.y + pr.h / 2, pr.z); }
+function propOverlap(pr) {
+  const a = pr.box;
+  for (const b of game.boxes) { if (b === a) continue; if (a.x0 < b.x1 && a.x1 > b.x0 && a.y0 < b.y1 - .001 && a.y1 > b.y0 + .001 && a.z0 < b.z1 && a.z1 > b.z0) return b; }
+  return null;
+}
+function removeProp(pr) {
+  actors.remove(pr.mesh);
+  const i = game.props.indexOf(pr); if (i >= 0) game.props.splice(i, 1);
+  const j = game.boxes.indexOf(pr.box); if (j >= 0) game.boxes.splice(j, 1);
+  if (game.grab && game.grab.ref === pr) game.grab = null;
+}
+function hitProp(pr, d, dmg, owner) {
+  pr.vx += d.x * dmg * .06; pr.vz += d.z * dmg * .06; pr.vy += Math.min(3, dmg * .03);
+  if (pr.explosive && !pr.fuse) { pr.hp -= dmg; if (pr.hp <= 0) { pr.fuse = .12; pr.lastHit = owner; } }
+}
+function updateProps(dt) {
+  for (let i = game.props.length - 1; i >= 0; i--) {
+    const pr = game.props[i];
+    if (pr.fuse > 0) { pr.fuse -= dt; if (pr.fuse <= 0) { removeProp(pr); explode(pr.x, pr.y + .45, pr.z, pr.lastHit || game.player); continue; } }
+    if (pr.held) { syncProp(pr); continue; }
+    pr.vy = Math.max(pr.vy - G * dt, -30);
+    const ox = pr.x, oz = pr.z, oy = pr.y;
+    pr.x += pr.vx * dt; syncProp(pr); if (propOverlap(pr)) { pr.x = ox; pr.vx *= -.3; syncProp(pr); }
+    pr.z += pr.vz * dt; syncProp(pr); if (propOverlap(pr)) { pr.z = oz; pr.vz *= -.3; syncProp(pr); }
+    pr.y += pr.vy * dt; let ground = false;
+    if (pr.y <= 0) { pr.y = 0; ground = true; }
+    syncProp(pr);
+    const hb = propOverlap(pr);
+    if (hb) { if (pr.vy <= 0) { pr.y = hb.y1; ground = true; } else { pr.y = Math.min(oy, hb.y0 - pr.h); pr.vy = 0; } syncProp(pr); }
+    if (ground) { if (pr.vy < -7) sfx('hit', pr); pr.vy = pr.vy < -5 ? -pr.vy * .25 : 0; pr.vx *= .86; pr.vz *= .86; if (Math.abs(pr.vx) < .05) pr.vx = 0; if (Math.abs(pr.vz) < .05) pr.vz = 0; }
+  }
+}
+// ---------------- reality crusher ----------------
+const CRUSH_MODES = [['spawn', '🧍', 'Создать'], ['grab', '✋', 'Захват'], ['push', '💨', 'Толчок'], ['revive', '✨', 'Оживить'], ['delete', '🗑️', 'Удалить']];
+const CRUSH_SPAWNS = [['civil', '🙂', 'Мирный'], ['hostile', '😠', 'Бандит'], ['dummy', '🧍', 'Манекен'], ['crate', '📦', 'Ящик'], ['barrel', '🛢️', 'Бочка'], ['xbarrel', '💥', 'Взрыв. бочка']];
+const CRUSH_LBL = { spawn: 'СОЗДАТЬ', grab: 'ВЗЯТЬ', push: 'ТОЛКНУТЬ', revive: 'ОЖИВИТЬ', delete: 'УДАЛИТЬ' };
+let crushMode = 'spawn', crushSpawn = 'civil', prevFire = false;
+const beamGeo = new THREE.BufferGeometry(); beamGeo.setAttribute('position', new THREE.BufferAttribute(new Float32Array(6), 3));
+const beamLine = new THREE.Line(beamGeo, new THREE.LineBasicMaterial({ color: 0xc070ff, transparent: true, opacity: .9 }));
+beamLine.frustumCulled = false; beamLine.visible = false; scene.add(beamLine);
+function muzzleOf(o, d) { const rx = Math.cos(game.yaw), rz = -Math.sin(game.yaw); return { x: o.x + d.x * .6 + rx * .16, y: o.y + d.y * .6 - .12, z: o.z + d.z * .6 + rz * .16 }; }
+function setBeam(a, b, t = .12) { const pa = beamGeo.attributes.position; pa.setXYZ(0, a.x, a.y, a.z); pa.setXYZ(1, b.x, b.y, b.z); pa.needsUpdate = true; beamLine.visible = true; game.beamT = t; }
+function magic(x, y, z, n, spd = 2) { for (let i = 0; i < n; i++) PS.magic.add({ x, y, z, vx: rnd(-1, 1) * spd, vy: rnd(-.5, 1.2) * spd, vz: rnd(-1, 1) * spd, life: rnd(.3, .7) }); }
+function crusherRay() {
+  const { o, d } = aimOf(game.player);
+  let r = castRay(o, d, 60, game.player);
+  for (const g of game.gibs) g.p.forEach((p, i) => { const t = raySphere(o, d, p, .14); if (t !== null && t < r.t) r = { kind: 'gib', g, i, t, at: { x: o.x + d.x * t, y: o.y + d.y * t, z: o.z + d.z * t } }; });
+  return { o, d, r };
+}
+function crushLabelOf(r) {
+  if (r.kind === 'body') return r.h.name + (r.h.team === 'hostile' ? ' · бандит' : r.h.team === 'dummy' ? '' : ' · мирный');
+  if (r.kind === 'corpse') return 'Тело · ' + r.h.name;
+  if (r.kind === 'gib') return 'Оторванная рука';
+  if (r.kind === 'wall' && r.box && r.box.prop) return r.box.prop.name;
+  return '';
+}
+function removeHuman(h) {
+  if (h === game.player) return;
+  if (h.mesh) actors.remove(h.mesh);
+  const i = game.humans.indexOf(h); if (i >= 0) game.humans.splice(i, 1);
+  for (const o of game.humans) { if (o.tgt === h) o.tgt = null; if (o.angryAt === h) o.angryAt = null; if (o.fearFrom === h) o.fearFrom = null; }
+  if (game.grab && game.grab.ref === h) game.grab = null;
+}
+function revive(h) {
+  const q = h.ragdoll.p[8], hit = castWorld({ x: q.x, y: q.y + .5, z: q.z }, { x: 0, y: -1, z: 0 }, 5);
+  const home = h.home; h.home = { x: q.x, z: q.z, y: hit ? hit.at.y : 0 };
+  respawn(h); h.home = home;
+  magic(h.x, h.y + 1, h.z, 30, 2.5); sfx('zap', h);
+}
+function crusherUpdate(p, dt) {
+  const fire = p.fire, edge = fire && !prevFire; prevFire = fire;
+  const { o, d, r } = crusherRay();
+  game.crushLabel = crushLabelOf(r);
+  const mz = muzzleOf(o, d);
+  if (crushMode === 'grab') {
+    if (edge) startGrab(r);
+    if (fire && game.grab) holdGrab(o, d, dt, mz);
+    else if (game.grab) releaseGrab();
+    return;
+  }
+  if (!edge) return;
+  p.attackT = p.attackDur = .2;
+  if (!r.kind) { toast('Наведи прицел на землю или объект', 1400); return; }
+  setBeam(mz, r.at); magic(r.at.x, r.at.y, r.at.z, 14); sfx('zap', r.at);
+  game.recoil = .05;
+  if (crushMode === 'spawn') {
+    let x = r.at.x, z = r.at.z, y = r.at.y;
+    if (!(r.kind === 'wall' && r.n && r.n[1] > .5)) { x -= d.x * .7; z -= d.z * .7; y = Math.max(0, r.at.y - .9); }
+    if (PROP_DEF[crushSpawn]) { if (game.props.length >= 60) { toast('Слишком много предметов', 1400); return; } spawnProp(crushSpawn, x, z, y); }
+    else {
+      if (game.humans.length >= 40) { toast('Максимум людей на карте', 1400); return; }
+      const h = makeHuman(crushSpawn); h.x = x; h.z = z; h.y = y; h.home = { x, z, y }; h.yaw = game.yaw + Math.PI; h.P = pose(h); game.humans.push(h);
+      magic(x, y + 1, z, 24, 2);
+    }
+  } else if (crushMode === 'push') {
+    const c = r.at, R = 3.4;
+    for (const h of game.humans) {
+      if (h === p) continue;
+      if (h.alive) { const dx = h.x - c.x, dz = h.z - c.z, dist = Math.hypot(dx, h.y + 1 - c.y, dz); if (dist < R) { const f = 1 - dist / R, l = Math.hypot(dx, dz) || 1; h.vx += (dx / l + d.x) * 9 * f; h.vz += (dz / l + d.z) * 9 * f; h.vy += 7 * f + 2; h.onGround = false; h.thrownBy = p; } }
+      else if (h.ragdoll) for (const q of h.ragdoll.p) { const dist = Math.hypot(q.x - c.x, q.y - c.y, q.z - c.z); if (dist < R) { const f = 1 - dist / R; q.px -= (d.x * 12 + (q.x - c.x)) * f * DT; q.py -= (6 + (q.y - c.y)) * f * DT; q.pz -= (d.z * 12 + (q.z - c.z)) * f * DT; } }
+    }
+    for (const g of game.gibs) for (const q of g.p) { const dist = Math.hypot(q.x - c.x, q.y - c.y, q.z - c.z); if (dist < R) { const f = 1 - dist / R; q.px -= d.x * 12 * f * DT; q.py -= 6 * f * DT; q.pz -= d.z * 12 * f * DT; } }
+    for (const pr of game.props) { const dist = Math.hypot(pr.x - c.x, pr.y + .45 - c.y, pr.z - c.z); if (dist < R) { const f = 1 - dist / R; pr.vx += d.x * 10 * f; pr.vz += d.z * 10 * f; pr.vy += 5 * f; } }
+    for (let i = 0; i < 30; i++) { const a = i / 30 * 6.283; PS.magic.add({ x: c.x, y: c.y + .1, z: c.z, vx: Math.cos(a) * 6, vy: .5, vz: Math.sin(a) * 6, life: .35 }); }
+  } else if (crushMode === 'revive') {
+    if (r.kind === 'corpse') revive(r.h); else toast('Наведи прицел на тело', 1400);
+  } else if (crushMode === 'delete') {
+    if (r.kind === 'body' || r.kind === 'corpse') { const c = r.h.alive ? { x: r.h.x, y: r.h.y + 1, z: r.h.z } : r.h.ragdoll.p[8]; magic(c.x, c.y, c.z, 40, 3); removeHuman(r.h); }
+    else if (r.kind === 'gib') { magic(r.at.x, r.at.y, r.at.z, 20); actors.remove(r.g.group); game.gibs.splice(game.gibs.indexOf(r.g), 1); }
+    else if (r.kind === 'wall' && r.box && r.box.prop) { magic(r.box.prop.x, r.box.prop.y + .45, r.box.prop.z, 30, 2.5); removeProp(r.box.prop); }
+    else toast('Это нельзя удалить', 1200);
+  }
+}
+function startGrab(r) {
+  const dist = clamp(r.t || 3, 1.8, 9);
+  if (r.kind === 'body' && r.h !== game.player) { r.h.held = true; game.grab = { kind: 'npc', ref: r.h, dist }; }
+  else if (r.kind === 'corpse') game.grab = { kind: 'corpse', ref: r.h, pt: r.i, dist };
+  else if (r.kind === 'gib') game.grab = { kind: 'gib', ref: r.g, pt: r.i, dist };
+  else if (r.kind === 'wall' && r.box && r.box.prop) { r.box.prop.held = true; game.grab = { kind: 'prop', ref: r.box.prop, dist }; }
+  if (game.grab) sfx('zap');
+}
+function holdGrab(o, d, dt, mz) {
+  const g = game.grab, T = { x: o.x + d.x * g.dist, y: o.y + d.y * g.dist, z: o.z + d.z * g.dist };
+  const vc = v => clamp(v, -22, 22);
+  if (g.kind === 'npc') {
+    const h = g.ref; if (!h.alive) { game.grab = { kind: 'corpse', ref: h, pt: 1, dist: g.dist }; h.held = false; return; }
+    const nx = T.x, ny = Math.max(0, T.y - 1.15), nz = T.z;
+    h.vx = vc((nx - h.x) / dt); h.vy = vc((ny - h.y) / dt); h.vz = vc((nz - h.z) / dt);
+    h.x = nx; h.y = ny; h.z = nz; h.onGround = false; h.thrownBy = game.player; h.speed = 0;
+  } else if (g.kind === 'corpse' || g.kind === 'gib') {
+    const pts = g.kind === 'corpse' ? (g.ref.ragdoll ? g.ref.ragdoll.p : null) : g.ref.p;
+    if (!pts) { game.grab = null; return; }
+    const q = pts[g.pt];
+    q.x += (T.x - q.x) * .45; q.y += (Math.max(q.r, T.y) - q.y) * .45; q.z += (T.z - q.z) * .45;
+  } else if (g.kind === 'prop') {
+    const pr = g.ref;
+    const ny = Math.max(0, T.y - pr.h / 2);
+    pr.vx = vc((T.x - pr.x) / dt); pr.vy = vc((ny - pr.y) / dt); pr.vz = vc((T.z - pr.z) / dt);
+    pr.x = T.x; pr.y = ny; pr.z = T.z;
+  }
+  setBeam(mz, T, .05);
+  if (Math.random() < .5) magic(T.x, T.y, T.z, 1, .6);
+}
+function releaseGrab() {
+  const g = game.grab; game.grab = null;
+  if (!g) return;
+  if (g.kind === 'npc') g.ref.held = false;
+  if (g.kind === 'prop') g.ref.held = false;
+}
+function buildCrushPanel() {
+  const M = $('crushModes'), S = $('crushSpawn');
+  M.innerHTML = ''; S.innerHTML = '';
+  CRUSH_MODES.forEach(([id, ic, nm]) => {
+    const b = document.createElement('button'); b.className = 'cb' + (crushMode === id ? ' on' : ''); b.innerHTML = `<i>${ic}</i>${nm}`;
+    b.addEventListener('pointerdown', e => { e.preventDefault(); e.stopPropagation(); if (game.grab) releaseGrab(); crushMode = id; buildCrushPanel(); $('fireLbl').textContent = CRUSH_LBL[crushMode]; });
+    M.appendChild(b);
+  });
+  CRUSH_SPAWNS.forEach(([id, ic, nm]) => {
+    const b = document.createElement('button'); b.className = 'cb' + (crushSpawn === id ? ' on' : ''); b.innerHTML = `<i>${ic}</i>${nm}`;
+    b.addEventListener('pointerdown', e => { e.preventDefault(); e.stopPropagation(); crushSpawn = id; buildCrushPanel(); });
+    S.appendChild(b);
+  });
+  S.classList.toggle('hidden', crushMode !== 'spawn');
+  if (game.player && WEAPONS[game.player.weapon].type === 'crusher') $('fireLbl').textContent = CRUSH_LBL[crushMode];
+}
+function updateRain(dt) {
+  const m = game.map, L = PS.rain.list;
+  if (!m || !m.rain) { L.length = 0; return; }
+  const cp = camera.position;
+  while (L.length < 450) L.push({ x: cp.x + rnd(-18, 18), y: cp.y + rnd(-2, 14), z: cp.z + rnd(-18, 18) });
+  for (const p of L) {
+    p.y -= 15 * dt; p.x += 1.2 * dt;
+    if (p.y < 0 || Math.abs(p.x - cp.x) > 18 || Math.abs(p.z - cp.z) > 18) { p.x = cp.x + rnd(-18, 18); p.z = cp.z + rnd(-18, 18); p.y = cp.y + rnd(4, 14); }
   }
 }
 // ---------------- AI ----------------
@@ -1551,6 +1796,7 @@ function los(a, b) {
   return true;
 }
 function ai(h, dt) {
+  if (h.team === 'dummy') { h.mvx = h.mvz = 0; h.fire = false; h.jump = false; h.combat = false; return; }
   h.aiT -= dt; h.fear = Math.max(0, h.fear - dt); h.angry = Math.max(0, h.angry - dt); h.tgtT -= dt; h.avoidT -= dt;
   const chaos = settings.chaos || game.demo, p = game.player;
   let tgt = null;
@@ -1593,8 +1839,10 @@ function moveBody(h, dt, maxSpd) {
   const tx = h.mvx * maxSpd, tz = h.mvz * maxSpd, acc = h.onGround ? 40 : 12;
   const dvx = tx - h.vx, dvz = tz - h.vz, dl = Math.hypot(dvx, dvz), ma = acc * dt;
   if (dl > ma) { h.vx += dvx / dl * ma; h.vz += dvz / dl * ma; } else { h.vx = tx; h.vz = tz; }
-  if (h.jump && h.onGround) { h.vy = 7.6; h.onGround = false; }
-  h.vy = Math.max(h.vy - G * dt, -30);
+  const flying = h === game.player && game.flying;
+  if (flying) h.vy = (input.jump ? 6 : 0) - (input.down ? 6 : 0);
+  else { if (h.jump && h.onGround) { h.vy = 7.6; h.onGround = false; } h.vy = Math.max(h.vy - G * dt, -30); }
+  const vyb = h.vy;
   const ox = h.x, oz = h.z;
   h.x += h.vx * dt; resolveXZ(h);
   h.z += h.vz * dt; resolveXZ(h);
@@ -1609,6 +1857,7 @@ function moveBody(h, dt, maxSpd) {
       else if (h.vy > 0 && prevY + PH <= b.y0 + .05) { h.y = b.y0 - PH; h.vy = 0; }
     } else if (Math.abs(h.y - b.y1) < .001 && h.vy <= 0) h.onGround = true;
   }
+  if (h.onGround && vyb < -13 && h !== game.player) h.fallDmg = (-vyb - 13) * 9;
   h.speed = Math.hypot(h.x - ox, h.z - oz) / dt;
 }
 function resolveXZ(h) {
@@ -1635,7 +1884,7 @@ function separate() {
 
 // ---------------- input ----------------
 const input = { mx: 0, mz: 0, jump: false, fire: false };
-const touch = { move: null, look: null, fire: null, jump: null };
+const touch = { move: null, look: null, fire: null, jump: null, down: null };
 const keys = {};
 const STICK_R = 56;
 let mouseDown = false, locked = false;
@@ -1671,11 +1920,11 @@ addEventListener('pointermove', e => {
 }, { passive: false });
 function endPointer(e) {
   if (e.pointerType === 'mouse') { if (e.button === 2) { game.ads = false; updateAmmo(); } else mouseDown = false; return; }
-  for (const k of ['move', 'look', 'fire', 'jump']) if (touch[k] && touch[k].id === e.pointerId) { touch[k] = null; if (k === 'fire') $('fireBtn').classList.remove('on'); if (k === 'jump') $('jumpBtn').classList.remove('on'); }
+  for (const k of ['move', 'look', 'fire', 'jump', 'down']) if (touch[k] && touch[k].id === e.pointerId) { touch[k] = null; if (k === 'down') $('downBtn').classList.remove('on'); if (k === 'fire') $('fireBtn').classList.remove('on'); if (k === 'jump') $('jumpBtn').classList.remove('on'); }
 }
 addEventListener('pointerup', endPointer); addEventListener('pointercancel', endPointer);
 document.addEventListener('pointerlockchange', () => { locked = document.pointerLockElement === glc; });
-for (const [id, k] of [['fireBtn', 'fire'], ['jumpBtn', 'jump']]) {
+for (const [id, k] of [['fireBtn', 'fire'], ['jumpBtn', 'jump'], ['downBtn', 'down']]) {
   $(id).addEventListener('pointerdown', e => {
     e.preventDefault(); e.stopPropagation(); initAudio();
     const g = toGame(e.clientX, e.clientY);
@@ -1711,6 +1960,7 @@ function readInput() {
   input.mx = -s * fx + c * sx; input.mz = -c * fx - s * sx;
   const l = Math.hypot(input.mx, input.mz); if (l > 1) { input.mx /= l; input.mz /= l; }
   input.jump = !!(touch.jump || keys.Space);
+  input.down = !!(touch.down || keys.KeyC || keys.ShiftLeft);
   input.fire = !!(touch.fire || (mouseDown && locked) || keys.KeyF);
 }
 
@@ -1718,7 +1968,7 @@ function readInput() {
 const vm = new THREE.Group(); vmScene.add(vm);
 const flashMat = new THREE.MeshBasicMaterial({ color: 0xffb050, map: TEX.soft, transparent: true, blending: THREE.AdditiveBlending, depthWrite: false });
 let vmWeapon = null, vmId = null;
-const VM_POS = { melee: [.22, -.24, -.4], saw: [.2, -.26, -.45], throw: [.26, -.26, -.55], gun: [.2, -.2, -.38], rocket: [.22, -.2, -.4], spray: [.24, -.25, -.5], marker: [.2, -.2, -.42] };
+const VM_POS = { crusher: [.2, -.2, -.38], melee: [.22, -.24, -.4], saw: [.2, -.26, -.45], throw: [.26, -.26, -.55], gun: [.2, -.2, -.38], rocket: [.22, -.2, -.4], spray: [.24, -.25, -.5], marker: [.2, -.2, -.42] };
 function buildVM(id) {
   if (vmWeapon) vm.remove(vmWeapon);
   vmWeapon = new THREE.Group(); vm.add(vmWeapon);
@@ -1826,11 +2076,12 @@ function updateHuman(h, dt) {
     return;
   }
   if (isP) { h.mvx = input.mx; h.mvz = input.mz; h.jump = input.jump; h.fire = input.fire; h.yaw = game.yaw; h.pitch = game.pitch; if (!h.fire) lastMark = null; }
-  else ai(h, dt);
+  else if (!h.held) ai(h, dt);
   h.cd -= dt; h.attackT = Math.max(0, h.attackT - dt); h.hurt -= dt; h.inv -= dt;
-  if (h.fire) doAttack(h);
-  const lostLeg = false;
-  moveBody(h, dt, isP ? (game.ads ? 3.6 : 6) : (h.panic ? 4.2 : h.fear > 0 ? 5.6 : 4.6));
+  if (isP && WEAPONS[h.weapon].type === 'crusher') crusherUpdate(h, dt);
+  else if (h.fire) doAttack(h);
+  if (!h.held) moveBody(h, dt, isP ? (game.flying ? 9 : game.ads ? 3.6 : 6) : (h.panic ? 4.2 : h.fear > 0 ? 5.6 : 4.6));
+  if (h.fallDmg) { const fd = h.fallDmg; h.fallDmg = 0; sfx('crunch', h); damage(h, fd, { x: 0, y: -1, z: 0 }, { x: h.x, y: h.y + .3, z: h.z }, { owner: h.thrownBy || null, knock: 2, pt: 13 }); if (!h.alive) return; }
   h.anim += h.speed * dt * 1.7;
   if (h.bleed > 0) {
     h.bleed = Math.max(0, h.bleed - dt * (h.stumpT > 0 ? .1 : .45));
@@ -1853,7 +2104,12 @@ function step(dt) {
   for (const g of game.gibs) updateGib(g);
   separate();
   updateProjectiles(dt);
+  updateProps(dt);
+  updateRain(dt);
   updateParticles(dt);
+  game.beamT = (game.beamT || 0) - dt; if (game.beamT <= 0) beamLine.visible = false;
+  game.flying = !!(game.player && settings.fly && game.mode === 'sandbox');
+  $('downBtn').classList.toggle('hidden', !game.flying);
   for (let i = tracers.length - 1; i >= 0; i--) { tracers[i].life -= dt; if (tracers[i].life <= 0) tracers.splice(i, 1); }
   game.shake = Math.max(0, game.shake - dt * 2.5);
   game.hitMarker = Math.max(0, game.hitMarker - dt);
@@ -2003,10 +2259,12 @@ function drawOverlay() {
         const gap = (w.id === 'shotgun' ? 14 : w.type === 'melee' ? 4 : 6) * (game.ads ? .5 : 1), len = 7;
         c.beginPath();
         if (w.type === 'paint') { c.stroke(); c.beginPath(); c.fillStyle = PAINT_COLORS[settings.paint]; c.arc(cx, cy, w.id === 'spray' ? 9 : 4, 0, 6.3); c.globalAlpha = .55; c.fill(); c.globalAlpha = 1; c.arc(cx, cy, w.id === 'spray' ? 9 : 4, 0, 6.3); }
+        else if (w.type === 'crusher') { c.strokeStyle = '#d6a8ff'; c.arc(cx, cy, 11, 0, 6.3); c.moveTo(cx + 3, cy); c.arc(cx, cy, 3, 0, 6.3); }
         else if (w.type === 'melee' || w.type === 'saw') { c.arc(cx, cy, w.type === 'saw' ? 8 : 3, 0, 6.3); }
         else { c.moveTo(cx - gap - len, cy); c.lineTo(cx - gap, cy); c.moveTo(cx + gap, cy); c.lineTo(cx + gap + len, cy); c.moveTo(cx, cy - gap - len); c.lineTo(cx, cy - gap); c.moveTo(cx, cy + gap); c.lineTo(cx, cy + gap + len); }
         c.stroke();
       }
+      if (w.type === 'crusher' && game.crushLabel) { c.font = '13px "Russo One",sans-serif'; c.fillStyle = 'rgba(0,0,0,.6)'; c.fillText(game.crushLabel, cx + 1, cy + 33); c.fillStyle = '#e2c4ff'; c.fillText(game.crushLabel, cx, cy + 32); c.font = '12px "Russo One",sans-serif'; }
       if (game.hitMarker > 0) { c.strokeStyle = '#ff3a3a'; c.lineWidth = 2.5; c.beginPath(); for (const [sx, sy] of [[-1, -1], [1, -1], [-1, 1], [1, 1]]) { c.moveTo(cx + sx * 6, cy + sy * 6); c.lineTo(cx + sx * 13, cy + sy * 13); } c.stroke(); }
       if (game.reloadT > 0) {
         const r = 1 - game.reloadT / game.reloadDur;
@@ -2061,8 +2319,9 @@ function updateHud() {
   $('hpnum').textContent = Math.max(0, Math.ceil(p.hp));
   $('kills').textContent = '☠ ' + game.kills;
 }
-const CATS = [['melee', 'Ближний бой'], ['gun', 'Огнестрел'], ['boom', 'Взрывчатка'], ['paint', 'Граффити']];
-const FIRE_LBL = { melee: 'УДАР', saw: 'ПИЛИТЬ', gun: 'ОГОНЬ', throw: 'БРОСОК', rocket: 'ПУСК', paint: 'РИСОВАТЬ' };
+const CATS = [['melee', 'Ближний бой'], ['gun', 'Огнестрел'], ['boom', 'Взрывчатка'], ['tool', 'Инструменты']];
+const FIRE_LBL = { melee: 'УДАР', saw: 'ПИЛИТЬ', gun: 'ОГОНЬ', throw: 'БРОСОК', rocket: 'ПУСК', paint: 'РИСОВАТЬ', crusher: 'СОЗДАТЬ' };
+const available = i => !(WEAPONS[i].sandboxOnly && game.mode !== 'sandbox');
 function tileHTML(w) { return `<i>${w.icon}</i><span>${w.name}<small>${w.desc}</small></span>`; }
 function buildInventory() {
   const g = $('invGrid'); g.innerHTML = '';
@@ -2071,9 +2330,9 @@ function buildInventory() {
     WEAPONS.forEach((w, i) => {
       if (w.cat !== c) return;
       const b = document.createElement('button');
-      b.className = 'tile' + (game.player && game.player.weapon === i ? ' on' : '');
+      b.className = 'tile' + (game.player && game.player.weapon === i ? ' on' : '') + (available(i) ? '' : ' off');
       b.innerHTML = tileHTML(w);
-      b.addEventListener('click', () => { selectWeapon(i); closeInv(); });
+      b.addEventListener('click', () => { if (!available(i)) { toast('Только в песочнице', 1400); return; } selectWeapon(i); closeInv(); });
       col.appendChild(b);
     });
     g.appendChild(col);
@@ -2086,18 +2345,22 @@ function openInv() {
   if (document.exitPointerLock && locked) document.exitPointerLock();
 }
 function closeInv() { if (game.state !== 'inv') return; hideAll(); game.state = 'play'; $('hud').classList.remove('hidden'); }
-function releaseTouches() { touch.move = touch.look = touch.fire = touch.jump = null; mouseDown = false; $('fireBtn').classList.remove('on'); $('jumpBtn').classList.remove('on'); }
+function releaseTouches() { touch.move = touch.look = touch.fire = touch.jump = touch.down = null; if (game.grab) releaseGrab(); mouseDown = false; $('fireBtn').classList.remove('on'); $('jumpBtn').classList.remove('on'); }
 function selectWeapon(i) {
   const p = game.player; if (!p) return;
+  if (!available(i)) return;
+  if (game.grab) releaseGrab();
   if (p.weapon !== i) { game.reloadT = 0; game.autoReload = 0; game.ads = false; }
   p.weapon = i; p.cd = Math.max(p.cd, .15); lastMark = null;
   const w = WEAPONS[i];
   $('wIcon').textContent = w.icon; $('wName').textContent = w.name;
   $('fireIcon').textContent = w.icon; $('fireLbl').textContent = FIRE_LBL[w.type];
   $('palette').classList.toggle('hidden', w.type !== 'paint');
+  $('crushPanel').classList.toggle('hidden', w.type !== 'crusher');
+  if (w.type === 'crusher') { buildCrushPanel(); $('fireLbl').textContent = CRUSH_LBL[crushMode]; }
   updateAmmo();
 }
-function cycleWeapon(d) { const p = game.player; if (!p) return; selectWeapon((p.weapon + d + WEAPONS.length) % WEAPONS.length); }
+function cycleWeapon(d) { const p = game.player; if (!p) return; let i = p.weapon; for (let k = 0; k < WEAPONS.length; k++) { i = (i + d + WEAPONS.length) % WEAPONS.length; if (available(i)) break; } selectWeapon(i); }
 function buildPalette() {
   const P = $('palette'); P.innerHTML = '';
   PAINT_COLORS.forEach((c, i) => {
@@ -2150,7 +2413,7 @@ function setPreview(i) {
   previewModel = new THREE.Group(); previewModel.add(inner); previewModel.scale.setScalar(k);
   previewScene.add(previewModel);
   const bars = [['Урон', w.st[0]], ['Скорость', w.st[1]], ['Расчленение', w.st[2]]];
-  const extra = w.mag ? `Магазин: ${w.mag} · перезарядка ${w.reload} с${w.zoom ? ' · прицел ×' + w.zoom : ''}` : w.type === 'paint' ? 'Держи кнопку, чтобы рисовать' : w.type === 'saw' ? 'Держи кнопку — пила режет без остановки' : 'Без патронов';
+  const extra = w.type === 'crusher' ? 'Режимы: создать, захват, толчок, оживить, удалить. Только в песочнице' : w.mag ? `Магазин: ${w.mag} · перезарядка ${w.reload} с${w.zoom ? ' · прицел ×' + w.zoom : ''}` : w.type === 'paint' ? 'Держи кнопку, чтобы рисовать' : w.type === 'saw' ? 'Держи кнопку — пила режет без остановки' : 'Без патронов';
   $('armInfo').innerHTML = `<div class="ah"><i>${w.icon}</i><div><b>${w.name}</b><small>${CATS.find(c => c[0] === w.cat)[1]}</small></div></div><p>${w.desc}</p>` +
     bars.map(([n, v]) => `<div class="stat"><span>${n}</span><div class="sbar"><div style="width:${v}%"></div></div></div>`).join('') + `<p class="ex">${extra}</p>`;
   [...$('armList').children].forEach((b, j) => b.classList.toggle('on', j === i));
@@ -2187,7 +2450,9 @@ function buildSettings() {
     r.appendChild(sg); P.appendChild(r);
   };
   row('Кровь', 'брызги, лужи и пятна', [[0, 'Мало'], [1, 'Норм'], [2, 'Много']], 'blood');
-  row('Людей на карте', 'в песочнице при старте', [[4, '4'], [8, '8'], [12, '12'], [16, '16']], 'npc');
+  row('Людей при старте', 'в песочнице; 0 — пустая карта', [[0, '0'], [4, '4'], [8, '8'], [16, '16']], 'npcStart');
+  row('Полёт', 'только в песочнице', [[false, 'Выкл'], [true, 'Вкл']], 'fly');
+  row('Бессмертие', 'только в песочнице', [[false, 'Выкл'], [true, 'Вкл']], 'god');
   row('Хаос', 'все дерутся со всеми', [[false, 'Выкл'], [true, 'Вкл']], 'chaos');
   row('Графика', '«Быстро» — для слабых телефонов', [[0, 'Быстро'], [1, 'Красиво']], 'gfx');
   row('Поле зрения', 'угол обзора камеры', [[65, '65°'], [75, '75°'], [90, '90°']], 'fov');
@@ -2210,21 +2475,22 @@ function clearActors() {
   clearMarks();
   tracers.length = 0; game.gibs = [];
 }
-const PSTART = { city: [-38, 0, -Math.PI / 2], ware: [-20, -12, Math.PI], canyon: [0, -8, Math.PI] };
+const PSTART = { city: [-38, 0, -Math.PI / 2], ware: [-20, -12, Math.PI], canyon: [0, -8, Math.PI], test: [0, 22, 0] };
 function startGame(mi, demo, mode = 'sandbox') {
   const m = MAPS[mi];
   clearActors();
   game.map = m; game.mapIndex = mi; m.pstart = PSTART[m.id]; buildWorld(m);
   Object.assign(game, { humans: [], projectiles: [], time: 0, kills: 0, demo, shake: 0, recoil: 0, flash: 0, mode: demo ? 'sandbox' : mode, wave: 0, waveT: 3, toSpawn: 0, spawnT: 0,
-    reloadT: 0, autoReload: 0, ads: false, adsK: 0, vmFlash: 0, dmgInd: [], splats: [], ammo: WEAPONS.map(w => w.mag || 0) });
+    reloadT: 0, autoReload: 0, ads: false, adsK: 0, vmFlash: 0, dmgInd: [], splats: [], props: [], grab: null, crushLabel: '', ammo: WEAPONS.map(w => w.mag || 0) });
   game.player = null;
   $('feed').innerHTML = '';
   if (!demo) {
     const p = makeHuman('player'); game.player = p; game.humans.push(p);
     p.x = m.pstart[0]; p.z = m.pstart[1]; game.yaw = m.pstart[2]; game.pitch = 0; p.inv = 2;
   }
-  const n = demo ? 10 : game.mode === 'survival' ? 0 : settings.npc;
+  const n = demo ? 10 : game.mode === 'survival' ? 0 : settings.npcStart;
   for (let i = 0; i < n; i++) { const h = makeHuman(i % 2 ? 'civil' : 'hostile'); placeHuman(h); game.humans.push(h); h.P = pose(h); }
+  for (const pr of (m.props || [])) spawnProp(pr[0], pr[1], pr[2], pr[3] || 0);
   hideMsg();
   releaseTouches();
   $('wave').classList.toggle('hidden', game.mode !== 'survival' || demo);
@@ -2233,6 +2499,7 @@ function startGame(mi, demo, mode = 'sandbox') {
     game.state = 'play'; hideAll(); $('hud').classList.remove('hidden');
     buildPalette(); selectWeapon(0); updateHud(); buildVM('fists');
     if (game.mode === 'survival') banner('ВЫЖИВАНИЕ', 'первая волна через 3 секунды', 3000);
+    else if (n === 0) { selectWeapon(widx('crusher')); toast('Карта пустая. Создавай людей и предметы Реалити-крашером 🌀', 4000); }
     else toast(settings.chaos ? 'Режим ХАОС: все против всех!' : 'Бандиты в масках охотятся за тобой');
   } else { game.state = 'menu'; $('hud').classList.add('hidden'); }
 }
@@ -2256,7 +2523,7 @@ function gameOver(record) {
 }
 function resume() { game.state = 'play'; hideAll(); $('hud').classList.remove('hidden'); }
 function goMenu() { backTo = 'menu'; startGame(0, true); show('menu'); }
-const TIPS = ['Катана и топор отрубают руки прямо у живых', 'Снайперка пробивает двоих насквозь', 'Бензопилу надо держать — она режет без остановки', 'Без руки человек паникует и истекает кровью', 'РПГ вблизи разрывает тело в клочья', 'В «Выживании» каждая волна сильнее', 'Баллончиком можно рисовать на машинах', 'Кнопка ◎ — прицеливание, ⟳ — перезарядка'];
+const TIPS = ['Реалити-крашер создаёт людей, ящики и взрывные бочки', 'В режиме «Захват» людей можно поднять и швырнуть', 'Полёт и бессмертие — в настройках', 'Катана и топор отрубают руки прямо у живых', 'Снайперка пробивает двоих насквозь', 'Бензопилу надо держать — она режет без остановки', 'Без руки человек паникует и истекает кровью', 'РПГ вблизи разрывает тело в клочья', 'В «Выживании» каждая волна сильнее', 'Баллончиком можно рисовать на машинах', 'Кнопка ◎ — прицеливание, ⟳ — перезарядка'];
 let tipI = 0;
 function nextTip() { $('tip').textContent = '💡 ' + TIPS[tipI++ % TIPS.length]; }
 nextTip(); setInterval(nextTip, 4500);
