@@ -226,6 +226,7 @@ h2{font-weight:600;letter-spacing:2px;text-transform:uppercase}
 .wslot:hover,.wslot:active{transform:scale(1.12);border-color:#fff}
 .wslot.on{border-color:#fff;background:rgba(232,36,46,.65)}
 .wslot.off{opacity:.3}
+@media (max-height:430px), (orientation:portrait) and (max-width:430px){ .wslot{width:50px;height:50px;margin:-25px 0 0 -25px} .wslot .ic{width:36px;height:36px} .wslot small{max-width:62px} }
 .tabs{display:flex;gap:8px;margin-bottom:12px;flex:0 0 auto}
 .wpick{margin-left:auto;display:flex;align-items:center;gap:6px;background:rgba(255,255,255,.06);border:1px solid var(--line);border-radius:12px;padding:3px 4px;font:600 13px var(--f-ui);color:#eee;white-space:nowrap}
 .wpick span{display:flex;align-items:center;gap:6px;min-width:170px;justify-content:center} .wpick b{font-weight:400;color:#aaa} .wpick .ic{width:26px;height:26px}
@@ -3650,10 +3651,15 @@ const available = i => !(WEAPONS[i].sandboxOnly && game.mode !== 'sandbox');
 function tileHTML(w) { return `<i>${icon(w.id)}</i><span>${w.name}<small>${w.desc}</small></span>`; }
 function buildInventory() {
   const W = $('wheelSlots'); W.innerHTML = '';
-  const n = WEAPONS.length, Ry = GH * .41, Rx = Math.min(GW * .34, Ry * 1.75), cx = GW / 2, cy = GH / 2;
+  // Reality Crusher first (top), then the rest; slots are spread evenly along the ellipse so they never overlap
+  const order = [widx('crusher'), ...WEAPONS.map((_, i) => i).filter(i => WEAPONS[i].id !== 'crusher')];
+  const n = order.length, Ry = GH * .425, Rx = Math.min(GW * .45, Ry * 2.2), cx = GW / 2, cy = GH / 2;
   $('wring').style.width = (Rx * 2) + 'px'; $('wring').style.height = (Ry * 2) + 'px';
-  WEAPONS.forEach((w, i) => {
-    const a = -Math.PI / 2 + i / n * Math.PI * 2;
+  const S = 720, cum = [0]; let prev = [0, -Ry];
+  for (let k = 1; k <= S; k++) { const t = -Math.PI / 2 + k / S * Math.PI * 2, q = [Math.cos(t) * Rx, Math.sin(t) * Ry]; cum.push(cum[k - 1] + Math.hypot(q[0] - prev[0], q[1] - prev[1])); prev = q; }
+  const at = L0 => { let k = 0; while (k < S && cum[k + 1] < L0) k++; return -Math.PI / 2 + k / S * Math.PI * 2; };
+  order.forEach((i, j) => {
+    const w = WEAPONS[i], a = at(j / n * cum[S]);
     const b = document.createElement('button');
     b.className = 'wslot' + (game.player && game.player.weapon === i ? ' on' : '') + (available(i) ? '' : ' off');
     b.style.left = (cx + Math.cos(a) * Rx) + 'px'; b.style.top = (cy + Math.sin(a) * Ry) + 'px';
