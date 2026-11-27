@@ -250,6 +250,30 @@ h2{font-weight:600;letter-spacing:2px;text-transform:uppercase}
 .fi .ic.fic{display:inline-block;width:24px;height:24px;vertical-align:middle;margin:-4px 6px -4px 0}
 .map .pv{background-size:cover!important}
 .card{padding:8px 11px} .card p{font-size:11.5px;line-height:1.35} .card b{margin:2px 0}
+/* ---- final pass: everything fits on small landscape phones without scrolling ---- */
+#setPanel{display:grid;grid-template-columns:1fr 1fr;column-gap:28px;width:min(900px,100%)}
+.card{display:grid;grid-template-columns:auto 1fr;column-gap:8px;align-items:center;align-content:start}
+.card i{grid-row:1} .card b{grid-row:1} .card p{grid-column:1/3;margin-top:4px}
+.card .ic{width:36px;height:36px}
+.scard{display:grid;grid-template-columns:auto 1fr;column-gap:10px;align-items:center;padding:8px 10px}
+.scard i{grid-row:1/3} .scard .ic{width:54px;height:54px;margin:0}
+.scard b{font-size:14.5px;align-self:end} .scard small{font-size:10.5px;align-self:start}
+.sgrid{grid-template-columns:repeat(4,minmax(0,1fr))}
+.armlist{grid-template-columns:repeat(5,minmax(0,1fr))}
+.atile{flex-direction:column;gap:3px;padding:6px 3px;align-items:center;text-align:center}
+.atile span{font-size:11px;max-width:100%}
+.atile .ic{width:32px;height:32px}
+@media (max-height:430px){
+  .opt{padding:5px 0;font-size:13px} .opt small{font-size:10px} .seg button{padding:5px 9px;font-size:12px}
+  .help{gap:8px} .card p{font-size:11px;line-height:1.3}
+  .modes{margin-bottom:8px;gap:8px} .mode{padding:6px 12px;font-size:11px} .mode .ic{width:44px;height:44px} .mode b{font-size:15px}
+  .map .info{padding:6px 10px 8px;gap:3px} .map .nm{font-size:15px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis} .chip:nth-child(n+2){display:none}
+  .sgrid{gap:8px} .tabs{margin-bottom:8px} .tab{padding:6px 14px;font-size:13px}
+  .bar{margin-bottom:8px} h2{font-size:21px} .back{width:38px;height:38px}
+}
+#setPanel{grid-template-columns:minmax(0,1fr) minmax(0,1fr)}
+.opt > span{min-width:0} .seg{flex:0 0 auto}
+@media (max-width:760px){ .opt small{display:none} .seg button{padding:5px 8px} #setPanel{column-gap:18px} .scard .ic{width:44px;height:44px} .scard b{font-size:13px} }
 </style>
 </head>
 <body>
@@ -285,14 +309,14 @@ h2{font-weight:600;letter-spacing:2px;text-transform:uppercase}
 <div id="helpScr" class="screen full hidden">
   <header class="bar"><button class="back" data-back aria-label="Назад">‹</button><h2>Как играть</h2></header>
   <div class="help">
-    <div class="card"><i data-icon="s_civil"></i><b>Ходьба и обзор</b><p>Левая половина экрана — джойстик. Свайп справа поворачивает камеру.</p></div>
-    <div class="card"><i data-icon="katana"></i><b>Атака</b><p>Держи красную кнопку и веди пальцем — так можно целиться на ходу. ⤒ — прыжок.</p></div>
-    <div class="card"><i data-icon="sniper"></i><b>Прицел и патроны</b><p>◎ — прицелиться (у снайперки ×4). ⟳ — перезарядка, она включается и сама.</p></div>
-    <div class="card"><i data-icon="rifle"></i><b>Арсенал</b><p>Круглая кнопка с оружием справа открывает колесо оружия.</p></div>
-    <div class="card"><i data-icon="axe"></i><b>Расчленёнка</b><p>Топор, катана, пила и снайперка отрубают конечности даже у живых. Без руки человек истекает кровью.</p></div>
-    <div class="card"><i data-icon="crusher"></i><b>Реалити-крашер</b><p>Создавай людей и предметы, хватай, кидай, толкай, оживляй и удаляй. Режимы — слева.</p></div>
-    <div class="card"><i data-icon="s_h_rifle"></i><b>Режимы</b><p>Песочница: люди возрождаются через минуту. Выживание: волны бандитов, одна жизнь.</p></div>
-    <div class="card"><i data-icon="m_push"></i><b>Полёт и бессмертие</b><p>Включаются в настройках, работают только в песочнице. В полёте ⤒ — вверх, ⤓ — вниз.</p></div>
+    <div class="card"><i data-icon="s_civil"></i><b>Ходьба и обзор</b><p>Левый палец — ходьба. Свайп справа — камера.</p></div>
+    <div class="card"><i data-icon="katana"></i><b>Атака</b><p>Держи кнопку и веди пальцем, чтобы целиться. ⤒ — прыжок.</p></div>
+    <div class="card"><i data-icon="sniper"></i><b>Прицел и патроны</b><p>◎ — прицел (снайперка ×4). ⟳ — перезарядка.</p></div>
+    <div class="card"><i data-icon="rifle"></i><b>Арсенал</b><p>Круглая кнопка с оружием открывает колесо.</p></div>
+    <div class="card"><i data-icon="axe"></i><b>Расчленёнка</b><p>Топор, катана, пила и снайперка отрубают руки, ноги и голову.</p></div>
+    <div class="card"><i data-icon="crusher"></i><b>Реалити-крашер</b><p>Создавай, хватай, кидай, толкай, оживляй и удаляй.</p></div>
+    <div class="card"><i data-icon="s_h_rifle"></i><b>Режимы</b><p>Песочница: возрождение через минуту. Выживание: волны врагов.</p></div>
+    <div class="card"><i data-icon="m_push"></i><b>Полёт и бессмертие</b><p>В настройках, только в песочнице. ⤒ вверх, ⤓ вниз.</p></div>
     <div class="card" style="display:none"><i data-icon="pistol"></i><b>Компьютер</b><p>WASD, мышь, ПКМ — прицел, R — перезарядка, пробел — прыжок, Q/E и Tab — оружие.</p></div>
   </div>
 </div>
@@ -1479,7 +1503,7 @@ function damage(h, dmg, dir, at, o) {
   if (!h.alive || h.inv > 0) return;
   const isP = h === game.player;
   if (isP && settings.god && game.mode === 'sandbox') return;
-  if (isP && o.owner && o.owner !== game.player) dmg *= .55;
+  if (isP && o.owner && o.owner !== game.player) dmg *= game.mode === 'survival' ? (game.wave < 4 ? .38 : .48) : .55;
   const w = o.w, pt = o.pt;
   h.hp -= dmg; h.hurt = .25;
   if (o.owner && o.owner !== h) h.lastAttacker = o.owner;
@@ -2044,7 +2068,8 @@ function endPointer(e) {
   for (const k of ['move', 'look', 'fire', 'jump', 'down']) if (touch[k] && touch[k].id === e.pointerId) { touch[k] = null; if (k === 'down') $('downBtn').classList.remove('on'); if (k === 'fire') $('fireBtn').classList.remove('on'); if (k === 'jump') $('jumpBtn').classList.remove('on'); }
 }
 addEventListener('pointerup', endPointer); addEventListener('pointercancel', endPointer);
-document.addEventListener('pointerlockchange', () => { locked = document.pointerLockElement === glc; });
+document.addEventListener('pointerlockchange', () => { const was = locked; locked = document.pointerLockElement === glc; if (was && !locked && game.state === 'play') pauseGame(); });
+glc.addEventListener('wheel', e => { if (game.state === 'play' && game.player) { e.preventDefault(); cycleWeapon(e.deltaY > 0 ? 1 : -1); } }, { passive: false });
 for (const [id, k] of [['fireBtn', 'fire'], ['jumpBtn', 'jump'], ['downBtn', 'down']]) {
   $(id).addEventListener('pointerdown', e => {
     e.preventDefault(); e.stopPropagation(); initAudio();
@@ -2257,7 +2282,7 @@ function spawnHostile() {
 function survivalTick(dt) {
   const p = game.player; if (!p || !p.alive) return;
   const alive = game.humans.filter(h => h !== p && h.alive).length;
-  if (game.waveT > 0) { game.waveT -= dt; if (game.waveT <= 0) { game.wave++; game.toSpawn = 3 + game.wave * 2; game.spawnT = 0; banner('ВОЛНА ' + game.wave, 'бандитов: ' + game.toSpawn); } }
+  if (game.waveT > 0) { game.waveT -= dt; if (game.waveT <= 0) { game.wave++; game.toSpawn = 2 + game.wave * 2; game.spawnT = 0; banner('ВОЛНА ' + game.wave, 'бандитов: ' + game.toSpawn); } }
   else if (game.toSpawn > 0) { game.spawnT -= dt; if (game.spawnT <= 0 && alive < 12) { spawnHostile(); game.toSpawn--; game.spawnT = .7; } }
   else if (alive === 0) {
     game.waveT = 6; p.hp = Math.min(p.maxHp, p.hp + 40); updateHud();
@@ -2665,7 +2690,7 @@ function buildSettings() {
   row('Хаос', 'все дерутся со всеми', [[false, 'Выкл'], [true, 'Вкл']], 'chaos');
   row('Графика', '«Быстро» — для слабых телефонов', [[0, 'Быстро'], [1, 'Красиво']], 'gfx');
   row('Поле зрения', 'угол обзора камеры', [[65, '65°'], [75, '75°'], [90, '90°']], 'fov');
-  row('Чувствительность', 'скорость поворота камеры', [[.6, 'Низк'], [1, 'Сред'], [1.6, 'Высок']], 'sens');
+  row('Камера', 'скорость поворота', [[.6, 'Низк'], [1, 'Сред'], [1.6, 'Высок']], 'sens');
   row('Звук', '', [[true, 'Вкл'], [false, 'Выкл']], 'sound');
 }
 function goLandscape() {

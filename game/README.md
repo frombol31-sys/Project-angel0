@@ -29,3 +29,4 @@
 - `build/build-apk.sh` — собирает `GoreZone.apk` (Android 5+, WebView, игра работает без интернета).
   Нужно: `apt install aapt apksigner zipalign dalvik-exchange android-sdk-platform-23 default-jdk`.
 - `build/build-exe.sh` — собирает `GoreZone.exe` (Windows 10/11, 64 бит) на Go. Игра открывается в окне Edge/Chrome без адресной строки.
+- v1.0 (финальная): все экраны помещаются на маленьких телефонах, баланс «Выживания», пауза при выходе из захвата мыши, смена оружия колёсиком.
