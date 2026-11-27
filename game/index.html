@@ -236,6 +236,20 @@ h2{font-weight:600;letter-spacing:2px;text-transform:uppercase}
 .scard b{font-weight:500;font-size:16px;letter-spacing:.5px}
 .scard small{font-family:var(--f-text);font-size:11px;color:var(--mut);line-height:1.3}
 .scard.on{border-color:#c48bff;background:rgba(150,60,255,.3)}
+.ic{display:block;object-fit:contain;pointer-events:none;-webkit-user-drag:none;filter:drop-shadow(0 0 1.5px rgba(255,255,255,.55)) drop-shadow(0 2px 3px rgba(0,0,0,.6))}
+.wslot .ic{width:42px;height:42px;margin-top:-4px}
+#wIcon .ic{width:40px;height:40px}
+#fireIcon .ic{width:52px;height:52px;margin:-4px 0 -6px}
+.cm .ic{width:26px;height:26px}
+.cm.cat .ic{width:32px;height:32px}
+.atile .ic{width:28px;height:28px}
+.ah .ic{width:52px;height:52px}
+.scard .ic{width:78px;height:78px;margin:-6px 0 -4px -8px}
+.mode .ic{width:54px;height:54px}
+.card .ic{width:42px;height:42px}
+.fi .ic.fic{display:inline-block;width:24px;height:24px;vertical-align:middle;margin:-4px 6px -4px 0}
+.map .pv{background-size:cover!important}
+.card{padding:8px 11px} .card p{font-size:11.5px;line-height:1.35} .card b{margin:2px 0}
 </style>
 </head>
 <body>
@@ -271,15 +285,15 @@ h2{font-weight:600;letter-spacing:2px;text-transform:uppercase}
 <div id="helpScr" class="screen full hidden">
   <header class="bar"><button class="back" data-back aria-label="Назад">‹</button><h2>Как играть</h2></header>
   <div class="help">
-    <div class="card"><i>🕹️</i><b>Ходьба и обзор</b><p>Левая половина экрана — джойстик. Свайп справа поворачивает камеру.</p></div>
-    <div class="card"><i>🔴</i><b>Атака</b><p>Держи красную кнопку и веди пальцем — так можно целиться на ходу. ⤒ — прыжок.</p></div>
-    <div class="card"><i>◎</i><b>Прицел и патроны</b><p>◎ — прицелиться (у снайперки ×4). ⟳ — перезарядка, она включается и сама.</p></div>
-    <div class="card"><i>🗡️</i><b>Арсенал</b><p>Нажми на название оружия сверху или листай стрелками ‹ ›.</p></div>
-    <div class="card"><i>🦴</i><b>Расчленёнка</b><p>Топор, катана, пила и снайперка отрубают конечности даже у живых. Без руки человек истекает кровью.</p></div>
-    <div class="card"><i>🌀</i><b>Реалити-крашер</b><p>Создавай людей и предметы, хватай и кидай, толкай, оживляй и удаляй. Режимы — внизу экрана.</p></div>
-    <div class="card"><i>🩸</i><b>Режимы</b><p>Песочница: люди возрождаются через минуту. Выживание: волны бандитов, одна жизнь.</p></div>
-    <div class="card"><i>🕊️</i><b>Полёт и бессмертие</b><p>Включаются в настройках, работают только в песочнице. В полёте ⤒ — вверх, ⤓ — вниз.</p></div>
-    <div class="card" style="display:none"><i>⌨️</i><b>Компьютер</b><p>WASD, мышь, ПКМ — прицел, R — перезарядка, пробел — прыжок, Q/E и Tab — оружие.</p></div>
+    <div class="card"><i data-icon="s_civil"></i><b>Ходьба и обзор</b><p>Левая половина экрана — джойстик. Свайп справа поворачивает камеру.</p></div>
+    <div class="card"><i data-icon="katana"></i><b>Атака</b><p>Держи красную кнопку и веди пальцем — так можно целиться на ходу. ⤒ — прыжок.</p></div>
+    <div class="card"><i data-icon="sniper"></i><b>Прицел и патроны</b><p>◎ — прицелиться (у снайперки ×4). ⟳ — перезарядка, она включается и сама.</p></div>
+    <div class="card"><i data-icon="rifle"></i><b>Арсенал</b><p>Круглая кнопка с оружием справа открывает колесо оружия.</p></div>
+    <div class="card"><i data-icon="axe"></i><b>Расчленёнка</b><p>Топор, катана, пила и снайперка отрубают конечности даже у живых. Без руки человек истекает кровью.</p></div>
+    <div class="card"><i data-icon="crusher"></i><b>Реалити-крашер</b><p>Создавай людей и предметы, хватай, кидай, толкай, оживляй и удаляй. Режимы — слева.</p></div>
+    <div class="card"><i data-icon="s_h_rifle"></i><b>Режимы</b><p>Песочница: люди возрождаются через минуту. Выживание: волны бандитов, одна жизнь.</p></div>
+    <div class="card"><i data-icon="m_push"></i><b>Полёт и бессмертие</b><p>Включаются в настройках, работают только в песочнице. В полёте ⤒ — вверх, ⤓ — вниз.</p></div>
+    <div class="card" style="display:none"><i data-icon="pistol"></i><b>Компьютер</b><p>WASD, мышь, ПКМ — прицел, R — перезарядка, пробел — прыжок, Q/E и Tab — оружие.</p></div>
   </div>
 </div>
 
@@ -291,7 +305,7 @@ h2{font-weight:600;letter-spacing:2px;text-transform:uppercase}
 <div id="overScr" class="screen side hidden">
   <div class="sidepanel">
     <h1 class="logo" style="font-size:clamp(40px,11vmin,84px)">ТЫ ПОГИБ</h1>
-    <div class="rec hidden" id="oRecord">🏆 НОВЫЙ РЕКОРД</div>
+    <div class="rec hidden" id="oRecord">НОВЫЙ РЕКОРД</div>
     <div class="stats" id="oStats"></div>
     <nav class="mlist">
       <button class="mi primary" id="bAgain"><span>ЕЩЁ РАЗ</span><em>та же карта, с первой волны</em></button>
@@ -315,18 +329,18 @@ h2{font-weight:600;letter-spacing:2px;text-transform:uppercase}
 
 <div id="hud" class="hidden">
   <button class="hb" id="pauseBtn" aria-label="Пауза">☰</button>
-  <div class="hpbox" id="hpbox"><div class="hpl"><span>✚</span><b id="hpnum">100</b><em id="kills">☠ 0</em></div><div class="hp"><div id="hpfill"></div></div></div>
+  <div class="hpbox" id="hpbox"><div class="hpl"><span>✚</span><b id="hpnum">100</b><em id="kills">0 убито</em></div><div class="hp"><div id="hpfill"></div></div></div>
   <div id="wave" class="hidden"></div>
   <div id="feed"></div>
   <div id="palette" class="hidden"></div>
-  <div id="crushCol" class="hidden"><button class="cm cat" id="crushCat"><i id="crushCatIcon">🙂</i>каталог</button><div id="crushModes"></div></div>
+  <div id="crushCol" class="hidden"><button class="cm cat" id="crushCat"><i id="crushCatIcon"></i>каталог</button><div id="crushModes"></div></div>
   <div id="wbox"><span id="wName">Кулаки</span><div id="ammo" class="hidden"><b id="ammoN">12</b><small> / ∞</small></div></div>
-  <button class="hb" id="wheelBtn" aria-label="Колесо оружия"><i id="wIcon">✊</i></button>
+  <button class="hb" id="wheelBtn" aria-label="Колесо оружия"><i id="wIcon"></i></button>
   <div class="rbtn sbtn hidden" id="downBtn">⤓<span>вниз</span></div>
   <div class="rbtn sbtn hidden" id="reloadBtn">⟳<span>перезар.</span></div>
   <div class="rbtn sbtn hidden" id="aimBtn">◎<span>прицел</span></div>
   <div class="rbtn" id="jumpBtn"><b>⤒</b></div>
-  <div class="rbtn" id="fireBtn"><i id="fireIcon">✊</i><span id="fireLbl">УДАР</span></div>
+  <div class="rbtn" id="fireBtn"><i id="fireIcon"></i><span id="fireLbl">УДАР</span></div>
 </div>
 
 
@@ -1302,6 +1316,11 @@ function makeWeaponModel(id) {
       add(.016, .07, .6, '#a9adb3', 0, -.02, .43); add(.02, .012, .62, '#333', 0, .018, .43); add(.02, .012, .62, '#333', 0, -.058, .43);
       { const m = add(0, 0, 0, '#a9adb3', 0, -.02, .73, new THREE.CylinderGeometry(.035, .035, .016, 12)); m.rotation.z = Math.PI / 2; }
       break;
+    case 'fists':
+      add(.2, .18, .16, '#e0ac80', 0, 0, 0);
+      for (let i = 0; i < 4; i++) add(.045, .05, .1, '#e0ac80', -.075 + i * .05, .06, .1);
+      add(.06, .05, .12, '#e0ac80', -.11, -.01, .05); add(.22, .2, .12, '#d8d2c4', 0, 0, -.13);
+      break;
     case 'crusher':
       add(.08, .09, .32, '#2a2830', 0, 0, .02); add(.05, .12, .06, '#1d1b22', 0, -.08, -.06).rotation.x = -.2; add(.09, .02, .22, '#3a3742', 0, .055, 0);
       { const core = add(0, 0, 0, glowMat, 0, 0, .12, new THREE.CylinderGeometry(.032, .032, .17, 10)); core.rotation.x = Math.PI / 2; }
@@ -1492,7 +1511,7 @@ function kill(h, ix, iy, iz, at, o, dmg) {
   const killer = o.owner && o.owner !== h ? o.owner : h.lastAttacker;
   sfx('splat', at);
   blood(at.x, at.y, at.z, ix / 10, .3, iz / 10, 30, 5, 1);
-  if (h === game.player) { h.deathRoll = rnd(-.9, .9); feed('☠ Ты погиб' + (killer ? ' · ' + killer.name : '')); onPlayerDeath(); return; }
+  if (h === game.player) { h.deathRoll = rnd(-.9, .9); feed('Ты погиб' + (killer ? ' · ' + killer.name : '')); onPlayerDeath(); return; }
   h.ragdoll = makeRagdoll(h, ix, iy, iz, at);
   if (Math.random() < .35) scream(at);
   const w = o.w;
@@ -1513,7 +1532,7 @@ function kill(h, ix, iy, iz, at, o, dmg) {
   if (o.bleedOut) tag = 'истёк кровью';
   if (killer === game.player) {
     game.kills++; updateHud();
-    feed(`${w ? w.icon : (o.explosive ? '💥' : '🩸')} ${h.team === 'hostile' ? 'бандит ' : ''}${h.name}${tag ? ' · ' + tag : ''}`);
+    feed(`${icon(w ? w.id : o.explosive ? 'grenade' : 'knife', 'fic')}${h.team === 'hostile' ? 'бандит ' : ''}${h.name}${tag ? ' · ' + tag : ''}`);
   }
 }
 function melee(h, o, d, w) {
@@ -1848,11 +1867,11 @@ function releaseGrab() {
 function buildCrushPanel() {
   const M = $('crushModes'); M.innerHTML = '';
   CRUSH_MODES.forEach(([id, ic, nm]) => {
-    const b = document.createElement('button'); b.className = 'cm' + (crushMode === id ? ' on' : ''); b.innerHTML = `<i>${ic}</i>${nm}`;
+    const b = document.createElement('button'); b.className = 'cm' + (crushMode === id ? ' on' : ''); b.innerHTML = `<i>${icon('m_' + id)}</i>${nm}`;
     b.addEventListener('pointerdown', e => { e.preventDefault(); e.stopPropagation(); if (game.grab) releaseGrab(); crushMode = id; buildCrushPanel(); });
     M.appendChild(b);
   });
-  $('crushCatIcon').textContent = SPAWN_DEF[crushSpawn].icon;
+  $('crushCatIcon').innerHTML = icon('s_' + crushSpawn);
   if (game.player && WEAPONS[game.player.weapon].type === 'crusher') $('fireLbl').textContent = CRUSH_LBL[crushMode];
 }
 function buildSpawnCatalog() {
@@ -1864,7 +1883,7 @@ function buildSpawnCatalog() {
   for (const id in SPAWN_DEF) {
     const S = SPAWN_DEF[id]; if (S.cat !== spawnTab) continue;
     const b = document.createElement('button'); b.className = 'scard' + (crushSpawn === id ? ' on' : '');
-    b.innerHTML = `<i>${S.icon}</i><b>${S.name}</b><small>${S.desc}</small>`;
+    b.innerHTML = `<i>${icon('s_' + id)}</i><b>${S.name}</b><small>${S.desc}</small>`;
     b.addEventListener('click', () => { crushSpawn = id; crushMode = 'spawn'; closeSpawn(); buildCrushPanel(); toast('Наведи прицел и нажми «Создать»', 1600); });
     G.appendChild(b);
   }
@@ -2261,7 +2280,7 @@ function onPlayerDeath() {
 let bannerT = 0;
 function banner(t, sub, ms = 2600) { showMsg(t, sub); clearTimeout(bannerT); bannerT = setTimeout(() => { if (!game.player || game.player.alive) hideMsg(); }, ms); }
 function feed(text) {
-  const f = $('feed'), d = document.createElement('div'); d.className = 'fi'; d.textContent = text;
+  const f = $('feed'), d = document.createElement('div'); d.className = 'fi'; d.innerHTML = text;
   f.prepend(d); while (f.children.length > 4) f.lastChild.remove();
   setTimeout(() => { d.classList.add('out'); setTimeout(() => d.remove(), 400); }, 4000);
 }
@@ -2406,6 +2425,91 @@ function drawOverlay() {
   if (game.flash > 0) { c.fillStyle = `rgba(255,230,180,${game.flash})`; c.fillRect(0, 0, GW, GH); }
 }
 
+// ---------------- 3D icons (rendered once from the game's own models) ----------------
+const ICONS = {};
+const icon = (key, cls = '') => ICONS[key] ? `<img class="ic ${cls}" src="${ICONS[key]}" alt="">` : '';
+function makeIcons() {
+  let iconR;
+  try { iconR = new THREE.WebGLRenderer({ antialias: true, alpha: true, preserveDrawingBuffer: true }); } catch (e) { return; }
+  iconR.setPixelRatio(1);
+  const iS = new THREE.Scene();
+  iS.add(new THREE.HemisphereLight(0xffffff, 0x5a5058, 1.5));
+  const k0 = new THREE.DirectionalLight(0xffffff, .7); k0.position.set(-2, 2, 4); iS.add(k0);
+  const k1 = new THREE.DirectionalLight(0xffffff, 1.2); k1.position.set(2, 3, 4); iS.add(k1);
+  const k2 = new THREE.DirectionalLight(0xff4a58, .75); k2.position.set(-3, 1, -2); iS.add(k2);
+  const cam = new THREE.PerspectiveCamera(26, 1, .01, 60);
+  const _c = new THREE.Vector3(), _s = new THREE.Vector3();
+  function snap(obj, yaw = 0, roll = 0, pitch = .12, size = 128) {
+    const inner = new THREE.Group(); inner.add(obj); inner.rotation.y = yaw;
+    const outer = new THREE.Group(); outer.add(inner); outer.rotation.set(pitch, 0, roll);
+    iS.add(outer); outer.updateMatrixWorld(true);
+    const box = new THREE.Box3().setFromObject(outer); box.getCenter(_c); box.getSize(_s);
+    const r = Math.max(_s.x, _s.y) * .5 + .0001, depth = _s.z * .5;
+    cam.aspect = 1; cam.updateProjectionMatrix();
+    const dist = r / Math.tan(THREE.MathUtils.degToRad(cam.fov / 2)) * 1.08 + depth;
+    cam.position.set(_c.x, _c.y, _c.z + dist); cam.lookAt(_c);
+    iconR.setSize(size, size, false); iconR.setClearColor(0x000000, 0); iconR.clear();
+    iconR.render(iS, cam);
+    const url = iconR.domElement.toDataURL('image/png');
+    iS.remove(outer);
+    return url;
+  }
+  const mesh = (geo, mat, x = 0, y = 0, z = 0) => { const m = new THREE.Mesh(geo, typeof mat === 'string' ? colMat(mat) : mat); m.position.set(x, y, z); return m; };
+  function fist() {
+    const g = new THREE.Group(), sk = '#e0ac80';
+    g.add(mesh(new THREE.BoxGeometry(.2, .18, .16), sk));
+    for (let i = 0; i < 4; i++) g.add(mesh(new THREE.BoxGeometry(.045, .05, .1), sk, -.075 + i * .05, .06, .1));
+    g.add(mesh(new THREE.BoxGeometry(.06, .05, .12), sk, -.11, -.01, .05));
+    g.add(mesh(new THREE.BoxGeometry(.22, .2, .12), '#d8d2c4', 0, 0, -.13));
+    return g;
+  }
+  function person(team, wid) {
+    const h = makeHuman(team);
+    if (wid) h.weapon = widx(wid);
+    Object.assign(h, { x: 0, y: 0, z: 0, yaw: 0, onGround: true, speed: 0, combat: team !== 'civil' && team !== 'dummy', anim: 0, pitch: 0 });
+    const P = pose(h); h.P = P; updateBodyMesh(h, P, STICKS, null);
+    actors.remove(h.mesh);
+    return h.mesh;
+  }
+  function prop(type) {
+    if (type === 'crate') return mesh(boxGeo(.9, .9, .9, .9), lookMat('crate'));
+    const m = mesh(new THREE.CylinderGeometry(.3, .3, .9, 18), type === 'xbarrel' ? '#b3121a' : '#2f5d7a');
+    for (const y of [.2, -.22]) m.add(mesh(new THREE.CylinderGeometry(.306, .306, .1, 18), type === 'xbarrel' ? '#ffd23a' : '#22475e', 0, y, 0));
+    return m;
+  }
+  const WPOSE = { melee: [Math.PI / 2 - .3, .75], saw: [Math.PI / 2 - .4, .25], gun: [Math.PI / 2 - .5, .12], rocket: [Math.PI / 2 - .5, .12], throw: [.5, 0], crusher: [Math.PI / 2 - .55, .1], paint: [-.4, -.1] };
+  for (const w of WEAPONS) {
+    if (w.id === 'fists') { ICONS.fists = snap(makeWeaponModel('fists'), .5, .1, .25); continue; }
+    const p = w.id === 'marker' ? [Math.PI / 2 - .3, .6] : WPOSE[w.type] || [0, 0];
+    ICONS[w.id] = snap(makeWeaponModel(w.id), p[0], p[1]);
+  }
+  for (const id in SPAWN_DEF) {
+    const S = SPAWN_DEF[id];
+    ICONS['s_' + id] = S.prop ? snap(prop(S.prop), .5, 0, .3) : snap(person(S.team, S.weapon || (S.team === 'hostile' ? 'bat' : null)), .55, 0, .05);
+  }
+  const glowG = new THREE.MeshBasicMaterial({ color: '#3ad16b' }), red = colMat('#e8242e');
+  { const g = new THREE.Group(); g.add(person('civil')); const d = mesh(new THREE.CylinderGeometry(.5, .5, .04, 24), glowMat, 0, .02, 0); g.add(d); ICONS.m_spawn = snap(g, .55, 0, .25); }
+  { const g = new THREE.Group(); g.add(mesh(new THREE.SphereGeometry(.12, 16, 12), glowMat)); for (let i = 0; i < 3; i++) { const a = i / 3 * 6.283, p = mesh(new THREE.BoxGeometry(.05, .3, .05), '#55525e', Math.cos(a) * .2, -.05, Math.sin(a) * .2); p.rotation.set(Math.sin(a) * .5, 0, -Math.cos(a) * .5); g.add(p); } g.add(mesh(new THREE.CylinderGeometry(.18, .22, .12, 16), '#2a2830', 0, -.25, 0)); ICONS.m_grab = snap(g, .3, 0, .35); }
+  { const g = new THREE.Group(); g.add(mesh(new THREE.SphereGeometry(.13, 16, 12), '#dfe9ff')); for (const [r, t] of [[.3, .03], [.48, .022]]) { const m = mesh(new THREE.TorusGeometry(r, t, 8, 40), glowMat); m.rotation.x = Math.PI / 2 - .5; g.add(m); } ICONS.m_push = snap(g, 0, 0, .2); }
+  { const g = new THREE.Group(); g.add(mesh(new THREE.BoxGeometry(.5, .16, .16), glowG)); g.add(mesh(new THREE.BoxGeometry(.16, .5, .16), glowG)); ICONS.m_revive = snap(g, .5, 0, .3); }
+  { const g = new THREE.Group(); const a = mesh(new THREE.BoxGeometry(.6, .14, .14), red), b = mesh(new THREE.BoxGeometry(.6, .14, .14), red); a.rotation.z = .785; b.rotation.z = -.785; g.add(a, b); ICONS.m_delete = snap(g, .5, 0, .3); }
+  ICONS.mode_sandbox = ICONS.crusher; ICONS.mode_survival = ICONS.s_h_rifle;
+  // map thumbnails: the real maps, rendered from a fixed camera
+  const VIEWS = { city: [[-30, 6, -9], [2, 1.5, 6]], ware: [[-20, 5.5, -11], [6, 1, 6]], canyon: [[-12, 9, -28], [16, 2, 16]], test: [[-8, 6, 26], [6, 1, -8]] };
+  for (const m of MAPS) {
+    buildWorld(m);
+    const [pos, at] = VIEWS[m.id];
+    const c2 = new THREE.PerspectiveCamera(62, 16 / 9, .05, 400); c2.position.set(...pos); c2.lookAt(...at);
+    if (skyMesh) skyMesh.position.copy(c2.position);
+    const so = m.sun[2]; sun.position.set(pos[0] + so[0], so[1], pos[2] + so[2]); sun.target.position.set(pos[0], 0, pos[2]); sun.target.updateMatrixWorld();
+    iconR.setSize(384, 216, false); iconR.setClearColor(0x000000, 1); iconR.clear();
+    iconR.render(scene, c2);
+    ICONS['map_' + m.id] = iconR.domElement.toDataURL('image/jpeg', .85);
+  }
+  iconR.dispose();
+  if (iconR.forceContextLoss) iconR.forceContextLoss();
+  document.querySelectorAll('[data-icon]').forEach(el => { el.innerHTML = icon(el.dataset.icon); });
+}
 // ---------------- UI ----------------
 const screens = ['menu', 'mapsScr', 'setScr', 'helpScr', 'pauseScr', 'wheelScr', 'spawnScr', 'armScr', 'overScr'];
 let backTo = 'menu';
@@ -2420,12 +2524,12 @@ function updateHud() {
   $('hpfill').style.width = clamp(p.hp / p.maxHp * 100, 0, 100) + '%';
   $('hpnum').textContent = Math.max(0, Math.ceil(p.hp));
   $('hpbox').classList.toggle('low', p.hp < 35);
-  $('kills').textContent = '☠ ' + game.kills;
+  $('kills').textContent = game.kills + ' убито';
 }
 const CATS = [['melee', 'Ближний бой'], ['gun', 'Огнестрел'], ['boom', 'Взрывчатка'], ['tool', 'Инструменты']];
 const FIRE_LBL = { melee: 'УДАР', saw: 'ПИЛИТЬ', gun: 'ОГОНЬ', throw: 'БРОСОК', rocket: 'ПУСК', paint: 'РИСОВАТЬ', crusher: 'СОЗДАТЬ' };
 const available = i => !(WEAPONS[i].sandboxOnly && game.mode !== 'sandbox');
-function tileHTML(w) { return `<i>${w.icon}</i><span>${w.name}<small>${w.desc}</small></span>`; }
+function tileHTML(w) { return `<i>${icon(w.id)}</i><span>${w.name}<small>${w.desc}</small></span>`; }
 function buildInventory() {
   const W = $('wheelSlots'); W.innerHTML = '';
   const n = WEAPONS.length, Ry = GH * .41, Rx = Math.min(GW * .34, Ry * 1.75), cx = GW / 2, cy = GH / 2;
@@ -2435,7 +2539,7 @@ function buildInventory() {
     const b = document.createElement('button');
     b.className = 'wslot' + (game.player && game.player.weapon === i ? ' on' : '') + (available(i) ? '' : ' off');
     b.style.left = (cx + Math.cos(a) * Rx) + 'px'; b.style.top = (cy + Math.sin(a) * Ry) + 'px';
-    b.innerHTML = `${w.icon}<small>${w.name}</small>`;
+    b.innerHTML = `${icon(w.id)}<small>${w.name}</small>`;
     const info = () => { $('wcCat').textContent = (CATS.find(c => c[0] === w.cat) || ['', ''])[1]; $('wcName').textContent = w.name; $('wcDesc').textContent = available(i) ? w.desc : 'только в песочнице'; };
     b.addEventListener('pointerenter', info);
     b.addEventListener('click', e => { e.stopPropagation(); if (!available(i)) { info(); toast('Только в песочнице', 1400); return; } selectWeapon(i); closeInv(); });
@@ -2458,8 +2562,8 @@ function selectWeapon(i) {
   if (p.weapon !== i) { game.reloadT = 0; game.autoReload = 0; game.ads = false; }
   p.weapon = i; p.cd = Math.max(p.cd, .15); lastMark = null;
   const w = WEAPONS[i];
-  $('wIcon').textContent = w.icon; $('wName').textContent = w.name;
-  $('fireIcon').textContent = w.icon; $('fireLbl').textContent = FIRE_LBL[w.type];
+  $('wIcon').innerHTML = icon(w.id); $('wName').textContent = w.name;
+  $('fireIcon').innerHTML = icon(w.id); $('fireLbl').textContent = FIRE_LBL[w.type];
   $('palette').classList.toggle('hidden', w.type !== 'paint');
   $('crushCol').classList.toggle('hidden', w.type !== 'crusher');
   if (w.type === 'crusher') { buildCrushPanel(); $('fireLbl').textContent = CRUSH_LBL[crushMode]; }
@@ -2486,14 +2590,14 @@ function buildMaps() {
   MODES.forEach(m => {
     const b = document.createElement('button'); b.className = 'mode' + (selMode === m.id ? ' on' : '');
     const rec = m.id === 'survival' && settings.best ? `<em>рекорд: волна ${settings.best}</em>` : '';
-    b.innerHTML = `<i>${m.icon}</i><span><b>${m.name}</b>${m.desc}${rec}</span>`;
+    b.innerHTML = `<i>${icon('mode_' + m.id)}</i><span><b>${m.name}</b>${m.desc}${rec}</span>`;
     b.addEventListener('click', () => { selMode = m.id; buildMaps(); });
     ml.appendChild(b);
   });
   const list = $('mapList'); list.innerHTML = '';
   MAPS.forEach((m, i) => {
     const b = document.createElement('button'); b.className = 'map';
-    b.innerHTML = `<div class="pv" style="background:${m.pv}"><span class="go">ИГРАТЬ ▶</span>${m.emoji}</div><div class="info"><div class="nm">${m.name}</div><div class="ds">${m.desc}</div><div class="chips">${m.tags.map(t => `<span class="chip">${t}</span>`).join('')}</div></div>`;
+    b.innerHTML = `<div class="pv" style="background:${ICONS['map_' + m.id] ? `#222 url(${ICONS['map_' + m.id]}) center/cover` : m.pv}"><span class="go">ИГРАТЬ ▶</span></div><div class="info"><div class="nm">${m.name}</div><div class="ds">${m.desc}</div><div class="chips">${m.tags.map(t => `<span class="chip">${t}</span>`).join('')}</div></div>`;
     b.addEventListener('click', () => { initAudio(); goLandscape(); startGame(i, false, selMode); });
     list.appendChild(b);
   });
@@ -2514,19 +2618,19 @@ function setPreview(i) {
   const box = new THREE.Box3().setFromObject(inner), size = new THREE.Vector3(), ctr = new THREE.Vector3();
   box.getSize(size); box.getCenter(ctr);
   inner.position.sub(ctr);
-  const k = 1.9 / Math.max(size.x, size.y * 1.6, size.z, .2);
+  const k = Math.min(1.9 / Math.max(size.x, size.y * 1.6, size.z, .2), .75 / Math.max(size.y, .05));
   previewModel = new THREE.Group(); previewModel.add(inner); previewModel.scale.setScalar(k);
   previewScene.add(previewModel);
   const bars = [['Урон', w.st[0]], ['Скорость', w.st[1]], ['Расчленение', w.st[2]]];
   const extra = w.type === 'crusher' ? 'Режимы: создать, захват, толчок, оживить, удалить. Только в песочнице' : w.mag ? `Магазин: ${w.mag} · перезарядка ${w.reload} с${w.zoom ? ' · прицел ×' + w.zoom : ''}` : w.type === 'paint' ? 'Держи кнопку, чтобы рисовать' : w.type === 'saw' ? 'Держи кнопку — пила режет без остановки' : 'Без патронов';
-  $('armInfo').innerHTML = `<div class="ah"><i>${w.icon}</i><div><b>${w.name}</b><small>${CATS.find(c => c[0] === w.cat)[1]}</small></div></div><p>${w.desc}</p>` +
+  $('armInfo').innerHTML = `<div class="ah"><i>${icon(w.id)}</i><div><b>${w.name}</b><small>${CATS.find(c => c[0] === w.cat)[1]}</small></div></div><p>${w.desc}</p>` +
     bars.map(([n, v]) => `<div class="stat"><span>${n}</span><div class="sbar"><div style="width:${v}%"></div></div></div>`).join('') + `<p class="ex">${extra}</p>`;
   [...$('armList').children].forEach((b, j) => b.classList.toggle('on', j === i));
 }
 function openArmory() {
   backTo = 'menu';
   const L = $('armList'); L.innerHTML = '';
-  WEAPONS.forEach((w, i) => { const b = document.createElement('button'); b.className = 'atile'; b.innerHTML = `<i>${w.icon}</i><span>${w.name}</span>`; b.addEventListener('click', () => setPreview(i)); L.appendChild(b); });
+  WEAPONS.forEach((w, i) => { const b = document.createElement('button'); b.className = 'atile'; b.innerHTML = `<i>${icon(w.id)}</i><span>${w.name}</span>`; b.addEventListener('click', () => setPreview(i)); L.appendChild(b); });
   show('armScr'); game.state = 'armory'; setPreview(armSel);
 }
 function elRect(el) { let x = 0, y = 0, e = el; while (e && e !== root) { x += e.offsetLeft; y += e.offsetTop; e = e.offsetParent; } return { x, y, w: el.offsetWidth, h: el.offsetHeight }; }
@@ -2603,7 +2707,7 @@ function startGame(mi, demo, mode = 'sandbox') {
     game.state = 'play'; hideAll(); $('hud').classList.remove('hidden');
     buildPalette(); selectWeapon(0); updateHud(); buildVM('fists');
     if (game.mode === 'survival') banner('ВЫЖИВАНИЕ', 'первая волна через 3 секунды', 3000);
-    else if (n === 0) { selectWeapon(widx('crusher')); toast('Карта пустая. Создавай людей и предметы Реалити-крашером 🌀', 4000); }
+    else if (n === 0) { selectWeapon(widx('crusher')); toast('Карта пустая. Создавай людей и предметы Реалити-крашером', 4000); }
     else toast(settings.chaos ? 'Режим ХАОС: все против всех!' : 'Бандиты в масках охотятся за тобой');
   } else { game.state = 'menu'; $('hud').classList.add('hidden'); }
 }
@@ -2629,7 +2733,7 @@ function resume() { game.state = 'play'; hideAll(); $('hud').classList.remove('h
 function goMenu() { backTo = 'menu'; startGame(0, true); show('menu'); }
 const TIPS = ['Реалити-крашер создаёт людей, ящики и взрывные бочки', 'В режиме «Захват» людей можно поднять и швырнуть', 'Полёт и бессмертие — в настройках', 'Катана и топор отрубают руки прямо у живых', 'Снайперка пробивает двоих насквозь', 'Бензопилу надо держать — она режет без остановки', 'Без руки человек паникует и истекает кровью', 'РПГ вблизи разрывает тело в клочья', 'В «Выживании» каждая волна сильнее', 'Баллончиком можно рисовать на машинах', 'Кнопка ◎ — прицеливание, ⟳ — перезарядка'];
 let tipI = 0;
-function nextTip() { $('tip').textContent = '💡 ' + TIPS[tipI++ % TIPS.length]; }
+function nextTip() { $('tip').textContent = 'Совет: ' + TIPS[tipI++ % TIPS.length]; }
 nextTip(); setInterval(nextTip, 4500);
 $('bPlay').onclick = () => { initAudio(); backTo = 'menu'; buildMaps(); show('mapsScr'); };
 $('bArm').onclick = () => { initAudio(); openArmory(); };
@@ -2674,6 +2778,7 @@ function frame(now) {
   requestAnimationFrame(frame);
 }
 applyGfx();
+makeIcons();
 startGame(0, true);
 show('menu');
 $('loading').classList.add('hidden');
