@@ -302,6 +302,7 @@ h2{font-weight:600;letter-spacing:2px;text-transform:uppercase}
 @media (max-width:760px){ #palette{gap:4px;padding:5px 6px;left:auto;right:150px;transform:none;bottom:96px} #palette .sw{width:26px;height:26px} }
 @media (max-height:430px){ .opt{padding:4px 0} }
 @media (pointer:fine){ .card.pc{order:-1} #fireBtn,#jumpBtn,#downBtn,#reloadBtn,#aimBtn{display:none!important} }
+body.mouse #fireBtn,body.mouse #jumpBtn,body.mouse #downBtn,body.mouse #reloadBtn,body.mouse #aimBtn{display:none!important}
 .khint.pal{align-self:center;padding:0 4px} @media (pointer:fine){ .khint.pal{display:block} }
 /* player name, emotes, chat */
 .hpbox .pn{font:600 12px var(--f-ui);letter-spacing:1.5px;color:#fff;opacity:.8;margin-bottom:1px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
@@ -477,6 +478,9 @@ function angDiff(a, b) { let d = b - a; while (d > Math.PI) d -= 2 * Math.PI; wh
 
 // ---------------- settings ----------------
 const IS_MOBILE = /Android|iPhone|iPad|iPod/i.test(navigator.userAgent) || (window.matchMedia && matchMedia('(pointer:coarse)').matches);
+// on-screen touch buttons are hidden as soon as a mouse is in use (PCs with touchscreens included), and come back on touch
+if (!IS_MOBILE && document.body) document.body.classList.add('mouse');
+addEventListener('pointermove', e => { if (document.body) document.body.classList.toggle('mouse', e.pointerType === 'mouse'); }, { passive: true, capture: true });
 const settings = { blood: 1, npcStart: 8, chaos: false, vol: .7, music: true, gfx: IS_MOBILE ? 0 : 1, sens: 1, paint: 0, fov: 75, best: 0, fly: false, god: false, respawn: 0, realDeath: false, name: '', lang: 'en-GB', res: 2 };
 try { Object.assign(settings, JSON.parse(localStorage.getItem('gz_settings') || '{}')); } catch (e) {}
 // ---------------- languages ----------------
@@ -3384,7 +3388,7 @@ function ai(h, dt) {
   }
   if (h.team === 'civil' && !h.kid && p && p.alive && (h.surCheck = (h.surCheck || 0) - dt) <= 0) { // a gun pointed at you: kneel and beg
     h.surCheck = .3; const w = WEAPONS[p.weapon], dx = h.x - p.x, dz = h.z - p.z, d = Math.hypot(dx, dz) || 1;
-    if (w && isRangedFoe(p) && d < 16 && !(h.angry > 0) && game.time > (h.surCool || 0)) {
+    if (w && game.ads && isRangedFoe(p) && d < 16 && !(h.angry > 0) && game.time > (h.surCool || 0)) { // only while you actually aim (RMB / aim button)
       const cp = Math.cos(game.pitch), dot = (-Math.sin(game.yaw) * cp * dx - Math.cos(game.yaw) * cp * dz) / d;
       if (dot > (d < 6 ? .96 : .985) && los(h, p) && (d >= 9 || Math.random() < .45 || h.fear > 0)) { // far away, or just panicking: run for it
         h.surCool = game.time + 5; h.fear = Math.max(h.fear, 7); h.fearFrom = p; h.gest = null;
