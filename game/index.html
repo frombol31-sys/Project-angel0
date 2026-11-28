@@ -4764,9 +4764,9 @@ const available = i => !(WEAPONS[i].sandboxOnly && game.mode !== 'sandbox');
 function tileHTML(w) { return `<i>${icon(w.id)}</i><span>${w.name}<small>${w.desc}</small></span>`; }
 const WHEEL_TABS = [
   [L('Ближний бой'), ['crusher', 'fists', 'knife', 'machete', 'bat', 'baton', 'shovel', 'axe', 'sledge', 'katana', 'saw']],
-  [L('Автоматы'), ['pistol', 'rifle', 'sniper', 'bow', 'crossbow', 'tknife']],
+  [L('Автоматы'), ['pistol', 'rifle', 'sniper', 'bow', 'crossbow']],
   [L('Дробовики'), ['shotgun', 'dbarrel', 'autoshot']],
-  [L('Остальное'), ['grenade', 'rpg', 'flamer', 'taser', 'gravgun', 'hook', 'spray', 'marker', 'bandage', 'medkit', 'virus', 'antidote']]
+  [L('Остальное'), ['tknife', 'grenade', 'rpg', 'flamer', 'taser', 'gravgun', 'hook', 'spray', 'marker', 'bandage', 'medkit', 'virus', 'antidote']]
 ];
 let invTab = null;
 function buildInventory() {
