@@ -1,0 +1,11 @@
+android/gen/
+android/obj/
+android/stage/
+android/assets/
+android/res/mipmap/ic_launcher.png
+desktop/web/
+out/
+*.jks
+*.idsig
+desktop/icon.ico
+desktop/rsrc_windows_amd64.syso
