@@ -1067,7 +1067,7 @@ class PSys {
   constructor(color, size, add, opacity, tex, vc) {
     this.pos = new Float32Array(MAXP * 3);
     this.geo = new THREE.BufferGeometry();
-    this.geo.setAttribute('position', new THREE.BufferAttribute(this.pos, 3));
+    this.geo.setAttribute('position', new THREE.BufferAttribute(this.pos, 3)); this.geo.setDrawRange(0, 0); // nothing drawn until the first particle (otherwise every unused point sits at the map centre)
     this.vc = !!vc;
     if (vc) { this.col = new Float32Array(MAXP * 3); this.geo.setAttribute('color', new THREE.BufferAttribute(this.col, 3)); }
     this.mat = new THREE.PointsMaterial({ color, size, sizeAttenuation: true, transparent: true, opacity, depthWrite: false, map: tex, vertexColors: !!vc, blending: add ? THREE.AdditiveBlending : THREE.NormalBlending });
