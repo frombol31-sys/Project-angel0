@@ -3855,7 +3855,9 @@ function ai(h, dt) {
     h.surCheck = .3; const w = WEAPONS[p.weapon], dx = h.x - p.x, dz = h.z - p.z, d = Math.hypot(dx, dz) || 1;
     if (w && game.ads && isRangedFoe(p) && d < 16 && !(h.angry > 0) && game.time > (h.surCool || 0)) { // only while you actually aim (RMB / aim button)
       const cp = Math.cos(game.pitch), dot = (-Math.sin(game.yaw) * cp * dx - Math.cos(game.yaw) * cp * dz) / d;
-      if (dot > (d < 6 ? .96 : .985) && los(h, p) && (d >= 9 || Math.random() < .45 || h.fear > 0)) { // far away, or just panicking: run for it
+      const facing = Math.abs(angDiff(h.yaw, Math.atan2(-dx, -dz))) < 1.3; // can they actually see you aiming?
+      if (!facing) { /* back turned: no idea a gun is on them */ }
+      else if (dot > (d < 6 ? .96 : .985) && los(h, p) && (d >= 9 || Math.random() < .45 || h.fear > 0)) { // far away, or just panicking: run for it
         h.surCool = game.time + 5; h.fear = Math.max(h.fear, 7); h.fearFrom = p; h.gest = null;
         if (Math.random() < .6) npcSay(h, pick(h.female ? [L('Он целится в меня!'), L('Помогите!!'), L('Не надо!!')] : [L('Он целится!'), L('Бежим!!'), L('Псих с пушкой!')]));
         if (Math.random() < .5) scream(h);
