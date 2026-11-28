@@ -1344,10 +1344,11 @@ function pose(h) {
     else arm(2, 4, 6, Math.sin(ph) * .5 * mv + .05, -.04);
     h._wdir = ad;
   } else if (w.id === 'fists' && (h.combat || attacking)) {
-    const ext = attacking ? Math.sin(atk * Math.PI) : 0;
-    const rh = add([.08, 1.42 + bob, lean + .18], ad, .35 * ext); L[7] = rh;
-    L[5] = [.2, rh[1] - .14 + .1 * ext, (L[3][2] + rh[2]) / 2 - .05 * (1 - ext)];
-    L[6] = [-.08, 1.46 + bob, lean + .2]; L[4] = [-.22, 1.3 + bob, lean + .1];
+    const ext = attacking ? Math.sin(atk * Math.PI) : 0, eR = h.punchL ? 0 : ext, eL = h.punchL ? ext : 0;
+    const rh = add([.08, 1.42 + bob, lean + .18], ad, .35 * eR); L[7] = rh;
+    L[5] = [.2, rh[1] - .14 + .1 * eR, (L[3][2] + rh[2]) / 2 - .05 * (1 - eR)];
+    const lh = add([-.08, 1.46 + bob, lean + .2], ad, .35 * eL); L[6] = lh;
+    L[4] = [-.22 + .02 * eL, lh[1] - .16 + .1 * eL, (L[2][2] + lh[2]) / 2 - .05 * (1 - eL)];
   } else if ((w.type === 'melee' && w.id !== 'fists') || w.type === 'throw') {
     const phi = w.type === 'throw' ? (attacking ? lerp(2.9, 1.2, ease(atk)) : .7) : (attacking ? lerp(2.8, .45, ease(atk)) : .85);
     arm(3, 5, 7, phi, -.08);
@@ -2852,6 +2853,7 @@ function doAttack(h) {
   }
   h.cd = h.team === 'zombie' ? 1.1 : w.cd * (isP ? 1 : 1.8);
   h.attackDur = w.dur || .12; h.attackT = h.attackDur;
+  if (w.id === 'fists') h.punchL = !h.punchL; // left, right, left, right...
   const { o, d } = aimOf(h);
   if (w.type === 'med') { useMed(h, w, o, d); return; }
   if (w.type === 'syringe') { inject(h, w, o, d); return; }
@@ -3755,8 +3757,9 @@ function updateVM(dt) {
   const u = vmWeapon.userData;
   if (u.flash) { u.flash.visible = game.vmFlash > 0; if (u.flash.visible) u.flash.rotation.z = Math.random() * 6; }
   if (u.fists) {
-    const ext = attacking ? Math.sin(t * Math.PI) : 0;
-    u.fists[1].position.set(.2 - .12 * ext, -.18 + .05 * ext, -.35 - .3 * ext);
+    const ext = attacking ? Math.sin(t * Math.PI) : 0, eL = p.punchL ? ext : 0, eR = p.punchL ? 0 : ext;
+    u.fists[1].position.set(.2 - .12 * eR, -.18 + .05 * eR, -.35 - .3 * eR);
+    u.fists[0].position.set(-.2 + .12 * eL, -.18 + .05 * eL, -.35 - .3 * eL);
   } else if (u.holder) {
     const H = u.holder, base = H.userData.base;
     if (w.type === 'melee') {
