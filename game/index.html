@@ -51,7 +51,8 @@ button:focus-visible{outline:2px solid var(--red2);outline-offset:2px}
 .full{flex-direction:column;background:rgba(9,7,8,.93);padding:12px 24px 16px}
 /* menus that may not fit (small phones): scroll with a finger, the mouse wheel or a thin scrollbar */
 .full > :not(.bar), .sidepanel, .scrolly{min-height:0;flex-shrink:1;overflow-y:auto;overscroll-behavior:contain;touch-action:pan-y;-webkit-overflow-scrolling:touch;scrollbar-width:thin;scrollbar-color:rgba(255,255,255,.25) transparent}
-.sidepanel{max-height:100%;justify-content:safe center}
+.sidepanel{max-height:100%;justify-content:safe center;scrollbar-width:none} .sidepanel::-webkit-scrollbar{display:none} /* side menus: still scroll on tiny screens, but without a visible bar */
+@media (max-height:360px){ .logo{font-size:clamp(38px,13vmin,60px)} .tag{display:none} .mi{padding-top:3px!important;padding-bottom:3px!important} .mi em{display:none} .sidepanel{gap:4px;padding-top:8px;padding-bottom:6px} }
 .full > :not(.bar)::-webkit-scrollbar, .sidepanel::-webkit-scrollbar, .scrolly::-webkit-scrollbar{width:6px} .full > :not(.bar)::-webkit-scrollbar-thumb, .sidepanel::-webkit-scrollbar-thumb, .scrolly::-webkit-scrollbar-thumb{background:rgba(255,255,255,.25);border-radius:3px}
 .bar{display:flex;align-items:center;gap:12px;margin-bottom:12px;flex:0 0 auto}
 .back{width:42px;height:42px;border-radius:12px;border:1px solid var(--line);background:rgba(255,255,255,.05);font-size:22px;line-height:1}
@@ -322,9 +323,10 @@ body.mouse #fireBtn,body.mouse #jumpBtn,body.mouse #downBtn,body.mouse #reloadBt
 #emoteMenu button:active{background:rgba(255,255,255,.3)}
 #emoteMenu button.danger{background:rgba(200,20,30,.35);border-color:rgba(255,80,90,.5)}
 #emoteMenu .ic{width:44px;height:44px}
-#chatLog{position:absolute;left:150px;bottom:170px;width:min(330px,42%);display:flex;flex-direction:column;gap:3px;pointer-events:none}
-#chatLog div{font:500 13px var(--f-text);color:#fff;background:rgba(0,0,0,.45);padding:3px 8px;border-radius:6px;text-shadow:0 1px 2px #000;overflow-wrap:anywhere;transition:opacity .5s}
+#chatLog{position:absolute;left:14px;top:70px;width:min(360px,44%);display:flex;flex-direction:column;align-items:flex-start;gap:3px;pointer-events:none}
+#chatLog div{max-width:100%;font:500 12px var(--f-text);color:#fff;background:rgba(0,0,0,.4);padding:2px 8px;border-radius:6px;text-shadow:0 1px 2px #000;overflow-wrap:anywhere;transition:opacity .5s}
 #chatLog b{font-weight:700;color:#e8e2d8} #chatLog .me b{color:#7fd4ff} #chatLog .bad b{color:#ff6b6b} #chatLog .civ b{color:#ffe08a} #chatLog .sys{color:#bbb;font-style:italic}
+#hud:has(#crushCol:not(.hidden)) #chatLog,#hud:has(#palette:not(.hidden)) #chatLog{left:96px}
 #chatLog .old{opacity:0} #hud.chatting #chatLog .old{opacity:1}
 #hud.chatting #chatLog{top:116px;bottom:auto;left:50%;transform:translateX(-50%);width:min(560px,72%)}
 #chatBar{position:absolute;left:50%;top:12px;transform:translateX(-50%);width:min(560px,72%);display:flex;flex-direction:column;gap:6px;padding:8px;border-radius:14px;background:rgba(10,10,12,.82);border:1px solid var(--hudline);pointer-events:auto;z-index:5}
@@ -334,7 +336,7 @@ body.mouse #fireBtn,body.mouse #jumpBtn,body.mouse #downBtn,body.mouse #reloadBt
 #chatBar #chatSend{background:var(--red2);border-color:var(--red2)}
 #chatBar .qp{display:flex;gap:5px;flex-wrap:wrap} #chatBar .qp button{padding:4px 9px;font-size:12px}
 .opt input.nameIn{width:170px;font:600 15px var(--f-ui);letter-spacing:1px;color:#fff;background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.3);border-radius:8px;padding:7px 10px;outline:none;user-select:text;-webkit-user-select:text}
-@media (max-width:760px){ #chatLog{left:130px;width:40%} .opt input.nameIn{width:130px} }
+@media (max-width:760px){ #chatLog{left:12px;width:46%} .opt input.nameIn{width:130px} }
 </style>
 </head>
 <body>
@@ -4181,7 +4183,7 @@ const FEM = { [L('захлебнулся кровью')]: L('захлебнул�
 function npcSay(h, text) {
   if (h.female && FEM[text]) text = FEM[text];
   if (game.demo || !game.humans.includes(h)) { h.say = text; h.sayT = game.time + 3.2; return; } /* the fight behind the menu doesn't write to the chat */
-  h.say = text; h.sayT = game.time + 3.2; chatMsg(npcLabel(h), text, h.team === 'hostile' ? 'bad' : 'civ'); }
+  h.say = text; h.sayT = game.time + 3.2; if (chatOpen || game.time - (game.lastChatT || -99) < 6) chatMsg(npcLabel(h), text, h.team === 'hostile' ? 'bad' : 'civ'); } // otherwise it's just the bubble over the head
 function inFront(h) { const p = game.player, dx = h.x - p.x, dz = h.z - p.z, d = Math.hypot(dx, dz) || 1; return (-Math.sin(game.yaw) * dx - Math.cos(game.yaw) * dz) / d > .55; }
 const EMOTE_REPLY = {
   fak: { civil: [L('Ах ты!'), L('Сам такой!'), L('Это что за жест?!'), L('Ну ты и наглый...'), L('Мама, он мне фак показал!')], hostile: [L('Ну всё, ты труп!'), L('Ах так?!'), L('Я тебя запомнил!'), L('Сейчас пальцы отрежу!')] },
@@ -4248,6 +4250,7 @@ const CHAT_REPLY = {
     other: [L('Заткнись!'), () => L('Тебе конец, ') + pname() + '!', L('Хватай его!'), L('Чего болтаешь?'), L('Мы тебя найдём!')] }
 };
 function sendChat(t) {
+  game.lastChatT = game.time;
   t = String(t || '').trim().slice(0, 80); if (!t) return;
   if (t[0] === '/') { chatCommand(t); return; }
   sfx('ui'); chatMsg(pname(), t, 'me');
@@ -4362,7 +4365,7 @@ function drawOverlay() {
       c.fillStyle = 'rgba(0,0,0,.6)'; c.fillText(txt, s.x + 1, s.y + 1); c.fillStyle = 'rgba(255,255,255,.85)'; c.fillText(txt, s.x, s.y);
       continue;
     }
-    const talking = h.say && h.sayT > game.time && h !== game.player;
+    const talking = h.say && h.sayT > game.time && h !== game.player && !game.demo && game.state === 'play';
     if (h.alive && (talking || h.panic || (h.team === 'hostile' && !game.demo))) {
       if (Math.hypot(h.x - camera.position.x, h.z - camera.position.z) > 30) continue;
       const s = project(h.x, h.y + 2.05, h.z); if (!s) continue;
