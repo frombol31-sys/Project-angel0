@@ -2677,6 +2677,7 @@ function damage(h, dmg, dir, at, o) {
   if (isP && settings.god && game.mode === 'sandbox') return;
   if (isP && o.owner && o.owner !== game.player) dmg *= game.mode === 'survival' ? (game.wave < 4 ? .38 : .48) : .55;
   const w = o.w, pt = o.pt;
+  if (!isP && pt !== undefined && !o.explosive) dmg *= pt >= 9 ? .5 : pt >= 2 && pt <= 7 ? .6 : 1; // arms and legs aren't vital
   h.hp -= dmg; h.hurt = .25;
   if (o.owner && o.owner !== h) h.lastAttacker = o.owner;
   h.bleed = Math.min(8, h.bleed + dmg / 25 + ((w && w.bleed) || 0));
@@ -2687,7 +2688,7 @@ function damage(h, dmg, dir, at, o) {
   if (!isP && h.hp > 0 && h.team !== 'zombie' && h.team !== 'dummy' && pt !== undefined && !(o.fire)) { // where you hit decides how they suffer
     if (pt >= 9 && pt <= 14 && dmg >= 12 && !h.legShot) { h.legShot = true; h.fallT = game.time; scream(h); npcSay(h, pick([L('Моя нога!!'), L('А-а-а, нога!'), L('Я не могу встать!')])); }
     else if (pt === 8 && dmg >= 10 && !h.belly) { h.belly = true; h.bleed = Math.max(h.bleed, 4); npcSay(h, pick([L('Живот... больно...'), L('Мне в живот попали!'), L('Кровь... не останавливается...')])); }
-    else if (pt === 1 && h.P && at.y > h.P[1].y - .02 && dmg >= 10 && !h.throat) { h.throat = game.time; h.throatDur = rnd(5, 7.5); h.say = L('*хрипит*'); h.sayT = game.time + 3; h.tgt = null; h.angry = 0; sfx('gurgle', h); }
+    else if (pt === 1 && h.P && at.y > h.P[1].y + .05 && Math.abs(at.x - h.P[1].x) + Math.abs(at.z - h.P[1].z) < .16 && dmg >= 10 && !h.throat) { h.throat = game.time; h.throatDur = rnd(5, 7.5); h.say = L('*хрипит*'); h.sayT = game.time + 3; h.tgt = null; h.angry = 0; sfx('gurgle', h); }
   }
   if (!isP && h.hp > 0 && Math.random() < .45 && !h.throat) sfx('grunt', at);
   const k = o.knock || 3;
@@ -2711,7 +2712,8 @@ function damage(h, dmg, dir, at, o) {
   let sever = null;
   if (!isP && pt !== undefined && w && (w.gore || 0) > 0) {
     const limb = POINT_LIMB[pt];
-    if (limb && !h.lost[limb]) { h.limbHp[limb] -= dmg * w.gore; if (h.limbHp[limb] <= 0) sever = limb; }
+    const canCut = w.type === 'melee' || w.type === 'saw' || !(limb === 'lLeg' || limb === 'rLeg'); // a bullet makes a leg wound, it doesn't take the leg off
+    if (limb && !h.lost[limb] && canCut) { h.limbHp[limb] -= dmg * w.gore; if (h.limbHp[limb] <= 0) sever = limb; }
   }
   if (sever === 'head' || sever === 'lLeg' || sever === 'rLeg') { h.hp = Math.min(h.hp, 0); o.sever = sever; }
   else if (sever && h.hp > 0) severAlive(h, sever, dir);
@@ -3353,11 +3355,11 @@ function updateDogs(dt) {
     const U = dg.mesh.userData;
     if (dg.burn > 0) { dg.burn -= dt; if (Math.random() < .8) PS.fire.add({ x: dg.x + rnd(-.2, .2), y: dg.y + rnd(.3, .7), z: dg.z + rnd(-.2, .2), vx: 0, vy: rnd(1, 2), vz: 0, life: .4 }); if (dg.alive) { dg.hp -= dt * 20; if (dg.hp <= 0) dogDamage(dg, 1, { x: 0, y: 0, z: 0 }, { x: dg.x, y: dg.y + .4, z: dg.z }, dg.lastBy, { id: 'flamer' }); } }
     if (!dg.alive) { // lying on its side
-      dg.vx *= .9; dg.vz *= .9; dg.x += dg.vx * dt; dg.z += dg.vz * dt; dg.vy -= G * dt; dg.y = Math.max(0, dg.y + dg.vy * dt);
-      dg.mesh.position.set(dg.x, dg.y, dg.z); dg.mesh.rotation.set(0, dg.yaw, lerp(dg.mesh.rotation.z, Math.PI / 2, Math.min(1, dt * 8)));
-      dg.mesh.position.y = dg.y - .28 * Math.min(1, (game.time - dg.deadAt) * 3);
+      dg.vx *= .9; dg.vz *= .9; dg.mvx = dg.mvz = 0; dg.jump = false; moveBody(dg, dt, 0); // same floor/box collision as when alive
+      const roll = lerp(dg.mesh.rotation.z, Math.PI / 2, Math.min(1, dt * 8)); dg.mesh.rotation.set(0, dg.yaw, roll);
+      dg.mesh.position.set(dg.x, dg.y + Math.sin(roll) * .14, dg.z); // pivot is at the paws: lift by half the body width so it lies on the floor
       for (const lg of U.legs) lg.rotation.x = .3;
-      if (!dg.pool && game.time - dg.deadAt > .6) { dg.pool = new THREE.Mesh(poolGeo, poolMat); dg.pool.position.set(dg.x, .015, dg.z); dg.pool.scale.setScalar(.2); actors.add(dg.pool); }
+      if (!dg.pool && game.time - dg.deadAt > .6) { dg.pool = new THREE.Mesh(poolGeo, poolMat); dg.pool.position.set(dg.x, dg.y + .015, dg.z); dg.pool.scale.setScalar(.2); actors.add(dg.pool); }
       if (dg.pool && dg.pool.scale.x < 1.1) dg.pool.scale.setScalar(dg.pool.scale.x + dt * .08);
       continue;
     }
