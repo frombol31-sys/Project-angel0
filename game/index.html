@@ -467,7 +467,8 @@ body.mouse #fireBtn,body.mouse #jumpBtn,body.mouse #downBtn,body.mouse #reloadBt
 'use strict';
 const $ = id => document.getElementById(id);
 const root = $('root'), glc = $('gl'), ov = $('ov'), octx = ov.getContext('2d');
-const DT = 1 / 60, G = 22, PR = .3, PH = 1.8, STEP = .5, EYE = 1.62;
+let DT = 1 / 60, TS = 1, K_DAMP = .996, K_FRIC = .8, K_WALL = .85; // DT shrinks in slow-mo (TS = time scale) so physics stays smooth
+const BASE_DT = 1 / 60, G = 22, PR = .3, PH = 1.8, STEP = .5, EYE = 1.62;
 const NPC_RESPAWN = 60, PLAYER_RESPAWN = 4;
 // "realistic death": instant black, after 2 s the black turns into white light, then you come back and the white fades away
 const REAL_DEATH = { black: 2, toWhite: .7, respawn: 3, fadeOut: 1 };
@@ -2293,9 +2294,9 @@ function contactPass(pts) {
       // floor/ceiling: small bounce, strong friction, static friction when nearly still
       if ((p.cn === 4 && vy < 0) || (p.cn === 5 && vy > 0)) vy = -vy * .18;
       const t = Math.hypot(vx, vz);
-      if (t < .0035) { vx = 0; vz = 0; } else { vx *= .8; vz *= .8; }
-    } else if (p.cn === 1) { vx = -vx * .2; vy *= .85; vz *= .85; }
-    else { vz = -vz * .2; vx *= .85; vy *= .85; }
+      if (t < .0035 * TS) { vx = 0; vz = 0; } else { vx *= K_FRIC; vz *= K_FRIC; }
+    } else if (p.cn === 1) { vx = -vx * .2; vy *= K_WALL; vz *= K_WALL; }
+    else { vz = -vz * .2; vx *= K_WALL; vy *= K_WALL; }
     p.px = p.x - vx; p.py = p.y - vy; p.pz = p.z - vz;
   }
 }
@@ -2325,7 +2326,7 @@ function updateRagdoll(rd) {
   const boxes = nearBoxes(c.x, c.z, 3);
   let maxV = 0;
   for (const p of pts) {
-    const vx = clamp((p.x - p.px) * .996, -.9, .9), vy = clamp((p.y - p.py) * .996, -.9, .9), vz = clamp((p.z - p.pz) * .996, -.9, .9);
+    const vx = clamp((p.x - p.px) * K_DAMP, -.9, .9), vy = clamp((p.y - p.py) * K_DAMP, -.9, .9), vz = clamp((p.z - p.pz) * K_DAMP, -.9, .9);
     p.vs = Math.hypot(vx, vy, vz) / DT; p.vdx = vx; p.vdy = vy; p.vdz = vz;
     p.px = p.x; p.py = p.y; p.pz = p.z;
     p.x += vx; p.y += vy - g; p.z += vz;
@@ -2355,7 +2356,7 @@ function updateRagdoll(rd) {
   if (rd.pins) for (const q of rd.pins) { const p = pts[q.i]; if (p) { p.x = p.px = q.x; p.y = p.py = q.y; p.z = p.pz = q.z; } }
   for (const p of pts) { const v = Math.abs(p.x - p.px) + Math.abs(p.z - p.pz) + Math.max(0, Math.abs(p.y - p.py) - g * 1.5); if (v > maxV) maxV = v; }
   // fall asleep once it has settled
-  if (maxV < .004) { rd.calm = (rd.calm || 0) + 1; if (rd.calm > 40) { rd.sleep = true; rd.sleepTick = 0; for (const p of pts) { p.px = p.x; p.py = p.y; p.pz = p.z; } } }
+  if (maxV < .004 * TS) { rd.calm = (rd.calm || 0) + 1; if (rd.calm > 40 / TS) { rd.sleep = true; rd.sleepTick = 0; for (const p of pts) { p.px = p.x; p.py = p.y; p.pz = p.z; } } }
   else rd.calm = 0;
 }
 // bodies push each other; living people shove and kick corpses when they walk into them
@@ -4950,6 +4951,7 @@ function clearActors() {
 }
 const PSTART = { city: [-38, 0, -Math.PI / 2], ware: [-20, -12, Math.PI], canyon: [0, -8, Math.PI], test: [0, 22, 0], bhop1: [-24, -62, Math.PI], bhop2: [-24, -62, Math.PI] };
 function startGame(mi, demo, mode = 'sandbox') {
+  if (TS !== 1) { game.slow = false; setTimeScale(1); }
   const zs = mode === 'zombies'; if (zs) mode = 'survival';
   if (demo && MAPS[mi].bhop) mi = 0;
   const m = MAPS[mi];
@@ -5029,9 +5031,17 @@ window.gzBack = function () {
   return 'ok';
 };
 const tap = (id, fn) => $(id).addEventListener('pointerdown', e => { e.preventDefault(); e.stopPropagation(); initAudio(); fn(); });
+// change the physics step; verlet bodies store velocity as (x - px), so rescale it to keep their real speed
+function setTimeScale(k) {
+  const nd = BASE_DT * k; if (Math.abs(nd - DT) < 1e-9) return;
+  const r = nd / DT, fix = pts => { for (const q of pts) { q.px = q.x - (q.x - q.px) * r; q.py = q.y - (q.y - q.py) * r; q.pz = q.z - (q.z - q.pz) * r; } };
+  for (const h of game.humans) if (h.ragdoll) fix(h.ragdoll.p);
+  for (const g of game.gibs) fix(g.p);
+  DT = nd; TS = k; K_DAMP = Math.pow(.996, k); K_FRIC = Math.pow(.8, k); K_WALL = Math.pow(.85, k);
+}
 function toggleSlow(on = !game.slow) {
   if (!settings.slowmo || game.state !== 'play') on = false;
-  game.slow = on; $('slowBtn').classList.toggle('on', on); sfx(on ? 'slowIn' : 'slowOut');
+  game.slow = on; setTimeScale(on ? .3 : 1); $('slowBtn').classList.toggle('on', on); sfx(on ? 'slowIn' : 'slowOut');
 }
 function updateSlowBtn() {
   $('slowBtn').classList.toggle('hidden', !settings.slowmo || !game.player); if (!settings.slowmo && game.slow) toggleSlow(false);
