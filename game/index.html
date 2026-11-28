@@ -259,7 +259,8 @@ h2{font-weight:600;letter-spacing:2px;text-transform:uppercase}
 .mode .ic{width:54px;height:54px}
 .card .ic{width:42px;height:42px}
 .fi .fn{font-weight:700;color:#7fd4ff;margin-right:2px} .fi .ic.fic{display:inline-block;width:24px;height:24px;vertical-align:middle;margin:-4px 6px -4px 0}
-.map .pv{background-size:cover!important}
+.map .pv{background-size:cover!important;flex:none;aspect-ratio:16/9;min-height:0;height:auto} /* real 16:9 screenshot, never stretched or cropped into a tall strip */
+.maps{align-content:center;overflow-y:auto;overscroll-behavior:contain}
 .card{padding:8px 11px} .card p{font-size:11.5px;line-height:1.35} .card b{margin:2px 0}
 /* ---- final pass: everything fits on small landscape phones without scrolling ---- */
 #setPanel{display:grid;grid-template-columns:1fr 1fr;column-gap:28px;width:min(900px,100%)}
@@ -278,7 +279,7 @@ h2{font-weight:600;letter-spacing:2px;text-transform:uppercase}
   .opt{padding:5px 0;font-size:13px} .opt small{font-size:10px} .seg button{padding:5px 9px;font-size:12px}
   .help{gap:8px} .card p{font-size:11px;line-height:1.3}
   .modes{margin-bottom:8px;gap:8px} .mode{padding:6px 12px;font-size:11px} .mode .ic{width:44px;height:44px} .mode b{font-size:15px}
-  .map .info{padding:6px 10px 8px;gap:3px} .map .nm{font-size:15px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis} .chip:nth-child(n+2){display:none}
+  .map .info{padding:6px 10px 8px;gap:3px} .map .nm{font-size:15px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis} .chip:nth-child(n+2){display:none} .map .ds{display:none}
   .sgrid{gap:8px} .tabs{margin-bottom:8px} .tab{padding:6px 14px;font-size:13px}
   .bar{margin-bottom:8px} h2{font-size:21px} .back{width:38px;height:38px}
 }
@@ -3805,7 +3806,7 @@ function makeIcons() {
     const c2 = new THREE.PerspectiveCamera(62, 16 / 9, .05, 400); c2.position.set(...pos); c2.lookAt(...at);
     if (skyMesh) skyMesh.position.copy(c2.position);
     const so = m.sun[2]; sun.position.set(pos[0] + so[0], so[1], pos[2] + so[2]); sun.target.position.set(pos[0], 0, pos[2]); sun.target.updateMatrixWorld();
-    iconR.setSize(384, 216, false); iconR.setClearColor(0x000000, 1); iconR.clear();
+    iconR.setSize(768, 432, false); iconR.setClearColor(0x000000, 1); iconR.clear();
     iconR.render(scene, c2);
     ICONS['map_' + m.id] = iconR.domElement.toDataURL('image/jpeg', .85);
   }
