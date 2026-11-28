@@ -324,8 +324,8 @@ body.mouse #fireBtn,body.mouse #jumpBtn,body.mouse #downBtn,body.mouse #reloadBt
 #devBtn{height:40px;padding:0 12px;border-radius:20px;background:rgba(120,40,200,.6);border:1.5px solid #c9a0ff;color:#fff;font:14px 'Russo One',sans-serif;pointer-events:auto}
 #devPanel{position:absolute;right:10px;top:64px;bottom:10px;width:min(300px,46vw);overflow-y:auto;background:rgba(14,10,22,.9);border:1px solid #6a4aa0;border-radius:12px;padding:8px;pointer-events:auto;z-index:20;font:12px var(--f-text);color:#eee}
 #devPanel h4{margin:6px 0 4px;font:13px 'Russo One',sans-serif;color:#c9a0ff;letter-spacing:1px}
-#devPanel .dv{display:flex;flex-wrap:wrap;gap:4px} #devPanel button{flex:1 1 45%;min-height:30px;border-radius:8px;border:1px solid #4a3a6a;background:#241a36;color:#fff;font:12px var(--f-text);padding:4px}
-#devPanel button.on{background:#6a2ad0;border-color:#c9a0ff} #devPanel pre{margin:0;font:11px monospace;white-space:pre-wrap;color:#bfe} #devPanel input{width:100%}
+#devPanel .dv{display:flex;flex-wrap:wrap;gap:6px} #devPanel button{flex:1 1 45%;min-height:40px;border-radius:9px;border:1px solid #4a3a6a;background:#241a36;color:#fff;font:13px var(--f-text);padding:6px 4px;touch-action:pan-y;-webkit-tap-highlight-color:transparent;user-select:none} #devPanel button:active{background:#3c2a5c}
+#devPanel button.on{background:#6a2ad0;border-color:#c9a0ff} #devPanel pre{margin:0;font:11px monospace;white-space:pre;overflow:hidden;height:68px;color:#bfe} #devPanel input{width:100%;height:32px;touch-action:none} #devPanel{overscroll-behavior:contain;-webkit-overflow-scrolling:touch}
 @media (max-width:760px){ #chatLog{width:38%!important} #feed{max-width:44%} #feed .fi{font-size:11px} }
 @media (max-width:760px){ #slowBtn,#flyBtn,#carBtn{height:34px;padding:0 9px;font-size:12px;letter-spacing:.5px} #topBtns{gap:5px;top:18px} }
 #emoteMenu,#chatBar{z-index:6} #feed{z-index:2}
@@ -5263,10 +5263,10 @@ function devAction(k) {
   if (k === 'night') { settings.daynight = (+settings.daynight || 0) === 1 ? 0 : 1; saveSettings(); }
   if (k === 'map') { const nm = MAPS.findIndex((m, i) => i > game.mapIndex && !m.bhop); startGame(nm >= 0 ? nm : 0, false, game.zs ? 'zombies' : game.mode); }
   if (k === 'wave5' && game.mode === 'survival') { game.wave += 4; game.waveT = .1; game.toSpawn = 0; for (const h of nonP()) if (h.alive) removeHuman(h); }
-  buildDevPanel();
+  devInfo();
 }
 function buildDevPanel() {
-  const P = $('devPanel'); if (!P || P.classList.contains('hidden')) return;
+  const P = $('devPanel'); if (!P || P.classList.contains('hidden')) return; const keep = P.scrollTop;
   const tg = (key, label) => `<button data-t="${key}" class="${DEVS[key] ? 'on' : ''}">${label}</button>`, act = (key, label) => `<button data-a="${key}">${label}</button>`;
   P.innerHTML = `<h4>DEV · GORE ZONE 1.0</h4><pre id="devInfo"></pre>
     <h4>${L('Читы')}</h4><div class="dv">${tg('god', L('Бессмертие'))}${tg('ammo', L('Бесконечные патроны'))}${tg('oneHit', L('Убийство с 1 удара'))}${tg('freeze', L('Заморозить ИИ'))}${tg('fly', L('Полёт везде'))}${tg('allw', L('Всё оружие везде'))}${tg('noclip', L('Сквозь стены'))}${tg('invis', L('Невидимка'))}${tg('speed', L('Супер-скорость'))}${tg('jump', L('Супер-прыжок'))}${tg('gore', L('Максимум гора'))}${tg('lowg', L('Низкая гравитация'))}</div>
@@ -5274,11 +5274,12 @@ function buildDevPanel() {
     <h4>${L('Скорость времени')}: <span id="devTsV">${DEVS.ts.toFixed(2)}</span>×</h4><input id="devTs" type="range" min="0.1" max="2" step="0.05" value="${DEVS.ts}">
     <h4>${L('Создать рядом')}</h4><div class="dv">${act('civ', L('10 мирных'))}${act('thug', L('10 бандитов'))}${act('zomb', L('5 зомби'))}${act('cop', L('3 полицейских'))}${act('dog', L('2 собаки'))}${act('car', L('Машину'))}</div>
     <h4>${L('Действия')}</h4><div class="dv">${act('kill', L('Убить всех'))}${act('clear', L('Очистить карту'))}${act('tp', L('Телепорт к прицелу'))}${act('heal', L('Вылечить'))}${act('wave', L('Пропустить волну'))}${act('respawn', L('Возродиться'))}${act('boom', L('Взрыв у прицела'))}${act('burnall', L('Поджечь всех'))}${act('zall', L('Всех в зомби'))}${act('revall', L('Оживить всех'))}${act('arm', L('Раздать оружие'))}${act('night', L('День / ночь'))}${act('map', L('Следующая карта'))}${act('wave5', L('Волна +5'))}</div>`;
-  P.querySelectorAll('[data-t]').forEach(b => b.addEventListener('click', () => { const k = b.dataset.t; DEVS[k] = !DEVS[k];
+  P.querySelectorAll('[data-t]').forEach(b => b.addEventListener('click', () => { const k = b.dataset.t; DEVS[k] = !DEVS[k]; b.classList.toggle('on', !!DEVS[k]);
     if (k === 'lowg') G = DEVS.lowg ? 7 : 22;
     if (k === 'wire') { devWire = devWire || new THREE.MeshBasicMaterial({ color: '#9fffa0', wireframe: true }); scene.overrideMaterial = DEVS.wire ? devWire : null; }
-    buildDevPanel(); }));
+    devInfo(); }));
   P.querySelectorAll('[data-a]').forEach(b => b.addEventListener('click', () => devAction(b.dataset.a)));
+  P.scrollTop = keep;
   const ts = $('devTs'); ts.addEventListener('input', () => { DEVS.ts = +ts.value; $('devTsV').textContent = DEVS.ts.toFixed(2); if (!game.slow) setTimeScale(DEVS.ts); });
   devInfo();
 }
@@ -5310,7 +5311,7 @@ let devWire = null;
 function toggleDevPanel() {
   if (!DEV) return; const P = $('devPanel'), open = P.classList.contains('hidden');
   P.classList.toggle('hidden', !open); $('devBtn').classList.toggle('on', open);
-  if (open) { buildDevPanel(); if (document.exitPointerLock && locked) document.exitPointerLock(); game.uiOpenT = performance.now(); } else relock();
+  if (open) { buildDevPanel(); if (document.exitPointerLock && locked) document.exitPointerLock(); } else relock();
 }
 function frame(now) {
   const dt = Math.min(.1, (now - last) / 1000); last = now;
