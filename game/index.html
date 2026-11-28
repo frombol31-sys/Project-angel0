@@ -3078,14 +3078,25 @@ const buzz = ms => { if (IS_MOBILE && navigator.vibrate) try { navigator.vibrate
 function sens() { return .0055 * settings.sens * (IS_MOBILE ? 1.3 : 1) * (camera.fov / settings.fov); }
 // desktop: grab the mouse again whenever a menu closes (called from a click/key handler, so the browser allows it)
 function relock() { if (IS_MOBILE || locked || game.state !== 'play' || chatOpen || !glc.requestPointerLock) return; try { const r = glc.requestPointerLock(); if (r && r.catch) r.catch(() => {}); } catch (e) {} }
+function rmbPress() {
+  game._rmb = true; const w = game.player && WEAPONS[game.player.weapon]; if (!w) return;
+  if (w.type === 'crusher') cycleCrush(1); else if (w.type === 'paint') cyclePaint(1);
+  else if (w.zoom && game.reloadT <= 0) { game.ads = true; updateAmmo(); }
+}
+// browsers send only ONE pointerdown/pointerup while any mouse button is held; pressing a second button (fire while aiming,
+// aiming while firing) arrives as a pointermove with new e.buttons — so the button state is read from e.buttons
+function mouseChord(e) {
+  if (game.state !== 'play' || !e.buttons) return; // buttons=0 moves are ignored: the final release always comes as pointerup (and some synthetic moves report 0)
+  const l = !!(e.buttons & 1), r = !!(e.buttons & 2);
+  if (l !== mouseDown) mouseDown = l;
+  if (r && !game._rmb) rmbPress(); else if (!r && game._rmb) { game._rmb = false; if (game.ads) { game.ads = false; updateAmmo(); } }
+}
 function lookBy(dx, dy) { game.yaw -= dx * sens(); game.pitch = clamp(game.pitch - dy * sens(), -1.45, 1.45); }
 glc.addEventListener('pointerdown', e => {
   initAudio();
   if (game.state !== 'play') return;
   if (e.pointerType === 'mouse') {
-    if (e.button === 2 && game.player && WEAPONS[game.player.weapon].type === 'crusher') { cycleCrush(1); return; }
-    if (e.button === 2 && game.player && WEAPONS[game.player.weapon].type === 'paint') { cyclePaint(1); return; }
-    if (e.button === 2) { const w = game.player && WEAPONS[game.player.weapon]; if (w && w.zoom && game.reloadT <= 0) { game.ads = true; updateAmmo(); } return; }
+    if (e.button === 2) { rmbPress(); return; }
     if (!locked && glc.requestPointerLock) { try { const r = glc.requestPointerLock(); if (r && r.catch) r.catch(() => {}); } catch (er) {} }
     mouseDown = true; return;
   }
@@ -3097,7 +3108,7 @@ glc.addEventListener('pointerdown', e => {
   try { glc.setPointerCapture(e.pointerId); } catch (er) {}
 }, { passive: false });
 addEventListener('pointermove', e => {
-  if (e.pointerType === 'mouse') { if (game.state === 'play' && !chatOpen && (locked || (!IS_MOBILE && e.target === glc && Math.abs(e.movementX) + Math.abs(e.movementY) < 200))) lookBy(e.movementX, e.movementY); return; }
+  if (e.pointerType === 'mouse') { mouseChord(e); if (game.state === 'play' && !chatOpen && (locked || (!IS_MOBILE && e.target === glc && Math.abs(e.movementX) + Math.abs(e.movementY) < 200))) lookBy(e.movementX, e.movementY); return; }
   const g = toGame(e.clientX, e.clientY);
   if (game.state === 'play' && !['move', 'look', 'fire', 'jump', 'down'].some(k => touch[k] && touch[k].id === e.pointerId) && glc.hasPointerCapture && glc.hasPointerCapture(e.pointerId) && !(wheelTap && wheelTap.id === e.pointerId)) {
     const st = { id: e.pointerId, ox: g.x, oy: g.y, x: g.x, y: g.y };
@@ -3114,7 +3125,7 @@ addEventListener('pointermove', e => {
   }
 }, { passive: false });
 function endPointer(e) {
-  if (e.pointerType === 'mouse') { if (e.button === 2) { game.ads = false; updateAmmo(); } else mouseDown = false; return; }
+  if (e.pointerType === 'mouse') { mouseDown = false; game._rmb = false; if (game.ads) { game.ads = false; updateAmmo(); } return; } // pointerup fires only when the last button is released
   for (const k of ['move', 'look', 'fire', 'jump', 'down']) if (touch[k] && touch[k].id === e.pointerId) { touch[k] = null; if (k === 'down') $('downBtn').classList.remove('on'); if (k === 'fire') $('fireBtn').classList.remove('on'); if (k === 'jump') $('jumpBtn').classList.remove('on'); }
 }
 addEventListener('pointerup', endPointer); addEventListener('pointercancel', endPointer);
@@ -3939,7 +3950,7 @@ function openInv() {
   if (document.exitPointerLock && locked) document.exitPointerLock();
 }
 function closeInv() { if (game.state !== 'inv') return; hideAll(); game.state = 'play'; $('hud').classList.remove('hidden'); relock(); }
-function releaseTouches() { touch.move = touch.look = touch.fire = touch.jump = touch.down = null; if (game.grab) releaseGrab(); mouseDown = false; $('fireBtn').classList.remove('on'); $('jumpBtn').classList.remove('on'); $('downBtn').classList.remove('on'); }
+function releaseTouches() { touch.move = touch.look = touch.fire = touch.jump = touch.down = null; if (game.grab) releaseGrab(); mouseDown = false; game._rmb = false; $('fireBtn').classList.remove('on'); $('jumpBtn').classList.remove('on'); $('downBtn').classList.remove('on'); }
 function selectWeapon(i) {
   const p = game.player; if (!p) return;
   if (!available(i)) return;
