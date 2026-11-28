@@ -7,6 +7,8 @@ s = s.replace('<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128
 s = s.replace("""<script>if (!window.THREE) document.write('<script src="three.min.js"><\\/script>');</script>""", '<script src="three.min.js"></script>')
 assert 'cdnjs' not in s and '<script src="three.min.js"></script>' in s
 s = re.sub(r'<link rel="manifest"[^>]*>\n', '', s)
+if os.environ.get('GZ_DEV'):  # developer build: turns on the in-game dev panel
+    s = s.replace('<head>', '<head>\n<script>window.GZ_DEV = 1;</script>', 1)
 open(os.path.join(out, 'index.html'), 'w').write(s)
 for f in ['three.min.js', 'icon-192.png', 'icon-512.png']:
     shutil.copy(os.path.join(src, f), out)

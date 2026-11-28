@@ -16,12 +16,14 @@ RES=$W/android-all-34.jar
 [ -s "$W/android.jar" ] || (cd "$W" && rm -rf fw && mkdir fw && cd fw && unzip -q "$RES" AndroidManifest.xml resources.arsc && zip -q -0 ../android.jar AndroidManifest.xml resources.arsc)
 APP=$ROOT/android/app/src/main
 rm -rf "$W/stage" && mkdir -p "$W/stage/res" "$W/stage/obj" "$W/stage/assets"
-python3 "$ROOT/build/make-app-assets.py" "$ROOT/game" "$W/stage/assets"
+GZ_DEV="${GZ_DEV:-}" python3 "$ROOT/build/make-app-assets.py" "$ROOT/game" "$W/stage/assets"
 sed 's|<manifest |<manifest package="com.gorezone.game" |' "$APP/AndroidManifest.xml" > "$W/stage/AndroidManifest.xml"
+RENAME=(); APKNAME=GoreZone.apk
+if [ -n "${GZ_DEV:-}" ]; then sed -i 's|android:label="GORE ZONE"|android:label="GORE ZONE Dev"|g' "$W/stage/AndroidManifest.xml"; RENAME=(--rename-manifest-package com.gorezone.game.dev); APKNAME=GoreZone-Dev.apk; fi
 aapt2 compile --dir "$APP/res" -o "$W/stage/res"
 VC=${VERSION_CODE:?set VERSION_CODE (CI builds use 300+run number; pick a higher one or use the CI build)}
 aapt2 link -o "$W/stage/app.unsigned.apk" -I "$W/android.jar" --manifest "$W/stage/AndroidManifest.xml" -R "$W"/stage/res/*.flat -A "$W/stage/assets" \
-  --min-sdk-version 24 --target-sdk-version 36 --version-code "$VC" --version-name "${VERSION_NAME:-1.0.$VC}" \
+  --min-sdk-version 24 --target-sdk-version 36 --version-code "$VC" --version-name "${VERSION_NAME:-1.0.$VC}" "${RENAME[@]}" \
   --java "$W/stage/gen" -0 js -0 html
 javac -Xlint:-options --release 8 -classpath "$ALL" -d "$W/stage/obj" \
   $(find "$APP/java" -name '*.java') $(find "$W/stage/gen" -name R.java) 2>&1 | grep -v "Picked up" || true
@@ -29,5 +31,5 @@ dalvik-exchange --dex --min-sdk-version=24 --output="$W/stage/classes.dex" "$W/s
 (cd "$W/stage" && zip -q -j app.unsigned.apk classes.dex)
 zipalign -f -p 4 "$W/stage/app.unsigned.apk" "$W/stage/app.aligned.apk"
 apksigner sign --ks "${KEYSTORE:?set KEYSTORE}" --ks-pass "pass:${KS_PASS:?set KS_PASS}" --ks-key-alias "${KEY_ALIAS:-upload}" \
-  --key-pass "pass:${KEY_PASS:-$KS_PASS}" --out "$OUT/GoreZone.apk" "$W/stage/app.aligned.apk"
-apksigner verify "$OUT/GoreZone.apk" && echo "OK: $OUT/GoreZone.apk (versionCode $VC)"
+  --key-pass "pass:${KEY_PASS:-$KS_PASS}" --out "$OUT/$APKNAME" "$W/stage/app.aligned.apk"
+apksigner verify "$OUT/$APKNAME" && echo "OK: $OUT/$APKNAME (versionCode $VC)"

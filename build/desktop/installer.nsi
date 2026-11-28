@@ -2,14 +2,19 @@
 Unicode true
 !include "MUI2.nsh"
 
-!define APPNAME "GORE ZONE"
+!ifndef APPNAME
+  !define APPNAME "GORE ZONE"
+!endif
+!ifndef APPID
+  !define APPID "GoreZone"
+!endif
 !define APPVER "1.0"
-!define UNINSTKEY "Software\Microsoft\Windows\CurrentVersion\Uninstall\GoreZone"
+!define UNINSTKEY "Software\Microsoft\Windows\CurrentVersion\Uninstall\${APPID}"
 
 Name "${APPNAME}"
 OutFile "${OUTFILE}"
-InstallDir "$PROGRAMFILES64\GORE ZONE"
-InstallDirRegKey HKLM "Software\GoreZone" "InstallDir"
+InstallDir "$PROGRAMFILES64\${APPNAME}"
+InstallDirRegKey HKLM "Software\${APPID}" "InstallDir"
 RequestExecutionLevel admin
 SetCompressor /SOLID lzma
 BrandingText "${APPNAME} ${APPVER}"
@@ -18,7 +23,7 @@ BrandingText "${APPNAME} ${APPVER}"
 !define MUI_UNICON "icon.ico"
 !define MUI_ABORTWARNING
 !define MUI_FINISHPAGE_RUN "$INSTDIR\GoreZone.exe"
-!define MUI_FINISHPAGE_RUN_TEXT "Запустить GORE ZONE"
+!define MUI_FINISHPAGE_RUN_TEXT "Запустить ${APPNAME}"
 
 !insertmacro MUI_PAGE_WELCOME
 !insertmacro MUI_PAGE_DIRECTORY
@@ -28,17 +33,17 @@ BrandingText "${APPNAME} ${APPVER}"
 !insertmacro MUI_UNPAGE_INSTFILES
 !insertmacro MUI_LANGUAGE "Russian"
 
-Section "GORE ZONE" SecMain
+Section "${APPNAME}" SecMain
   SetShellVarContext all
   SetOutPath "$INSTDIR"
   File "${EXEFILE}"
   File "icon.ico"
   WriteUninstaller "$INSTDIR\Uninstall.exe"
-  CreateDirectory "$SMPROGRAMS\GORE ZONE"
-  CreateShortcut "$SMPROGRAMS\GORE ZONE\GORE ZONE.lnk" "$INSTDIR\GoreZone.exe" "" "$INSTDIR\icon.ico"
-  CreateShortcut "$SMPROGRAMS\GORE ZONE\Удалить GORE ZONE.lnk" "$INSTDIR\Uninstall.exe"
-  CreateShortcut "$DESKTOP\GORE ZONE.lnk" "$INSTDIR\GoreZone.exe" "" "$INSTDIR\icon.ico"
-  WriteRegStr HKLM "Software\GoreZone" "InstallDir" "$INSTDIR"
+  CreateDirectory "$SMPROGRAMS\${APPNAME}"
+  CreateShortcut "$SMPROGRAMS\${APPNAME}\${APPNAME}.lnk" "$INSTDIR\GoreZone.exe" "" "$INSTDIR\icon.ico"
+  CreateShortcut "$SMPROGRAMS\${APPNAME}\Удалить ${APPNAME}.lnk" "$INSTDIR\Uninstall.exe"
+  CreateShortcut "$DESKTOP\${APPNAME}.lnk" "$INSTDIR\GoreZone.exe" "" "$INSTDIR\icon.ico"
+  WriteRegStr HKLM "Software\${APPID}" "InstallDir" "$INSTDIR"
   WriteRegStr HKLM "${UNINSTKEY}" "DisplayName" "${APPNAME}"
   WriteRegStr HKLM "${UNINSTKEY}" "DisplayVersion" "${APPVER}"
   WriteRegStr HKLM "${UNINSTKEY}" "Publisher" "GORE ZONE"
@@ -55,10 +60,10 @@ Section "Uninstall"
   Delete "$INSTDIR\icon.ico"
   Delete "$INSTDIR\Uninstall.exe"
   RMDir "$INSTDIR"
-  Delete "$SMPROGRAMS\GORE ZONE\GORE ZONE.lnk"
-  Delete "$SMPROGRAMS\GORE ZONE\Удалить GORE ZONE.lnk"
-  RMDir "$SMPROGRAMS\GORE ZONE"
-  Delete "$DESKTOP\GORE ZONE.lnk"
+  Delete "$SMPROGRAMS\${APPNAME}\${APPNAME}.lnk"
+  Delete "$SMPROGRAMS\${APPNAME}\Удалить ${APPNAME}.lnk"
+  RMDir "$SMPROGRAMS\${APPNAME}"
+  Delete "$DESKTOP\${APPNAME}.lnk"
   DeleteRegKey HKLM "${UNINSTKEY}"
-  DeleteRegKey HKLM "Software\GoreZone"
+  DeleteRegKey HKLM "Software\${APPID}"
 SectionEnd
