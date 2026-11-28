@@ -1830,10 +1830,18 @@ const REL = {
   grief: { son: [L('Сынок!! Нет!!'), L('Мой мальчик!!')], mom: [L('Мама!! Мамочка!!')], dad: [L('Папа!! Вставай!!')], bf: [L('Нет!! Только не он!!')], gf: [L('Нет!! Только не она!!')] },
   revenge: [L('Ты за это ответишь!!'), L('Я убью тебя!!')]
 };
+// civilians only fight back up close against someone with fists or a blade; against guns at range — and always for women and kids — they run
+const isRangedFoe = f => { const w = f && WEAPONS[f.weapon]; return !!w && (w.type === 'gun' || w.type === 'rocket' || w.type === 'throw'); };
+function wouldFight(n, foe) {
+  if (!foe || !foe.alive || n.kid || n.female || n.team !== 'civil') return false;
+  const d = Math.hypot(foe.x - n.x, foe.z - n.z);
+  if (isRangedFoe(foe)) return d < 3; // a gun in your face: grab it / punch back
+  return d < 6;
+}
 function relHurt(h, ow) {
   const r = h.rel; if (!r || !r.o.alive || game.time < (h.relT || 0)) return;
   h.relT = game.time + 4; const o = r.o;
-  if ((o.rel.me === 'dad' || o.rel.me === 'bf') && ow && ow.alive && ow !== o) { o.angry = 10; o.angryAt = ow; o.fear = 0; o.gest = 'fist'; o.gestT = game.time + 1.2; npcSay(o, pick(REL.protect[r.me] || REL.revenge)); }
+  if ((o.rel.me === 'dad' || o.rel.me === 'bf') && ow && ow.alive && ow !== o && wouldFight(o, ow)) { o.angry = 10; o.angryAt = ow; o.fear = 0; o.gest = 'fist'; o.gestT = game.time + 1.2; npcSay(o, pick(REL.protect[r.me] || REL.revenge)); }
   else { o.fear = Math.max(o.fear, 4); o.fearFrom = ow || h; npcSay(o, pick(REL.worry[r.me] || [L('Помогите!')])); }
 }
 function relDeath(h, killer) {
@@ -1842,7 +1850,7 @@ function relDeath(h, killer) {
   o.gest = 'grief'; o.gestT = game.time + 2.6; o.fear = 8; o.fearFrom = killer || h;
   npcSay(o, pick(REL.grief[r.me] || [L('Нет!!')]));
   if ((o.rel.me === 'dad' || o.rel.me === 'bf') && killer && killer !== o)
-    later(2.6, () => { if (o.alive && killer.alive && game.humans.includes(o) && game.humans.includes(killer) && o.team !== 'zombie') { o.fear = 0; o.angry = 15; o.angryAt = killer; o.gest = 'fist'; o.gestT = game.time + 1.4; npcSay(o, pick(REL.revenge)); } });
+    later(2.6, () => { if (o.alive && killer.alive && game.humans.includes(o) && game.humans.includes(killer) && o.team !== 'zombie' && wouldFight(o, killer)) { o.fear = 0; o.angry = 15; o.angryAt = killer; o.gest = 'fist'; o.gestT = game.time + 1.4; npcSay(o, pick(REL.revenge)); } });
 }
 // ---------------- medicine, virus and zombies ----------------
 const ZSKIN = ['#7f9a6c', '#8aa07a', '#6f8a63', '#94a383'], ZSHIRT = ['#4a4f3a', '#5a4a3a', '#3a4048', '#5e3a36', '#3e3e3a'];
@@ -2412,7 +2420,7 @@ function damage(h, dmg, dir, at, o) {
   }
   if (h.team === 'zombie' && ow && ow !== h && ow.team !== 'zombie') h.tgt = ow;
   if (ow && ow !== h && !h.panic) {
-    if (h.team === 'civil') { h.fear = 5; h.fearFrom = ow; if (!h.kid && (Math.random() < .35 || h.weapon > 0)) { h.angry = 9; h.angryAt = ow; } relHurt(h, ow); }
+    if (h.team === 'civil') { h.fear = 5; h.fearFrom = ow; if (wouldFight(h, ow) && (Math.random() < .5 || h.weapon > 0)) { h.angry = 9; h.angryAt = ow; h.fear = 0; } else if (h.angryAt === ow) h.angry = 0; relHurt(h, ow); }
     else if (h.team === 'hostile' && ow !== game.player) { h.angry = 6; h.angryAt = ow; }
   }
   let sever = null;
@@ -2490,7 +2498,7 @@ function witnessDeath(h, killer, tag) {
           if (talk < 2 && Math.random() < .5) { talk++; npcSay(n, pick([L('Ты убил ') + h.name + '!', L('Ты за это ответишь!'), L('Он мне был как брат!'), L('Валите его!')])); } }
         return;
       }
-      const brave = !n.kid && n.weapon > 0 && !byZ && killer && killer.alive && killer !== n && Math.random() < .45;
+      const brave = n.weapon > 0 && !byZ && killer !== n && wouldFight(n, killer) && Math.random() < .45;
       if (brave) { n.angry = 10; n.angryAt = killer; n.gest = 'fist'; n.gestT = game.time + 1; if (talk < 2) { talk++; npcSay(n, pick([L('Ах ты урод!'), L('Ты за это заплатишь!'), L('Я тебя остановлю!')])); } return; }
       // shock: freeze for a moment with hands to the face (longer if it was gory and close), then run away
       const shock = (d < 7 || gory ? rnd(.6, 1.3) : rnd(.15, .5)) * (n.kid ? .7 : 1);
@@ -2973,7 +2981,7 @@ function ai(h, dt) {
   if (game.zc) { // people react to zombies nearby: civilians run, armed people fight
     let nz = null, nzd = 8; for (const z of game.humans) if (z.team === 'zombie' && z.alive) { const dd = Math.hypot(z.x - h.x, z.z - h.z); if (dd < nzd) { nzd = dd; nz = z; } }
     if (nz) {
-      if (h.team === 'civil' && (h.weapon === 0 || h.kid)) { h.fear = Math.max(h.fear, 2); h.fearFrom = nz; if (!h.zSaid) { h.zSaid = true; npcSay(h, pick([L('Зомби!!'), L('Бегите!! Зомби!!'), L('А-а-а! Мертвецы!')])); } }
+      if (h.team === 'civil' && (h.weapon === 0 || h.kid || h.female)) { h.fear = Math.max(h.fear, 2); h.fearFrom = nz; if (!h.zSaid) { h.zSaid = true; npcSay(h, pick([L('Зомби!!'), L('Бегите!! Зомби!!'), L('А-а-а! Мертвецы!')])); } }
       else { h.angry = Math.max(h.angry, 2); h.angryAt = nz; }
     }
   }
@@ -2992,6 +3000,9 @@ function ai(h, dt) {
       if (Math.random() < .6) npcSay(h, pick(h.kid ? [L('Мама, тут дядя не двигается!'), L('Он спит?..')] : [L('Тут труп!'), L('Фу... он мёртвый!'), L('Кто это его так?..'), L('Надо уходить отсюда...')]));
       break;
     }
+  }
+  if (h.team === 'civil' && h.angry > 0 && h.angryAt && h.angryAt.team !== 'zombie' && !wouldFight(h, h.angryAt) && isRangedFoe(h.angryAt) && !(chaos && h.weapon > 0)) { // charging a gunman across the street is suicide: run instead
+    h.fear = Math.max(h.fear, 4); h.fearFrom = h.angryAt; h.angry = 0;
   }
   let tgt = null;
   if (h.panic) tgt = null;
