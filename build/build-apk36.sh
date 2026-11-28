@@ -21,7 +21,7 @@ sed 's|<manifest |<manifest package="com.gorezone.game" |' "$APP/AndroidManifest
 aapt2 compile --dir "$APP/res" -o "$W/stage/res"
 VC=${VERSION_CODE:?set VERSION_CODE (CI builds use 100+run number; pick a higher one or use the CI build)}
 aapt2 link -o "$W/stage/app.unsigned.apk" -I "$W/android.jar" --manifest "$W/stage/AndroidManifest.xml" -R "$W"/stage/res/*.flat -A "$W/stage/assets" \
-  --min-sdk-version 24 --target-sdk-version 36 --version-code "$VC" --version-name "1.0.$VC" \
+  --min-sdk-version 24 --target-sdk-version 36 --version-code "$VC" --version-name "${VERSION_NAME:-1.0.$VC}" \
   --java "$W/stage/gen" -0 js -0 html
 javac -Xlint:-options --release 8 -classpath "$ALL" -d "$W/stage/obj" \
   $(find "$APP/java" -name '*.java') $(find "$W/stage/gen" -name R.java) 2>&1 | grep -v "Picked up" || true
