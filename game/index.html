@@ -1557,8 +1557,10 @@ function freeSpot(far) {
       const dx = x - game.player.x, dz = z - game.player.z, l = Math.hypot(dx, dz) || 1;
       if ((-Math.sin(game.yaw) * dx - Math.cos(game.yaw) * dz) / l > .45) continue;
     }
+    if (far && game.mode === 'survival' && game.player && game.player.alive && Math.hypot(x - game.player.x, z - game.player.z) < 8) continue; // never right next to you
     return { x, z };
   }
+  if (far && game.player) { const m2 = game.map, p = game.player, x = p.x > 0 ? -m2.bx + 3 : m2.bx - 3, z = p.z > 0 ? -m2.bz + 3 : m2.bz - 3; if (!boxAt(x, .5, z, .6)) return { x, z }; }
   return { x: 0, z: 0 };
 }
 function placeHuman(h) { const s = freeSpot(true); h.x = s.x; h.z = s.z; h.y = 0; h.vx = h.vy = h.vz = 0; }
@@ -2068,6 +2070,7 @@ function zombieAI(h, dt) {
   if (h.tgtT <= 0 || !h.tgt || !h.tgt.alive || h.tgt.team === 'zombie' || h.tgt.held) {
     let best = null, bd = 22;
     for (const o of game.humans) { if (!o.alive || o === h || o.team === 'zombie' || o.team === 'dummy' || o.held) continue; const dd = Math.hypot(o.x - h.x, o.z - h.z); if (dd < bd) { bd = dd; best = o; } }
+    if (!best && game.zs && game.player && game.player.alive) best = game.player; // zombie survival: they always come for you
     h.tgt = best; h.tgtT = rnd(.6, 1.2);
   }
   const t = h.tgt; h.combat = true;
@@ -2076,7 +2079,10 @@ function zombieAI(h, dt) {
     h.yaw += angDiff(h.yaw, Math.atan2(dx, dz)) * Math.min(1, dt * 5);
     if (dist > .75) { h.mvx = dx / dist; h.mvz = dz / dist; } else h.mvx = h.mvz = 0;
     if (dist < 1.15 && Math.abs(t.y - h.y) < 1.2) h.fire = true;
-    if (h.speed < .4 && dist > 1.5 && h.onGround && Math.random() < dt) h.jump = true;
+    if (h.speed < .4 && dist > 1.5 && h.onGround) { h.stuck = (h.stuck || 0) + dt; if (Math.random() < dt) h.jump = true; if (h.stuck > .6) { h.stuck = 0; h.avoid = Math.random() < .5 ? -1 : 1; h.avoidT = rnd(.8, 1.6); } } else h.stuck = 0;
+    if ((h.progT = (h.progT || 0) - dt) <= 0) { // sliding along a rock without getting closer counts as stuck too
+      h.progT = 1.2; if (dist > 2 && h.lastDist !== undefined && dist > h.lastDist - .6 && !(h.avoidT > 0)) { h.avoid = h.avoid === 1 ? -1 : 1; h.avoidT = rnd(1.2, 2.2); } h.lastDist = dist; }
+    if (h.avoidT > 0) { h.avoidT -= dt; const a = h.avoid * 1.4, c = Math.cos(a), s2 = Math.sin(a), nx = h.mvx * c + h.mvz * s2, nz = -h.mvx * s2 + h.mvz * c; h.mvx = nx; h.mvz = nz; } // walk around the wall
   } else {
     if (h.aiT <= 0) { h.aiT = rnd(2, 5); h.wdir = Math.random() < .5 ? null : rnd(0, 6.28); }
     if (h.wdir !== null) { h.mvx = Math.sin(h.wdir) * .35; h.mvz = Math.cos(h.wdir) * .35; h.yaw += angDiff(h.yaw, h.wdir) * Math.min(1, dt * 4); } else h.mvx = h.mvz = 0;
@@ -2771,7 +2777,7 @@ function kill(h, ix, iy, iz, at, o, dmg) {
   const killer = o.owner && o.owner !== h ? o.owner : h.lastAttacker;
   sfx('splat', at);
   blood(at.x, at.y, at.z, ix / 10, .3, iz / 10, 30, 5, 1);
-  if (h === game.player) { h.deathRoll = rnd(-.9, .9); game.killedBy = killer && killer !== h ? npcLabel(killer) + (killer.weapon ? ' · ' + WEAPONS[killer.weapon].name : '') : (o.bleedOut ? L('заражение или кровопотеря') : ''); feed(L('Ты погиб') + (killer ? ' · ' + killer.name : '')); onPlayerDeath(); return; }
+  if (h === game.player) { h.deathRoll = rnd(-.9, .9); game.killedBy = killer && killer !== h ? npcLabel(killer) + (killer.weapon !== undefined && WEAPONS[killer.weapon] ? ' · ' + WEAPONS[killer.weapon].name : '') : (o.bleedOut ? L('заражение или кровопотеря') : ''); feed(L('Ты погиб') + (killer ? ' · ' + killer.name : '')); onPlayerDeath(); return; }
   h.ragdoll = makeRagdoll(h, ix, iy, iz, at); h.ragdoll.h = h;
   sfx('bodyfall', at);
   if (h.rel) relDeath(h, killer);
@@ -4098,6 +4104,7 @@ function suicideVM() {
   else if (k === 'grenade') { go(.0, -.12, -.3, 0, 0, Math.sin(t * 20) * .05 * (t > .35 ? 1 : 0)); }
   else if (k === 'rpg') aimBack(.85, .3);
   else if (k === 'crusher') aimBack(.35, .45);
+  else if (k === 'flame') aimBack(.55, .55);
   else if (k === 'virus') { const st = clamp((t - .25) / .15, 0, 1); aimBack(.3 - .12 * st, .45, -.06); }
 }
 function updateVM(dt) {
@@ -4304,10 +4311,11 @@ function spawnWaveZombie() {
 }
 function survivalTick(dt) {
   const p = game.player; if (!p || !p.alive) return;
-  const alive = game.humans.filter(h => h !== p && h.alive).length;
+  const alive = game.humans.filter(h => h !== p && h.alive && !h.surr && !h.broken).length;
   if (game.waveT > 0) { game.waveT -= dt; if (game.waveT <= 0) { game.wave++; game.toSpawn = game.zs ? 3 + game.wave * 3 : 2 + game.wave * 2; game.spawnT = 0; banner(L('ВОЛНА ') + game.wave, (game.zs ? L('зомби: ') : L('бандитов: ')) + game.toSpawn); sfx(game.zs ? 'groan' : 'wave'); } }
   else if (game.toSpawn > 0) { game.spawnT -= dt; if (game.spawnT <= 0 && alive < (game.zs ? 16 : 12)) { if (game.zs) spawnWaveZombie(); else spawnHostile(); game.toSpawn--; game.spawnT = game.zs ? .45 : .7; } }
   else if (alive === 0) {
+    for (const h of game.humans.slice()) if (h.alive && h !== p && (h.surr || h.broken)) { magic(h.x, h.y + 1, h.z, 20, 1.5); removeHuman(h); } // the ones who gave up leave
     game.waveT = 6; p.hp = Math.min(p.maxHp, p.hp + 40); updateHud();
     banner(L('ВОЛНА ') + game.wave + L(' ПРОЙДЕНА'), L('+40 здоровья · следующая через 6 с'));
     for (let i = 0; i < game.ammo.length; i++) if (WEAPONS[i].mag) game.ammo[i] = WEAPONS[i].mag; updateAmmo(); game.uses = {};
@@ -5120,11 +5128,12 @@ function confirmQuit(btn, fn) { // survival: first tap asks, second tap within 3
 }
 $('bMenu').onclick = () => confirmQuit($('bMenu'), goMenu);
 // ---- suicide with the weapon in hand ----
-const SUICIDE_DUR = { gun: 1.35, blade: 1.25, bat: 1.15, fists: 1.6, saw: 1.9, grenade: 2.3, rpg: 1.25, crusher: 1.6, virus: 1.5 };
+const SUICIDE_DUR = { flame: 1.8, gun: 1.35, blade: 1.25, bat: 1.15, fists: 1.6, saw: 1.9, grenade: 2.3, rpg: 1.25, crusher: 1.6, virus: 1.5 };
 function suicideKind(id) {
   if (SHOTGUNS.has(id) || id === 'pistol' || id === 'rifle' || id === 'sniper') return 'gun';
   if (id === 'knife' || id === 'katana' || id === 'axe' || id === 'machete' || id === 'tknife') return 'blade';
   if (id === 'crossbow' || id === 'bow' || id === 'taser') return 'gun';
+  if (id === 'flamer') return 'flame';
   return { bat: 'bat', shovel: 'bat', sledge: 'bat', baton: 'bat', fists: 'fists', saw: 'saw', grenade: 'grenade', rpg: 'rpg', crusher: 'crusher', virus: 'virus' }[id] || null;
 }
 function startSuicide() {
@@ -5146,6 +5155,7 @@ function suicideTick(p, dt) { // runs in game time; events happen at fixed momen
   if (s.k === 'grenade') { if (once(1, .35)) sfx('empty', p); if (once(2, 2)) { explode(p.x, p.y + 1, p.z, p, 'grenade'); return finishSuicide(p); } }
   if (s.k === 'rpg' && once(1, .75)) { sfx('rocket', p); explode(p.x, p.y + .1, p.z, p, 'rpg'); return finishSuicide(p); }
   if (s.k === 'crusher') { if (once(1, .3)) { sfx('zap', p); magic(at.x, at.y - .4, at.z, 30, 1.5); } if (once(2, 1.3)) { sfx('poof', p); magic(at.x, at.y - .4, at.z, 60, 3); game.flash = .5; return finishSuicide(p); } }
+  if (s.k === 'flame') { if (once(1, .35)) { sfx('flame', p); for (let i = 0; i < 30; i++) PS.fire.add({ x: p.x + rnd(-.3, .3), y: p.y + rnd(.3, 1.8), z: p.z + rnd(-.3, .3), vx: rnd(-1, 1), vy: rnd(1, 3), vz: rnd(-1, 1), life: rnd(.3, .7) }); game.flash = .4; p.burn = 7; } if (once(2, 1.6)) return finishSuicide(p); }
   if (s.k === 'virus') { if (once(1, .4)) { sfx('hit', p); p.infected = game.time + .001; } if (once(2, 1.3)) { sfx('groan', p); return finishSuicide(p); } }
   if (s.t > s.dur + .5) game.suicide = null;
 }
