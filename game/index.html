@@ -2624,12 +2624,15 @@ function gravUpdate(p, dt) {
     for (let i = 0; i < 16; i++) PS.magic.add({ x: mz.x, y: mz.y, z: mz.z, vx: d.x * rnd(4, 9) + rnd(-1, 1), vy: d.y * rnd(4, 9) + rnd(-1, 1), vz: d.z * rnd(4, 9) + rnd(-1, 1), life: .3 });
   }
 }
+// bandits (and police) don't hit their own side — unless Chaos mode is on, then everyone hits everyone
+const chaosOn = () => (settings.chaos && game.mode === 'sandbox') || game.demo;
+const sameSide = (a, b) => !!a && !!b && a !== b && a.alive !== false && b.alive && (a.team === 'hostile' || a.team === 'police') && a.team === b.team && !chaosOn();
 function castRay(o, d, maxT, owner, skip) {
   let best = maxT, res = { kind: null };
   if (d.y < -1e-6) { const t = -o.y / d.y; if (t < best) { best = t; res = { kind: 'wall', n: [0, 1, 0] }; } }
   for (const b of game.boxes) { const r = rayBox(o, d, b); if (r && r.t < best) { best = r.t; res = { kind: 'wall', n: r.n, box: b }; } }
   for (const h of game.humans) {
-    if (h === owner || h === skip) continue;
+    if (h === owner || h === skip || sameSide(owner, h)) continue; // friendly bullets pass through
     if (h.alive) {
       if (h === game.player) { for (const [c, r, i] of playerSpheres(h)) { const t = raySphere(o, d, c, r); if (t !== null && t < best) { best = t; res = { kind: 'body', h, i }; } } }
       else if (h.P) { for (const [i, r] of HITS) { if (ptGone(h, i)) continue; const t = raySphere(o, d, h.P[i], r * (h.size || 1)); if (t !== null && t < best) { best = t; res = { kind: 'body', h, i }; } }
@@ -2839,7 +2842,7 @@ const STICKY = new Set(['knife', 'machete', 'axe', 'katana']);
 function melee(h, o, d, w) {
   let any = false;
   for (const t of game.humans.slice()) {
-    if (t === h) continue;
+    if (t === h || sameSide(h, t)) continue;
     if (t.alive) {
       const pts = t === game.player ? playerSpheres(t).map(s => [s[0], s[2]]) : t.P ? [...HITS.filter(([i]) => !ptGone(t, i)).map(([i]) => [t.P[i], i]), [midTorso(t), 8]] : [];
       let best = null, bd = 1e9;
@@ -2868,7 +2871,7 @@ function sawTick(h, o, d, w) {
   if (h === game.player) game.shake = Math.max(game.shake, .06);
   let best = null, bd = 1e9;
   for (const t of game.humans.slice()) {
-    if (t === h) continue;
+    if (t === h || sameSide(h, t)) continue;
     if (t.alive) {
       const pts = t === game.player ? playerSpheres(t).map(s => [s[0], s[2]]) : t.P ? HITS.filter(([i]) => !ptGone(t, i)).map(([i]) => [t.P[i], i]) : [];
       for (const [p, i] of pts) { const vx = p.x - o.x, vy = p.y - o.y, vz = p.z - o.z, dist = Math.hypot(vx, vy, vz) || 1; if (dist <= w.range && (vx * d.x + vy * d.y + vz * d.z) / dist > .55 && dist < bd) { bd = dist; best = { t, p, i, alive: true }; } }
